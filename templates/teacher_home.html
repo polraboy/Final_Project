@@ -12,10 +12,6 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
       rel="stylesheet"
     />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
-      rel="stylesheet"
-    />
     <style>
         :root {
             --primary-color: #FF8C00;
@@ -98,15 +94,7 @@
             border-color: darken(var(--primary-color), 10%);
             transform: translateY(-2px);
         }
-        .btn-custom-blue {
-          background-color: #007bff;
-          border-color: #007bff;
-          color: white;
-      }
-      .btn-custom-blue:hover {
-          background-color: #0056b3;
-          border-color: #0056b3;
-      }
+
         .edit-mode-button {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
@@ -250,13 +238,7 @@
             <a class="nav-link" href="{{ url_for('teacher_home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
           </li>
           <li class="nav-item">
-<<<<<<< HEAD
             <a class="nav-link" href="{{ url_for('add_project') }}"><i class="fas fa-plus"></i> เพิ่มโครงการ</a>
-=======
-          <a class="nav-link" href="completed_projects"
-            ><i class="fas fa-info-circle"></i> โครงการที่เสร็จสิ้น</a
-          >
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('teacher_projects') }}"><i class="fas fa-tasks"></i> จัดการโครงการ</a>
@@ -285,7 +267,6 @@
     </nav>
     
     {% if g.user %}
-<<<<<<< HEAD
     <div class="modal fade" id="userInfoModal" tabindex="-1" role="dialog" aria-labelledby="userInfoModalLabel" aria-hidden="true">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -309,95 +290,6 @@
       </div>
     </div>
     {% endif %}
-=======
-<div class="modal fade" id="userInfoModal" tabindex="-1" role="dialog" aria-labelledby="userInfoModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="userInfoModalLabel">ข้อมูลผู้ใช้</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p><strong>ชื่อ:</strong> {{ g.user.name }}</p>
-        <p><strong>อีเมล:</strong> {{ g.user.email or 'ไม่มีข้อมูล' }}</p>
-        {% if g.user.type == 'teacher' %}
-          <p><strong>เบอร์โทรศัพท์:</strong> {{ g.user.phone or 'ไม่มีข้อมูล' }}</p>
-        {% endif %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
-      </div>
-    </div>
-  </div>
-  {% endif %}
-</div>
-
-
-<div class="container mt-5">
-  <div class="content-box">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 id="content-title">ข้อมูลข่าวสาร</h2>
-          <button class="btn btn-custom-blue" onclick="toggleContent()">โครงการที่กำลังจัด</button>
-      </div>
-
-      <div id="news-content">
-          <!-- เนื้อหาข่าวสารเดิม -->
-          <div class="row">
-              {% for constant in constants %}
-                  <div class="col-md-4 mb-4">
-                      <div class="card h-100">
-                          <img src="data:image/jpeg;base64,{{ constant[2] }}" class="card-img-top" alt="{{ constant[0] }}">
-                          <div class="card-body">
-                              <h5 class="card-title">{{ constant[0] }}</h5>
-                              <p>{{ constant[1] }}</p>
-                          </div>
-                      </div>
-                  </div>
-              {% endfor %}
-          </div>
-          
-          <!-- การแบ่งหน้า -->
-          {% if total_pages > 1 %}
-              <nav aria-label="Page navigation">
-                  <ul class="pagination justify-content-center">
-                      <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('teacher_home', page=page-1) }}">ก่อนหน้า</a>
-                      </li>
-                      <li class="page-item active">
-                          <span class="page-link">หน้า {{ page }} จาก {{ total_pages }}</span>
-                      </li>
-                      <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                          <a class="page-link" href="{{ url_for('teacher_home', page=page+1) }}">ถัดไป</a>
-                      </li>
-                  </ul>
-              </nav>
-          {% endif %}
-      </div>
-
-      <div id="projects-content" style="display: none;">
-          <!-- เนื้อหาโครงการที่กำลังจัด -->
-          <div class="row">
-              {% for project in active_projects %}
-                  <div class="col-md-4 mb-4">
-                      <div class="card">
-                          <div class="card-body">
-                              <h5 class="card-title">{{ project[1] }}</h5>
-                              <p>วันที่เริ่ม: {{ project[2].strftime('%d/%m/%Y') }}</p>
-                              <p>วันที่สิ้นสุด: {{ project[3].strftime('%d/%m/%Y') }}</p>
-                              <a href="{{ url_for('project_detail', project_id=project[0]) }}" class="btn btn-primary">ดูรายละเอียด</a>
-                          </div>
-                      </div>
-                  </div>
-              {% endfor %}
-          </div>
-      </div>
-  </div>
-</div>
-         
-
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
     <div class="container mt-5 content-box">
       <h2 class="mb-4">ข้อมูลข่าวสาร</h2>
@@ -443,22 +335,5 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-      function toggleContent() {
-          var newsContent = document.getElementById('news-content');
-          var projectsContent = document.getElementById('projects-content');
-          var contentTitle = document.getElementById('content-title');
-      
-          if (newsContent.style.display !== 'none') {
-              newsContent.style.display = 'none';
-              projectsContent.style.display = 'block';
-              contentTitle.textContent = 'โครงการที่กำลังจัด';
-          } else {
-              newsContent.style.display = 'block';
-              projectsContent.style.display = 'none';
-              contentTitle.textContent = 'ข้อมูลข่าวสาร';
-          }
-      }
-      </script>
   </body>
 </html>

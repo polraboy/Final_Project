@@ -6,10 +6,6 @@
     <title>เพิ่มโครงการใหม่ - มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
-    <link
-      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
-      rel="stylesheet"
-    />
     <style>
        
         :root {
@@ -98,22 +94,12 @@
               .expense-total, .expense-grand-total {
                 font-weight: bold;
               }
-              custom-textarea {
-                width: 100%;
-                min-height: 80px; /* ปรับความสูงขั้นต่ำตามต้องการ */
-                padding: 5px;
-                font-size: 14px; /* ปรับขนาดตัวอักษรตามต้องการ */
-                line-height: 1.5;
-                resize: vertical; /* อนุญาตให้ปรับขนาดในแนวตั้งได้ */
-              }
-            
-              td {
-                vertical-align: top; /* จัดให้ textarea อยู่ด้านบนของเซลล์ */
-                padding: 5px; /* ปรับ padding ของเซลล์ตามต้องการ */
-              }
         </style>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
+
+
+
 <body>
     
     <nav class="navbar navbar-expand-lg navbar-dark">
@@ -147,20 +133,9 @@
             </li>
            
             <li class="nav-item">
-<<<<<<< HEAD
                 <a class="nav-link" href="{{ url_for('add_project') }}">
                     <i class="fas fa-plus"></i> เพิ่มโครงการ
                 </a>
-=======
-                <a class="nav-link" href="completed_projects"
-                  ><i class="fas fa-info-circle"></i> โครงการที่เสร็จสิ้น</a
-                >
-                </li>
-            <li class="nav-item">
-              <a class="nav-link" href="add_project"
-                ><i class="fas fa-tasks"></i> เพิ่มโครงการ</a
-              >
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
             </li>
             <li class="nav-item">
               <a class="nav-link" href="teacher_projects"
@@ -289,7 +264,8 @@
                     
                     
                     <div class="form-group">
-                       
+                        <label>อาจารย์ผู้รับผิดชอบ:</label>
+                        <p>{{ teacher_info[0] }} - {{ teacher_info[1] }}</p>
                     </div>
                 </div>
             </div>
@@ -311,10 +287,13 @@
                 <textarea class="form-control" id="project_detail" name="project_detail" rows="4"></textarea>
               </div>
             <div class="form-group">
-                <label for="strategy">ประเด็นยุทธศาสตร์และตัวชี้วัด:</label>
+                <label for="strategy">ประเด็นยุทธศาสตร์:</label>
                 <input type="text" class="form-control" id="strategy" name="strategy">
             </div>
-            
+            <div class="form-group">
+                <label for="indicator">ตัวชี้วัด:</label>
+                <input type="text" class="form-control" id="indicator" name="indicator">
+            </div>
             <div class="form-group">
                 <label for="cluster">Cluster:</label>
                 <input type="text" class="form-control" id="cluster" name="cluster">
@@ -336,7 +315,7 @@
                 <textarea class="form-control" id="objectives" name="objectives" rows="3"></textarea>
             </div>
             <div class="form-group">
-                <label for="goals">เป้าหมาย (ให้ระบุกลุ่มเป้าหมายให้ชัดเจน):</label>
+                <label for="goals">เป้าหมาย:</label>
                 <textarea class="form-control" id="goals" name="goals" rows="3"></textarea>
             </div>
             <div class="form-group">
@@ -353,18 +332,18 @@
             </div>
 
                 <div class="col-md-12 left-align">
-                    <label for="project_target">13. กลุ่มเป้าหมายผู้เข้าร่วมโครงการ (ให้ระบุจำนวนให้ชัดเจน)</label>
+                    <label for="project_target">13. กลุ่มเป้าหมายผู้เข้าร่วมโครงการ (ให้ระบุกลุ่มเป้าหมาย และจำนวนให้ชัดเจน)</label>
                     <textarea class="form-control" id="project_target" name="project_target" rows="3" required></textarea>
                 </div>
         
-                <h3 class="mt-4"> งบประมาณ</h3>
+                <h3 class="mt-4">14. งบประมาณ</h3>
                 <div class="expense-form">
                     <div class="form-group">
                         <label for="project_budget">งบประมาณโครงการ:</label>
                         <input type="number" class="form-control" id="project_budget" name="project_budget" required placeholder="งบประมาณโครงการ">
                     </div>
                     
-                    <h4> ค่าตอบแทน</h4>
+                    <h4>14.1 ค่าตอบแทน</h4>
                     <div id="compensation-items">
                         <div class="expense-item">
                             <input type="text" class="form-control expense-description" name="compensation_description[]" placeholder="รายการค่าตอบแทน">
@@ -377,7 +356,7 @@
                         รวมค่าตอบแทน <span id="compensationSubtotal">0</span> <span class="currency">บาท</span>
                     </div>
                 
-                    <h4> ค่าใช้สอย</h4>
+                    <h4>14.2 ค่าใช้สอย</h4>
                     <div id="expense-items">
                         <div class="expense-item">
                             <input type="text" class="form-control expense-description" name="expense_description[]" placeholder="รายการค่าใช้สอย">
@@ -400,7 +379,7 @@
                         <label for="note" class="note">หมายเหตุ: งบประมาณ ให้ระบุรายละเอียดการคำนวณรายการค่าใช้จ่ายที่ต้องการให้ชัดเจน ตามระเบียบ กระทรวงการคลัง และตามนโยบายมาตรการประหยัดของมหาวิทยาลัยฯ ทั้งนี้ให้ผู้รับผิดชอบโครงการ ประสานในส่วนนี้กับกองคลัง หรืองานคลังแต่ละวิทยาเขต ก่อนเสนอขออนุมัติโครงการ</label>
                     
                     
-                        <h3 class="mt-4"> แผนปฏิบัติงาน (แผนงาน) แผนการใช้จ่ายงบประมาณ (แผนเงิน) และตัวชี้วัดเป้าหมายผลผลิต</h3>
+                        <h3 class="mt-4">15. แผนปฏิบัติงาน (แผนงาน) แผนการใช้จ่ายงบประมาณ (แผนเงิน) และตัวชี้วัดเป้าหมายผลผลิต</h3>
 <div class="table-responsive">
     <table class="table table-bordered">
         <thead>
@@ -427,13 +406,7 @@
         </thead>
         <tbody id="activityTableBody">
             <tr>
-<<<<<<< HEAD
                 <td><input type="text" class="form-control" name="activity[]" required></td>
-=======
-                <td>
-                    <textarea class="form-control custom-textarea" name="activity[]" rows="3" required></textarea>
-                  </td>
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
                 <td><input type="checkbox" name="month[0][]" value="ต.ค."></td>
                 <td><input type="checkbox" name="month[0][]" value="พ.ย."></td>
                 <td><input type="checkbox" name="month[0][]" value="ธ.ค."></td>
@@ -456,18 +429,7 @@
 <h4 class="mt-4">ตัวชี้วัดเป้าหมายผลผลิต</h4>
 <div class="form-group">
     <label>ตัวชี้วัดเชิงปริมาณ</label>
-<<<<<<< HEAD
     <input type="text" class="form-control" id="quantity_indicator" name="quantity_indicator">
-=======
-    <div id="quantityIndicators">
-        <div class="input-group mb-2">
-            <label for="quantity_indicator"></label>
-            <textarea type="text" class="form-control" id="quantity_indicator" rows="2"name="quantity_indicator"></textarea>
-            </div>
-        </div>
-    </div>
-    
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 </div>
 
 <div class="form-group">
@@ -485,18 +447,10 @@
     <input type="number" class="form-control" name="cost_indicator" placeholder="งบประมาณที่ใช้ในการดำเนินโครงการ (บาท)" required>
 </div>
                         
-<<<<<<< HEAD
 <div class="form-group">
     <label>16. ผลที่คาดว่าจะเกิด (Impact):</label>
     <textarea class="form-control" id="expected_results" name="expected_results" rows="4" required></textarea>
 </div>
-=======
-                        <div class="form-group">
-                            <label> ผลที่คาดว่าจะเกิด (Impact):</label>
-                            <textarea class="form-control" id="expected_results" name="expected_results" rows="4" placeholder= ""required></textarea>
-                            
-                        </div>
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
                     <div class="col-md-12">
                         <label for="note" class="note">หมายเหตุ: กรุณากรอกข้อมูลให้ครบถ้วนสมบูรณ์ เพื่อประกอบการพิจารณางบประมาณ</label>
                     </div>
@@ -512,7 +466,6 @@
                         <label>ตำแหน่ง:</label>
                      <p class="form-control">อาจารย์ประจำสาขา{{ teacher_info[1] }}
                        <br>  
-<<<<<<< HEAD
                       
                        <div class="form-group">
                         <label>เบอร์โทรศัพท์:</label>
@@ -520,13 +473,6 @@
                     </div>
                       <div class="text-center mt-4">
                         <button type="submit" class="btn btn-primary">บันทึกโครงการ</button>
-=======
-                        <div class="text-center mt-4">
-                            <button type="submit" class="btn btn-primary">บันทึกการแก้ไขโครงการ</button>
-                            <a href="{{ url_for('teacher_projects') }}" class="btn btn-secondary">ยกเลิก</a>
-                        </div>
-                    </button>
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
                       </div>
                     </form>
                   </div>
@@ -560,11 +506,7 @@
                 const tbody = document.getElementById('activityTableBody');
                 const newRow = tbody.insertRow();
                 newRow.innerHTML = `
-<<<<<<< HEAD
                     <td><input type="text" class="form-control" name="activity[]" required></td>
-=======
-                    <td><textarea class="form-control custom-textarea" name="activity[]" rows="3" required></textarea></td>
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
                     <td><input type="checkbox" name="month[${activityCount}][]" value="ต.ค."></td>
                     <td><input type="checkbox" name="month[${activityCount}][]" value="พ.ย."></td>
                     <td><input type="checkbox" name="month[${activityCount}][]" value="ธ.ค."></td>
@@ -580,7 +522,6 @@
                 `;
                 activityCount++;
             });
-<<<<<<< HEAD
         });
     </script>
     <script>
@@ -610,8 +551,6 @@
                 `;
                 activityCount++;
             });
-=======
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         });
     </script>
     

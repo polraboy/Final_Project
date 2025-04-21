@@ -12,10 +12,6 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
       rel="stylesheet"
     />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
-      rel="stylesheet"
-    />
     <style>
       :root {
         --primary-color: #ff8c00;
@@ -276,13 +272,7 @@
           <a class="nav-link" href="{{ url_for('teacher_projects') }}"><i class="fas fa-tasks"></i> จัดการโครงการ</a>
         </li>
         <li class="nav-item">
-<<<<<<< HEAD
           <a class="nav-link" href="{{ url_for('project_history') }}"><i class="fas fa-history"></i> ประวัติโครงการ</a>
-=======
-          <a class="nav-link" href="completed_projects"
-            ><i class="fas fa-info-circle"></i> โครงการที่เสร็จสิ้น</a
-          >
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         </li>
    
           <a class="nav-link" href="{{ url_for('project_reports') }}">
@@ -351,7 +341,9 @@
     <div class="container mt-5">
       <div class="content-box">
         <h2 class="text-center mb-4">โครงการที่คุณอาจารย์ดูแล</h2>
-        
+        <a href="javascript:history.back()" class="btn btn-secondary mb-3"
+          >กลับ</a
+        >
         <div class="table-responsive">
           <table class="table table-striped">
             <thead>
@@ -430,11 +422,6 @@
                     >แก้ไข</a
                   >
                 </td>
-                <td>
-                  {% if project[2] == 2 and project[3] == 1 %}
-            <button class="btn btn-success btn-sm" onclick="completeProject({{ project[0] }})">สำเร็จโครงการ</button>
-        {% endif %}
-              </td>
                 <td>
                   {% if project[4] %}
                   <button onclick="confirmDownload({{ project[0] }}, '{{ project[1] }}')" class="btn btn-primary btn-sm">
@@ -556,7 +543,6 @@
               }
           });
       }
-<<<<<<< HEAD
       
       function confirmDownload(projectId, projectName) {
         Swal.fire({
@@ -634,33 +620,5 @@
           });
       }
     </script>
-=======
-  });
-}
-</script>
-<script>
-  function completeProject(projectId) {
-      if (confirm('คุณแน่ใจหรือไม่ว่าต้องการทำเครื่องหมายว่าโครงการนี้เสร็จสิ้น?')) {
-          fetch('/complete_project/' + projectId, { method: 'POST' })
-              .then(response => response.json())
-              .then(data => {
-                  if (data.success) {
-                      // ลบแถวของโครงการออกจากตาราง
-                      document.getElementById('project-row-' + projectId).remove();
-                      alert('โครงการถูกทำเครื่องหมายว่าเสร็จสิ้นแล้ว');
-                      
-                      // ตรวจสอบว่ายังมีโครงการเหลืออยู่หรือไม่
-                      if (document.querySelectorAll('table tbody tr').length === 0) {
-                          // ถ้าไม่มีโครงการเหลือ แสดงข้อความ
-                          document.querySelector('table tbody').innerHTML = '<tr><td colspan="5" class="text-center">ไม่มีโครงการที่กำลังดำเนินการ</td></tr>';
-                      }
-                  } else {
-                      alert('เกิดข้อผิดพลาด: ' + data.error);
-                  }
-              });
-      }
-  }
-  </script>
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
   </body>
 </html>

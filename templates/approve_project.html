@@ -7,10 +7,6 @@
     <title>อนุมัติโครงการ</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
-    <link
-      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
-      rel="stylesheet"
-    />
     <style>
         :root {
             --primary-color: #FF8C00;
@@ -119,7 +115,9 @@
                     <a class="nav-link" href="{{ url_for('admin_home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
                 </li>
 
-                
+                <li class="nav-item">
+                    <a class="nav-link" href="active_projects"><i class="fas fa-project-diagram"></i> โครงการ</a>
+                </li>
 
                 <li class="nav-item active">
                     <a class="nav-link" href="{{ url_for('approve_project') }}"><i class="fas fa-check-circle"></i>
@@ -351,38 +349,6 @@
         document.getElementById('approval').addEventListener('change', filterProjects);
         filterProjects();
     </script>
-    <script>
-        // ฟังก์ชันสำหรับอัพเดทสถานะโครงการ
-        function updateProjectStatus(projectId, newStatus) {
-            fetch('/update_project_status/' + projectId, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({status: newStatus})
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    if (newStatus === 4) {  // ถ้าสถานะเป็นเสร็จสิ้น
-                        // ลบแถวของโครงการออกจากตาราง
-                        document.getElementById('project-row-' + projectId).remove();
-                        
-                        // ตรวจสอบว่ายังมีโครงการเหลืออยู่หรือไม่
-                        if (document.querySelectorAll('table tbody tr').length === 0) {
-                            // ถ้าไม่มีโครงการเหลือ แสดงข้อความ
-                            document.querySelector('table tbody').innerHTML = '<tr><td colspan="5" class="text-center">ไม่มีโครงการที่รอการอนุมัติ</td></tr>';
-                        }
-                    } else {
-                        // อัพเดทการแสดงผลสถานะในตาราง
-                        // (คุณอาจต้องเพิ่มโค้ดส่วนนี้ตามการออกแบบ UI ของคุณ)
-                    }
-                } else {
-                    alert('เกิดข้อผิดพลาด: ' + data.error);
-                }
-            });
-        }
-        </script>
 </body>
 
 </html>

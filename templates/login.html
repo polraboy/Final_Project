@@ -81,29 +81,6 @@
         max-width: 100px;
         margin-bottom: 10px;
       }
-      @keyframes successRotate {
-        0% { transform: rotate(-5deg); box-shadow: 0 0 0 rgba(0,128,0,0); }
-        50% { transform: rotate(5deg); box-shadow: 0 0 20px rgba(0,128,0,0.5); }
-        100% { transform: rotate(0); box-shadow: 0 0 0 rgba(0,128,0,0); }
-      }
-      
-      @keyframes failureShake {
-        0%, 100% { transform: translateX(0); }
-        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-        20%, 40%, 60%, 80% { transform: translateX(5px); }
-      }
-      
-      .success-animation {
-        animation: successRotate 0.8s ease-out;
-        background-color: #d4edda;
-        border-color: #c3e6cb;
-      }
-      
-      .failure-animation {
-        animation: failureShake 0.5s ease-in-out;
-        background-color: #f8d7da;
-        border-color: #f5c6cb;
-      }
     </style>
   </head>
 
@@ -138,19 +115,12 @@
               ><i class="fas fa-home"></i> หน้าหลัก</a
             >
           </li>
-<<<<<<< HEAD
           
           <li class="nav-item">
             <a class="nav-link" href="#"
               ><i class="fas fa-project-diagram"></i> โครงการ</a
-=======
-          <li class="nav-item">
-            <a class="nav-link" href="participation_history"
-              ><i class="bi bi-card-checklist"></i> ประวัติการเข้าร่วมโครงการ</a
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
             >
           </li>
-          
           <li class="nav-item active">
             <a class="nav-link" href="/login"
               ><i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ</a
@@ -165,7 +135,7 @@
         <h2 class="text-center mb-4">
           <i class="fas fa-user-lock"></i> เข้าสู่ระบบ
         </h2>
-        <form id="loginForm" action="{{ url_for('login') }}" method="post">
+        <form action="{{ url_for('login') }}" method="post">
           <div class="form-group">
             <label for="username"><i class="fas fa-user"></i> ชื่อผู้ใช้</label>
             <input
@@ -174,7 +144,6 @@
               id="username"
               name="username"
               placeholder="กรอกชื่อผู้ใช้"
-              required
             />
           </div>
           <div class="form-group">
@@ -185,17 +154,15 @@
               id="password"
               name="password"
               placeholder="กรอกรหัสผ่าน"
-              required
             />
           </div>
-          <p><small><i class="fas fa-info-circle"></i> หากลืมรหัสผ่านโปรดติดต่อเจ้าหน้าที่</small></p>
+          <label for="password"></i> หากลืมรหัสผ่านโปรดติดต่อเจ้าหน้าที่</label>
           <button type="submit" class="btn btn-primary btn-block">
             <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
           </button>
         </form>
       </div>
     </div>
-    
 
     <!-- Footer -->
     <footer class="footer">
@@ -214,54 +181,8 @@
       </div>
     </footer>
 
-    
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        var loginForm = document.getElementById('loginForm');
-        loginForm.addEventListener('submit', function(e) {
-          e.preventDefault();
-          var formData = new FormData(loginForm);
-          
-          fetch(loginForm.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-              'X-Requested-With': 'XMLHttpRequest'
-            }
-          })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
-            }
-            return response.json();
-          })
-          .then(data => {
-            if (data.success) {
-              loginForm.classList.add('success-animation');
-              setTimeout(function() {
-                window.location.href = data.redirect;
-              }, 1000);
-            } else {
-              loginForm.classList.add('failure-animation');
-              alert(data.message || 'Login failed. Please try again.');
-              setTimeout(function() {
-                loginForm.classList.remove('failure-animation');
-              }, 500);
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            loginForm.classList.add('failure-animation');
-            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
-            setTimeout(function() {
-              loginForm.classList.remove('failure-animation');
-            }, 500);
-          });
-        });
-      });
-      </script>
   </body>
 </html>

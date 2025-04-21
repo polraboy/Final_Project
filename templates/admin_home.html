@@ -7,10 +7,6 @@
     <title>หน้าหลักผู้ดูแลระบบ</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
-    <link
-      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
-      rel="stylesheet"
-    />
     <style>
         :root {
             --primary-color: #FF8C00;
@@ -61,15 +57,6 @@
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
             margin-top: 30px;
             margin-bottom: 50px;
-        }
-        .card-body {
-            position: relative;
-            padding-bottom: 40px; /* เพิ่มพื้นที่ด้านล่างสำหรับปุ่มลบ */
-        }
-        .card-body form {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
         }
 
         .btn-primary {
@@ -157,45 +144,6 @@
             font-weight: bold;
             margin-bottom: 30px !important;
         }
-<<<<<<< HEAD
-=======
-        .btn-custom-blue {
-            background-color: #007bff;
-            border-color: #007bff;
-            color: white;
-        }
-        .btn-custom-blue:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-        }
-        .edit-mode-button {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            font-size: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            position: fixed;
-            bottom: 120px;
-            /* ปรับตำแหน่งให้อยู่เหนือ footer */
-            right: 30px;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            /* ให้แน่ใจว่าปุ่มอยู่ด้านหน้าสุด */
-        }
-
-        .edit-mode-button:hover {
-            transform: scale(1.1) rotate(90deg);
-            background-color: darken(var(--primary-color), 10%);
-            border-color: darken(var(--primary-color), 10%);
-        }
-        
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         
         .constant-item {
             margin-bottom: 20px;
@@ -227,17 +175,12 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
                 </li>
-<<<<<<< HEAD
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('active_projects') }}"><i class="fas fa-project-diagram"></i> โครงการ</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('approve_project') }}"><i class="fas fa-check-circle"></i> อนุมัติคำขอโครงการ</a>
                 </li>
-=======
-                
-                
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
                 
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('edit_basic_info') }}"><i class="fas fa-cog"></i> ข้อมูลพื้นฐาน</a>
@@ -330,7 +273,6 @@
             </div>
         </div>
 
-<<<<<<< HEAD
         <div class="content-box">
             <h2 class="mb-4">ข้อมูลข่าวสาร</h2>
             <div class="row">
@@ -389,110 +331,5 @@
             }
         }
     </script>
-=======
-        <div class="container mt-5">
-            <div class="content-box">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 id="content-title">ข้อมูลข่าวสาร</h2>
-                    <button class="btn btn-custom-blue" onclick="toggleContent()">โครงการที่กำลังจัด</button>
-                </div>
-          
-                <div id="news-content">
-                    <!-- เนื้อหาข่าวสารเดิม -->
-                    <div class="row">
-                        {% for constant in constants %}
-                            <div class="col-md-4 mb-4">
-                                <div class="card h-100">
-                                    <img src="data:image/jpeg;base64,{{ constant[2] }}" class="card-img-top" alt="{{ constant[0] }}">
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ constant[0] }}</h5>
-                                        <p>{{ constant[1] }}</p>
-                                        <form action="{{ url_for('delete_constant') }}" method="POST" onsubmit="return confirm('คุณแน่ใจหรือไม่ที่จะลบข่าวสารนี้?');">
-                                            <input type="hidden" name="constant_headname" value="{{ constant[0] }}">
-                                            <button type="submit" class="btn btn-danger btn-sm">ลบ</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    
-                    <!-- การแบ่งหน้า -->
-                    {% if total_pages > 1 %}
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-center">
-                                <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                                    <a class="page-link" href="{{ url_for('admin_home', page=page-1) }}">ก่อนหน้า</a>
-                                </li>
-                                <li class="page-item active">
-                                    <span class="page-link">หน้า {{ page }} จาก {{ total_pages }}</span>
-                                </li>
-                                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                                    <a class="page-link" href="{{ url_for('admin_home', page=page+1) }}">ถัดไป</a>
-                                </li>
-                            </ul>
-                        </nav>
-                    {% endif %}
-                </div>
-          
-                <div id="projects-content" style="display: none;">
-                    <!-- เนื้อหาโครงการที่กำลังจัด -->
-                    <div class="row">
-                        {% for project in active_projects %}
-                            <div class="col-md-4 mb-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ project[1] }}</h5>
-                                        <p>วันที่เริ่ม: {{ project[2].strftime('%d/%m/%Y') }}</p>
-                                        <p>วันที่สิ้นสุด: {{ project[3].strftime('%d/%m/%Y') }}</p>
-                                        <a href="{{ url_for('project_detail', project_id=project[0]) }}" class="btn btn-primary">ดูรายละเอียด</a>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-          </div>
-        <!-- Footer -->
-        
-
-        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-        <script>
-            function confirmDelete(headname) {
-                if (confirm("คุณแน่ใจหรือไม่ที่จะลบข้อมูลนี้?")) {
-                    var form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = "{{ url_for('admin_home') }}";
-                    var input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'delete_constant_headname';
-                    input.value = headname;
-                    form.appendChild(input);
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-            }
-        </script>
-        <script>
-            function toggleContent() {
-                var newsContent = document.getElementById('news-content');
-                var projectsContent = document.getElementById('projects-content');
-                var contentTitle = document.getElementById('content-title');
-            
-                if (newsContent.style.display !== 'none') {
-                    newsContent.style.display = 'none';
-                    projectsContent.style.display = 'block';
-                    contentTitle.textContent = 'โครงการที่กำลังจัด';
-                } else {
-                    newsContent.style.display = 'block';
-                    projectsContent.style.display = 'none';
-                    contentTitle.textContent = 'ข้อมูลข่าวสาร';
-                }
-            }
-            </script>
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 </body>
 </html>

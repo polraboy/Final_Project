@@ -44,7 +44,6 @@ from reportlab.lib.utils import simpleSplit
 from datetime import timedelta
 import requests
 from flask_cors import CORS
-from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -175,32 +174,9 @@ def home():
         (c[0], c[1], base64.b64encode(c[2]).decode("utf-8")) for c in constants
     ]
 
-     # เพิ่มการดึงข้อมูล active_projects
-    with get_db_cursor() as (db, cursor):
-        cursor.execute("""
-            SELECT project_id, project_name, project_dotime, project_endtime
-            FROM project
-            WHERE project_statusStart = 1
-            ORDER BY project_dotime DESC
-        """)
-        active_projects = cursor.fetchall()
-
-    return render_template('home.html', constants=constants, page=page, total_pages=total_pages, active_projects=active_projects)
-
-@app.route("/delete_constant", methods=["POST"])
-@login_required("admin")
-def delete_constant():
-    constant_headname = request.form.get("constant_headname")
-    if constant_headname:
-        with get_db_cursor() as (db, cursor):
-            query = "DELETE FROM constants WHERE constants_headname = %s"
-            cursor.execute(query, (constant_headname,))
-            db.commit()
-        flash("ลบข่าวสารเรียบร้อยแล้ว", "success")
-    else:
-        flash("ไม่พบข้อมูลข่าวสารที่ต้องการลบ", "error")
-    return redirect(url_for("admin_home"))
-
+    return render_template(
+        "home.html", constants=constants, page=page, total_pages=total_pages
+    )
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -208,56 +184,38 @@ def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        
+
         with get_db_cursor() as (db, cursor):
             query_teacher = "SELECT * FROM teacher WHERE teacher_username = %s"
             cursor.execute(query_teacher, (username,))
             teacher = cursor.fetchone()
-<<<<<<< HEAD
 
             if teacher and check_password_hash(teacher[3], password):  # ตำแหน่งที่ 3 คือ teacher_password
-=======
-            
-            if teacher:
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
                 session.clear()
                 session["teacher_id"] = teacher[0]
                 session["teacher_name"] = teacher[1]
                 session["teacher_email"] = teacher[5]
                 session["teacher_phone"] = teacher[4]
                 session["user_type"] = "teacher"
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return jsonify({"success": True, "redirect": url_for("teacher_home")})
-                else:
-                    return redirect(url_for("teacher_home"))
+                return redirect(url_for("teacher_home"))
             else:
                 query_admin = "SELECT * FROM admin WHERE admin_username = %s"
                 cursor.execute(query_admin, (username,))
                 admin = cursor.fetchone()
-<<<<<<< HEAD
 
                 if admin and check_password_hash(admin[3], password):  # ตำแหน่งที่ 3 คือ admin_password
-=======
-                
-                if admin:
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
                     session.clear()
                     session["admin_id"] = admin[0]
                     session["admin_name"] = admin[1]
                     session["admin_email"] = admin[4]
                     session["user_type"] = "admin"
-                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                        return jsonify({"success": True, "redirect": url_for("admin_home")})
-                    else:
-                        return redirect(url_for("admin_home"))
+                    return redirect(url_for("admin_home"))
                 else:
-                    error_message = "Login failed. Please check your username and password."
-                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                        return jsonify({"success": False, "message": error_message})
-                    else:
-                        flash(error_message, "error")
-                        return redirect(url_for("login"))
-    
+                    flash(
+                        "Login failed. Please check your username and password.",
+                        "error",
+                    )
+
     return render_template("login.html")
 
 
@@ -379,25 +337,9 @@ def admin_home():
     except mysql.connector.Error as err:
         flash(f"เกิดข้อผิดพลาดในการดึงข้อมูล: {err}", "danger")
         constants = []
-<<<<<<< HEAD
         total_pages = 1
 
     return render_template("admin_home.html", constants=constants, page=page, total_pages=total_pages, search_query=search_query)
-=======
-        
-    # เพิ่มการดึงข้อมูล active_projects
-    with get_db_cursor() as (db, cursor):
-        cursor.execute("""
-            SELECT project_id, project_name, project_dotime, project_endtime
-            FROM project
-            WHERE project_statusStart = 1
-            ORDER BY project_dotime DESC
-        """)
-        active_projects = cursor.fetchall()
-
-    return render_template("admin_home.html", constants=constants, page=page, total_pages=total_pages, search_query=search_query,active_projects=active_projects)
-
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 @app.route("/approve_project", methods=["GET", "POST"])
 @login_required("admin")
 def approve_project():
@@ -409,7 +351,6 @@ def approve_project():
         action = request.form.get("action")
         
         with get_db_cursor() as (db, cursor):
-<<<<<<< HEAD
             # ดึงข้อมูลโครงการและอีเมลของอาจารย์
             cursor.execute("""
                 SELECT p.project_name, t.teacher_email, t.teacher_name
@@ -422,18 +363,6 @@ def approve_project():
                 project_name, teacher_email, teacher_name = result
             else:
                 project_name, teacher_email, teacher_name = "ไม่ทราบชื่อโครงการ", None, "ไม่ทราบชื่อ"
-=======
-            base_query = """
-            SELECT p.project_id, p.project_name, p.project_status, 
-                   CASE WHEN p.project_pdf IS NOT NULL THEN TRUE ELSE FALSE END as has_pdf,
-                   p.project_submit_date, p.project_approve_date, p.project_reject_date
-            FROM project p
-            WHERE p.project_status != 4  -- ไม่รวมโครงการที่เสร็จสิ้นแล้ว
-            """
-            count_query = "SELECT COUNT(*) FROM project p WHERE p.project_status != 4"
-            where_clauses = []
-            query_params = []
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
             if action == "approve":
                 new_status = 2
@@ -462,15 +391,8 @@ def approve_project():
             if action == "approve":
                 message = f"""เรียน อาจารย์{teacher_name}
 
-<<<<<<< HEAD
 โครงการ: {project_name}
 สถานะ: {status_text}
-=======
-            if where_clauses:
-                additional_where = " AND " + " AND ".join(where_clauses)
-                base_query += additional_where
-                count_query += additional_where
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
 โครงการของท่านได้รับการอนุมัติเรียบร้อยแล้ว ท่านสามารถดำเนินโครงการตามที่เสนอได้
 
@@ -543,28 +465,12 @@ def approve_project():
         cursor.execute(count_query, query_params)
         total_projects = cursor.fetchone()[0]
 
-<<<<<<< HEAD
         # Calculate total pages
         total_pages = ceil(total_projects / per_page)
 
         # Get projects for current page
         base_query += " ORDER BY p.project_id DESC LIMIT %s OFFSET %s"
         query_params.extend([per_page, (page - 1) * per_page])
-=======
-    constants = [
-        (c[0], c[1], base64.b64encode(c[2]).decode("utf-8")) for c in constants
-    ]
-    with get_db_cursor() as (db, cursor):
-        cursor.execute("""
-            SELECT project_id, project_name, project_dotime, project_endtime
-            FROM project
-            WHERE project_statusStart = 1
-            ORDER BY project_dotime DESC
-        """)
-        active_projects = cursor.fetchall()
-
-    return render_template("teacher_home.html", constants=constants, user=g.user, page=page, total_pages=total_pages, search_query=search_query,active_projects=active_projects)
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
         cursor.execute(base_query, query_params)
         projects = cursor.fetchall()
@@ -629,7 +535,6 @@ def join_project(project_id):
         join_telephone = request.form["join_telephone"]
         join_email = request.form["join_email"]
 
-<<<<<<< HEAD
         # ตรวจสอบอีเมลซ้ำในโครงการนี้
         cursor.execute(
             """
@@ -651,29 +556,13 @@ def join_project(project_id):
                 project_id=project_id,
                 current_count=current_count,
             )
-=======
-        # ตรวจสอบการสมัครซ้ำ
-        cursor.execute(
-            """
-            SELECT COUNT(*) as duplicate_count
-            FROM `join`
-            WHERE project_id = %s AND (join_name = %s OR join_telephone = %s OR join_email = %s)
-            """,
-            (project_id, join_name, join_telephone, join_email)
-        )
-        duplicate_result = cursor.fetchone()
-        
-        if duplicate_result["duplicate_count"] > 0:
-            flash("คุณได้สมัครเข้าร่วมโครงการนี้แล้ว ไม่สามารถสมัครซ้ำได้", "error")
-            return redirect(url_for("project_detail", project_id=project_id))
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
         try:
             cursor.execute(
                 """
                 INSERT INTO `join` (join_name, join_telephone, join_email, project_id, join_status)
                 VALUES (%s, %s, %s, %s, 0)
-                """,
+            """,
                 (join_name, join_telephone, join_email, project_id),
             )
             conn.commit()
@@ -692,65 +581,7 @@ def join_project(project_id):
         current_count=current_count,
     )
 
-@app.route("/complete_project/<int:project_id>", methods=["POST"])
-@login_required("teacher")
-def complete_project(project_id):
-    teacher_id = session["teacher_id"]
-    try:
-        with get_db_cursor() as (db, cursor):
-            # ตรวจสอบว่าโครงการเป็นของอาจารย์ที่ล็อกอินอยู่และมีสถานะที่ถูกต้อง
-            cursor.execute("SELECT project_status, project_statusStart FROM project WHERE project_id = %s AND teacher_id = %s", (project_id, teacher_id))
-            result = cursor.fetchone()
-            if not result or result[0] != 2 or result[1] != 1:  # 2 คือสถานะอนุมัติแล้ว, 1 คือกำลังดำเนินการ
-                return jsonify({"success": False, "error": "ไม่พบโครงการหรือโครงการไม่อยู่ในสถานะที่เหมาะสม"})
-            
-            # อัปเดตสถานะโครงการเป็นเสร็จสิ้น
-            cursor.execute("UPDATE project SET project_status = 4, project_statusStart = 2 WHERE project_id = %s", (project_id,))
-            db.commit()
-        return jsonify({"success": True})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
 
-@app.route("/completed_projects")
-@login_required("teacher", "admin")
-def completed_projects():
-    page = request.args.get("page", 1, type=int)
-    per_page = 10  # จำนวนโครงการต่อหน้า
-
-    with get_db_cursor() as (db, cursor):
-        if g.user["type"] == "teacher":
-            cursor.execute("SELECT COUNT(*) FROM project WHERE teacher_id = %s AND project_status = 4", (g.user["id"],))
-        else:  # admin
-            cursor.execute("SELECT COUNT(*) FROM project WHERE project_status = 4")
-        
-        total_projects = cursor.fetchone()[0]
-        total_pages = ceil(total_projects / per_page)
-        offset = (page - 1) * per_page
-
-        if g.user["type"] == "teacher":
-            query = """
-                SELECT p.project_id, p.project_name, p.project_dotime, p.project_endtime, t.teacher_name
-                FROM project p
-                JOIN teacher t ON p.teacher_id = t.teacher_id
-                WHERE p.teacher_id = %s AND p.project_status = 4
-                ORDER BY p.project_endtime DESC
-                LIMIT %s OFFSET %s
-            """
-            cursor.execute(query, (g.user["id"], per_page, offset))
-        else:  # admin
-            query = """
-                SELECT p.project_id, p.project_name, p.project_dotime, p.project_endtime, t.teacher_name
-                FROM project p
-                JOIN teacher t ON p.teacher_id = t.teacher_id
-                WHERE p.project_status = 4
-                ORDER BY p.project_endtime DESC
-                LIMIT %s OFFSET %s
-            """
-            cursor.execute(query, (per_page, offset))
-        
-        completed_projects = cursor.fetchall()
-
-    return render_template("completed_projects.html", projects=completed_projects, page=page, total_pages=total_pages)
 @app.route("/project/<int:project_id>/participants")
 def project_participants(project_id):
     conn = get_db_connection()
@@ -796,17 +627,6 @@ def get_teachers_from_database():
         cursor.execute(query)
         teachers = cursor.fetchall()
     return teachers
-<<<<<<< HEAD
-=======
-def get_admins_from_database():
-    with get_db_cursor() as (db, cursor):
-        query = """SELECT admin_id, admin_name, admin_username, 
-                   admin_password, admin_phone, admin_email
-                   FROM admin"""
-        cursor.execute(query)
-        admins = cursor.fetchall()
-    return admins
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
 @app.route("/download_project_pdf/<int:project_id>")
 @login_required("teacher", "admin")
@@ -1006,24 +826,14 @@ def create_project_pdf(project_data):
         # สร้างสไตล์
         styles = getSampleStyleSheet()
         styles["Normal"].fontName = "THSarabunNew"
-        styles["Normal"].fontSize = 9
+        styles["Normal"].fontSize = 12
         styles["Heading1"].fontName = "THSarabunNew"
         styles["Heading1"].fontSize = 14
         styles["Heading2"].fontName = "THSarabunNew"
         styles["Heading2"].fontSize = 12
         styles["Heading3"].fontName = "THSarabunNew"
         styles["Heading3"].fontSize = 12
-        styles.add(ParagraphStyle(name='Signature', 
-                          parent=styles['Normal'],
-                          fontSize=16,  # เพิ่มขนาดจาก 12 เป็น 16
-                          alignment=1,  # 1 คือการจัดกึ่งกลาง
-                          spaceAfter=6))
-        styles.add(ParagraphStyle(name='MultiLine', 
-                          parent=styles['Normal'],
-                          spaceBefore=1,
-                          spaceAfter=1,
-                          leading=12))  # ปรับระยะห่างระหว่างบรรทัด
-        
+
         def header(canvas, doc):
             canvas.saveState()
             page_width = doc.pagesize[0]
@@ -1083,21 +893,13 @@ def create_project_pdf(project_data):
         # ตรวจสอบและกำหนดค่าเริ่มต้นสำหรับทุกฟิลด์
         project_name = project_data.get('project_name', 'ไม่ระบุชื่อโครงการ')
         content.append(
-<<<<<<< HEAD
             Paragraph(f"1. ชื่อโครงการ: {project_name}", styles["Normal"])
-=======
-            Paragraph(f"1. ชื่อโครงการ: {project_data['project_name']}", styles["Heading2"])
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         )
         
         project_style = project_data.get('project_style', 'ไม่ระบุลักษณะโครงการ')
         content.append(
             Paragraph(
-<<<<<<< HEAD
                 f"2. ลักษณะโครงการ: {project_style}", styles["Normal"]
-=======
-                f"2. ลักษณะโครงการ: {project_data['project_style']}", styles["Heading2"]
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
             )
         )
         
@@ -1113,13 +915,8 @@ def create_project_pdf(project_data):
         # เพิ่มคำว่า "นโยบาย: " ข้างหน้าค่า policy_text
         content.append(
             Paragraph(
-<<<<<<< HEAD
                 f"นโยบาย: {policy_text}",
                 styles["Normal"],
-=======
-                f"นโยบายที่ 4 : การศึกษา และเรียนรู้ การทะนุบำรุงศาสนา ศิลปะ และวัฒนธรรม",
-                styles["Heading2"],
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
             )
         )
         # ตรวจสอบและใช้ฟิลด์ output หรือ project_output
@@ -1127,15 +924,11 @@ def create_project_pdf(project_data):
         if not output_text and 'output' in project_data:
             output_text = project_data.get('output', '')
         content.append(
-<<<<<<< HEAD
             Paragraph(f"ผลผลิต : {output_text}", styles["Normal"])
-=======
-            Paragraph(f"ผลผลิต : {project_data.get('output', '')}", styles["Heading2"])
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         )
         
         content.append(
-            Paragraph("4. ความสอดคล้องประเด็นยุทธศาสตร์ และตัวชี้วัด ของมหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน ", styles["Heading2"])
+            Paragraph("4. ความสอดคล้องประเด็นยุทธศาสตร์ และตัวชี้วัด", styles["Heading2"])
         )
         
         # ตรวจสอบและใช้ฟิลด์ strategy หรือ project_strategy
@@ -1144,7 +937,6 @@ def create_project_pdf(project_data):
             strategy_text = project_data.get('strategy', '')
         content.append(
             Paragraph(
-<<<<<<< HEAD
                 f"ประเด็นยุทธศาสตร์ที่ : {strategy_text}",
                 styles["Normal"],
             )
@@ -1158,13 +950,6 @@ def create_project_pdf(project_data):
             Paragraph(f"ตัวชี้วัดที่ : {indicator_text}", styles["Normal"])
         )
         
-=======
-                f" {project_data.get('strategy', '')}",
-                styles["Heading2"],
-            )
-        )
-       
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         content.append(
             Paragraph(
                 "5. ความสอดคล้องกับ Cluster / Commonality / Physical grouping",
@@ -1177,11 +962,7 @@ def create_project_pdf(project_data):
         if not cluster_text and 'cluster' in project_data:
             cluster_text = project_data.get('cluster', '')
         content.append(
-<<<<<<< HEAD
             Paragraph(f"Cluster : {cluster_text}", styles["Normal"])
-=======
-            Paragraph(f"Cluster : {project_data.get('cluster', '')}", styles["Heading2"])
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         )
         
         # ตรวจสอบและใช้ฟิลด์ commonality หรือ project_commonality
@@ -1190,11 +971,7 @@ def create_project_pdf(project_data):
             commonality_text = project_data.get('commonality', '')
         content.append(
             Paragraph(
-<<<<<<< HEAD
                 f"Commonality : {commonality_text}", styles["Normal"]
-=======
-                f"Commonality : {project_data.get('commonality', '')}", styles["Heading2"]
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
             )
         )
         
@@ -1204,13 +981,8 @@ def create_project_pdf(project_data):
             physical_grouping_text = project_data.get('physical_grouping', '')
         content.append(
             Paragraph(
-<<<<<<< HEAD
                 f"Physical grouping : {physical_grouping_text}",
                 styles["Normal"],
-=======
-                f"Physical grouping : {project_data.get('physical_grouping', '')}",
-                styles["Heading2"],
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
             )
         )
         
@@ -1218,11 +990,7 @@ def create_project_pdf(project_data):
         project_address = project_data.get('project_address', 'ไม่ระบุสถานที่')
         content.append(
             Paragraph(
-<<<<<<< HEAD
                 f"7. สถานที่ดำเนินงาน: {project_address}", styles["Normal"]
-=======
-                f"7. สถานที่ดำเนินงาน: {project_data['project_address']}", styles["Heading2"]
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
             )
         )
         
@@ -1238,18 +1006,12 @@ def create_project_pdf(project_data):
         
         content.append(
             Paragraph(
-<<<<<<< HEAD
                 f"8. ระยะเวลาดำเนินการ: {project_dotime} ถึง {project_endtime}",
                 styles["Normal"],
-=======
-                f"8. ระยะเวลาดำเนินการ: {project_data['project_dotime']} ถึง {project_data['project_endtime']}",
-                styles["Heading2"],
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
             )
         )
         
         content.append(Paragraph("9. หลักการและเหตุผล", styles["Heading2"]))
-<<<<<<< HEAD
         
         # ตรวจสอบและใช้ฟิลด์ rationale หรือ project_rationale
         rationale_text = project_data.get('project_rationale', '')
@@ -1281,17 +1043,6 @@ def create_project_pdf(project_data):
             Paragraph(
                 f"11.1 เป้าหมายเชิงผลผลิต (Output): {output_target_text}",
                 styles["Normal"],
-=======
-        content.append(Paragraph(project_data.get("rationale", ""), styles["Heading2"]))
-        content.append(Paragraph("10. วัตถุประสงค์", styles["Heading2"]))
-        content.append(Paragraph(project_data.get("objectives", ""), styles["Heading2"]))
-        content.append(Paragraph("11. เป้าหมาย", styles["Heading2"]))
-        content.append(Paragraph(project_data.get("goals", ""), styles["Heading2"]))
-        content.append(
-            Paragraph(
-                f"11.1 เป้าหมายเชิงผลผลิต (Output): {project_data.get('output_target', '')}",
-                styles["Heading2"],
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
             )
         )
         
@@ -1301,13 +1052,8 @@ def create_project_pdf(project_data):
             outcome_target_text = project_data.get('outcome_target', '')
         content.append(
             Paragraph(
-<<<<<<< HEAD
                 f"11.2 เป้าหมายเชิงผลลัพธ์ (Outcome): {outcome_target_text}",
                 styles["Normal"],
-=======
-                f"11.2 เป้าหมายเชิงผลลัพธ์ (Outcome): {project_data.get('outcome_target', '')}",
-                styles["Heading2"],
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
             )
         )
         
@@ -1316,24 +1062,15 @@ def create_project_pdf(project_data):
         # ตรวจสอบและใช้ฟิลด์ project_activity
         project_activity_text = project_data.get('project_activity', '')
         content.append(
-<<<<<<< HEAD
             Paragraph(project_activity_text, styles["Normal"])
-=======
-            Paragraph(project_data.get("project_activity", ""), styles["Heading2"])
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         )
         
         content.append(Paragraph("13. กลุ่มเป้าหมายผู้เข้าร่วมโครงการ", styles["Heading2"]))
-<<<<<<< HEAD
         
         # ตรวจสอบและกำหนดค่าเริ่มต้นสำหรับ project_target
         project_target = project_data.get('project_target', '0')
         content.append(Paragraph(str(project_target), styles["Normal"]))
         
-=======
-        content.append(Paragraph(project_data["project_target"], styles["Heading2"]))
-
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         content.append(Paragraph("14. งบประมาณ", styles["Heading2"]))
         
         # ตรวจสอบและกำหนดค่าเริ่มต้นสำหรับ project_budget
@@ -1356,7 +1093,6 @@ def create_project_pdf(project_data):
                 compensation_items = []
                 
         content.append(Paragraph("14.1 ค่าตอบแทน", styles["Heading3"]))
-<<<<<<< HEAD
         for item in compensation_items:
             content.append(
                 Paragraph(
@@ -1403,17 +1139,6 @@ def create_project_pdf(project_data):
                 f"รวมค่าใช้จ่ายทั้งสิ้น: {grand_total} บาท", styles["Normal"]
             )
         )
-=======
-        for item in project_data["compensation"]:
-            content.append(Paragraph(f"{item['description']}: {item['amount']} บาท", styles["Heading2"]))
-        content.append(Paragraph(f"รวมค่าตอบแทน: {project_data['total_compensation']} บาท", styles["Heading2"]))
-
-        content.append(Paragraph("14.2 ค่าใช้สอย", styles["Heading3"]))
-        for item in project_data["expenses"]:
-            content.append(Paragraph(f"{item['description']}: {item['amount']} บาท", styles["Heading2"]))
-        content.append(Paragraph(f"รวมค่าใช้สอย: {project_data['total_expenses']} บาท", styles["Heading2"]))
-          
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
         # แผนปฏิบัติงาน (ใช้ตารางตามต้นฉบับ)
         content.append(
@@ -1461,14 +1186,7 @@ def create_project_pdf(project_data):
             ]
             table_data.append(row)
 
-        quantity_indicator = project_data.get('quantity_indicator', '')
-        quality_indicator = project_data.get('quality_indicator', '')
-        time_indicator = project_data.get('time_indicator', '')
-        cost_indicator = project_data.get('cost_indicator', '')
-        lines = quantity_indicator.split('\n')
-        formatted_text = '<br/>'.join(lines)
         # เพิ่มส่วนของตัวชี้วัดเป้าหมายผลผลิต
-<<<<<<< HEAD
         table_data.append(["ตัวชี้วัดเป้าหมายผลผลิต", ""] + [""] * 11)
 
         # เพิ่มแถวตัวชี้วัดเชิงปริมาณ
@@ -1494,15 +1212,6 @@ def create_project_pdf(project_data):
         if not cost_indicator and 'cost_indicator' in project_data:
             cost_indicator = project_data.get('cost_indicator', '')
         table_data.append(["เชิงค่าใช้จ่าย", cost_indicator] + [""] * 11)
-=======
-        table_data.extend([
-            ["ตัวชี้วัดเป้าหมายผลผลิต", ""] + [""] * 11,
-            ["เชิงปริมาณ", Paragraph(formatted_text, styles['MultiLine'])] + [""] * 11,
-            ["เชิงคุณภาพ", Paragraph(quality_indicator, styles['MultiLine'])] + [""] * 11,
-            ["เชิงเวลา", Paragraph(time_indicator, styles['MultiLine'])] + [""] * 11,
-            ["เชิงค่าใช้จ่าย", Paragraph(cost_indicator, styles['MultiLine'])] + [""] * 11,
-        ])
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
         col_widths = [8 * cm] + [0.7 * cm] * 12
         table = Table(table_data, colWidths=col_widths)
@@ -1520,17 +1229,12 @@ def create_project_pdf(project_data):
             ('SPAN', (1, -2), (-1, -2)),  # เชิงเวลา
             ('SPAN', (1, -1), (-1, -1)),  # เชิงค่าใช้จ่าย
             ('BACKGROUND', (0, -5), (0, -1), colors.lightgrey),
-            ('LEFTPADDING', (1, 0), (1, -1), 6),
-            ('RIGHTPADDING', (1, 0), (1, -1), 6),
-            ('TOPPADDING', (1, 0), (1, -1), 3),
-            ('BOTTOMPADDING', (1, 0), (1, -1), 3),
         ]))
 
         content.append(table)
 
         # เพิ่มส่วน "ผลที่คาดว่าจะเกิด (Impact)"
         content.append(Paragraph("16. ผลที่คาดว่าจะเกิด (Impact)", styles["Heading2"]))
-<<<<<<< HEAD
         
         # ตรวจสอบและใช้ฟิลด์ expected_results หรือ project_expected_results
         expected_results = project_data.get('project_expected_results', '')
@@ -1542,32 +1246,10 @@ def create_project_pdf(project_data):
         else:
             content.append(Paragraph("ไม่มีข้อมูล", styles["Normal"]))
 
-=======
-        content.append(
-            Paragraph(project_data.get("expected_results", ""), styles["Normal"])
-        )
-        content.append(Spacer(1, 2*inch))  # เพิ่มระยะห่างก่อนส่วนลงชื่อ
-        content.append(Paragraph(f"ลงชื่อ _____________________{project_data['teacher_name']}_____________________", styles['Signature']))
-        content.append(Paragraph(f"({project_data['teacher_name']})", styles['Signature']))
-        content.append(Paragraph(f"ตำแหน่ง อาจารย์ประจำสาขา{project_data.get('branch_name', '')}", styles['Signature']))
-        content.append(Paragraph(f"วันที่ {datetime.now().strftime('%d/%m/%Y')}", styles['Signature']))
-        content.append(Paragraph(f"เบอร์โทรศัพท์ที่สามารถติดต่อโดยตรง", styles['Signature']))
-        content.append(Paragraph(f"{project_data.get('teacher_phone', 'ไม่ระบุ')}", styles['Signature']))
-        content.append(Spacer(1, 0.5*inch))  # เพิ่มระยะห่างก่อนส่วนความคิดเห็น
-        content.append(Paragraph("ความคิดเห็นของผู้บังคับบัญชา.....จึงเรียนมาเพื่อโปรดพิจารณา", styles['Signature']))
-        content.append(Paragraph("_____________________________________________", styles['Signature']))
-        content.append(Spacer(1, 0.5*inch))
-        content.append(Paragraph("ลงชื่อ _______________________________", styles['Signature']))
-        content.append(Paragraph("(นายศราวุธ ซื่อวุฒิกุล)", styles['Signature']))
-        content.append(Paragraph("หัวหน้าสาขาระบบสารสนเทศ", styles['Signature']))
-        content.append(Paragraph(f"วันที่ {datetime.now().strftime('%d/%m/%Y')}", styles['Signature']))
-            
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         try:
             doc.build(content, onFirstPage=header, onLaterPages=header)
             buffer.seek(0)
             return buffer
-        
         except Exception as e:
             logging.error(f"Error building PDF: {e}", exc_info=True)
             return None
@@ -1701,17 +1383,8 @@ def _enumerate(seq):
     return enumerate(seq)
 app.jinja_env.filters['enumerate'] = _enumerate
 
-<<<<<<< HEAD
 # ลงทะเบียนฟิลเตอร์หลังจากนิยามฟังก์ชันแล้ว
 app.jinja_env.filters['from_json'] = from_json
-=======
-# เพิ่มการล็อกข้อมูลเพื่อตรวจสอบปัญหา
-print(f"Current working directory: {os.getcwd()}")
-print(
-    f"Full path to logo: {os.path.abspath(os.path.join(os.path.dirname(__file__), 'static', '1.png'))}"
-)
-
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 @app.route("/edit_project/<int:project_id>", methods=["GET", "POST"])
 @login_required("teacher")
 def edit_project(project_id):
@@ -1720,7 +1393,6 @@ def edit_project(project_id):
 
     teacher_id = session["teacher_id"]
     
-<<<<<<< HEAD
     with get_db_cursor() as (db, cursor):
         # ดึงข้อมูลโครงการเดิม
         query = """SELECT project_id, project_budgettype, project_year, project_name, 
@@ -1733,16 +1405,6 @@ def edit_project(project_id):
                    project_quality_indicator, project_time_indicator, project_cost_indicator,
                    project_expected_results, project_compensation_json, project_expenses_json,
                    project_policy
-=======
-    db = get_db_connection()
-    cursor = db.cursor()
-
-    try:
-        # ดึงข้อมูลโครงการเดิม
-        query = """SELECT project_id, project_budgettype, project_year, project_name, 
-                   project_style, project_address, project_dotime, project_endtime, 
-                   project_target, project_status, project_budget, project_detail
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
                    FROM project WHERE project_id = %s AND teacher_id = %s"""
         cursor.execute(query, (project_id, teacher_id))
         project = cursor.fetchone()
@@ -1759,7 +1421,6 @@ def edit_project(project_id):
         cursor.execute(query_teacher, (teacher_id,))
         teacher_info = cursor.fetchone()
 
-<<<<<<< HEAD
     # สร้าง project_data สำหรับ GET request
     project_data = {
         "project_id": project[0],
@@ -1799,29 +1460,11 @@ def edit_project(project_id):
         "teacher_name": teacher_info[0],
         "branch_name": teacher_info[1]
     }
-=======
-        # สร้าง project_data
-        project_data = {
-            "project_id": project[0],
-            "project_budgettype": project[1],
-            "project_year": project[2],
-            "project_name": project[3],
-            "project_style": project[4],
-            "project_address": project[5],
-            "project_dotime": project[6],
-            "project_endtime": project[7],
-            "project_target": project[8],
-            "project_status": project[9],
-            "project_budget": project[10],
-            "teacher_name": teacher_info[0],
-            "branch_name": teacher_info[1],
-            "project_detail": project[11],
-        }
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
-        if request.method == "POST":
-            # อัปเดต project_data ด้วยข้อมูลจากฟอร์ม
-            project_data.update({
+    if request.method == "POST":
+        # อัปเดต project_data ด้วยข้อมูลจากฟอร์ม
+        project_data.update(
+            {
                 "project_budgettype": request.form["project_budgettype"],
                 "project_year": request.form["project_year"],
                 "project_name": request.form["project_name"],
@@ -1831,7 +1474,6 @@ def edit_project(project_id):
                 "project_endtime": request.form["project_endtime"],
                 "project_target": request.form["project_target"],
                 "project_budget": request.form["project_budget"],
-<<<<<<< HEAD
                 "project_detail": request.form["project_detail"],
                 "project_output": request.form["output"],
                 "output": request.form["output"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
@@ -1870,65 +1512,18 @@ def edit_project(project_id):
                 "policy": request.form.get("policy", ""),
             }
         )
-=======
-                "output": request.form["output"],
-                "strategy": request.form["strategy"],
-                "cluster": request.form["cluster"],
-                "commonality": request.form["commonality"],
-                "physical_grouping": request.form["physical_grouping"],
-                "rationale": request.form["rationale"],
-                "objectives": request.form["objectives"],
-                "goals": request.form["goals"],
-                "output_target": request.form["output_target"],
-                "outcome_target": request.form["outcome_target"],
-                "project_activity": request.form["project_activity"],
-                "quantity_indicator": request.form["quantity_indicator"],
-                "quality_indicator": request.form["quality_indicator"],
-                "time_indicator": request.form["time_indicator"],
-                "cost_indicator": request.form["cost_indicator"],
-                "expected_results": request.form.get("expected_results", ""),
-                "project_detail": request.form["project_detail"],
-            })
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
-            # รับข้อมูลแผนปฏิบัติงาน
-            activities = request.form.getlist("activity[]")
-            project_data["activities"] = []
-            for i, activity in enumerate(activities):
-                if activity:
-                    selected_months = request.form.getlist(f"month[{i}][]")
-                    project_data["activities"].append(
-                        {"activity": activity, "months": selected_months}
-                    )
+        error_messages = []
 
-<<<<<<< HEAD
         # ตรวจสอบชื่อโครงการซ้ำ
         if project_data["project_name"] != project[3]:  # ถ้าชื่อโครงการมีการเปลี่ยนแปลง
             if is_project_name_duplicate(project_data["project_name"], project_id):
                 error_messages.append("ไม่สามารถแก้ไขโครงการได้เนื่องจากชื่อโครงการ '{}' มีอยู่แล้ว กรุณาใช้ชื่อโครงการอื่น".format(project_data["project_name"]))
-=======
-            # รับข้อมูลค่าตอบแทนและค่าใช้สอย
-            project_data["compensation"] = []
-            project_data["expenses"] = []
-            
-            compensation_descriptions = request.form.getlist("compensation_description[]")
-            compensation_amounts = request.form.getlist("compensation_amount[]")
-            for desc, amount in zip(compensation_descriptions, compensation_amounts):
-                if desc and amount:
-                    project_data["compensation"].append(
-                        {"description": desc, "amount": float(amount)}
-                    )
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
-            expense_descriptions = request.form.getlist("expense_description[]")
-            expense_amounts = request.form.getlist("expense_amount[]")
-            for desc, amount in zip(expense_descriptions, expense_amounts):
-                if desc and amount:
-                    project_data["expenses"].append(
-                        {"description": desc, "amount": float(amount)}
-                    )
+        # ตรวจสอบวันที่ซ้ำสำหรับครูคนเดียวกัน
+        if is_date_overlap_for_teacher(teacher_id, project_data["project_dotime"], project_data["project_endtime"], project_id):
+            error_messages.append("ไม่สามารถแก้ไขโครงการได้เนื่องจากคุณมีโครงการอื่นในช่วงเวลา {} ถึง {} แล้ว กรุณาเลือกวันที่อื่น".format(project_data["project_dotime"], project_data["project_endtime"]))
 
-<<<<<<< HEAD
         if error_messages:
             for message in error_messages:
                 flash(message, "error")
@@ -2104,65 +1699,9 @@ def edit_project(project_id):
         else:
             logging.error("PDF buffer is None - check create_project_pdf function")
             flash("เกิดข้อผิดพลาดในการสร้าง PDF", "error")
-=======
-            # คำนวณยอดรวม
-            total_compensation = sum(item["amount"] for item in project_data["compensation"])
-            total_expenses = sum(item["amount"] for item in project_data["expenses"])
-            grand_total = total_compensation + total_expenses
 
-            project_data["total_compensation"] = total_compensation
-            project_data["total_expenses"] = total_expenses
-            project_data["grand_total"] = grand_total
-
-            # อัปเดตข้อมูลในฐานข้อมูล
-            update_query = """UPDATE project SET 
-                              project_budgettype = %s, project_year = %s, project_name = %s, 
-                              project_style = %s, project_address = %s, project_dotime = %s, 
-                              project_endtime = %s, project_target = %s, project_budget = %s,
-                              project_detail = %s
-                              WHERE project_id = %s AND teacher_id = %s"""
-            cursor.execute(update_query, (
-                project_data["project_budgettype"],
-                project_data["project_year"],
-                project_data["project_name"],
-                project_data["project_style"],
-                project_data["project_address"],
-                project_data["project_dotime"],
-                project_data["project_endtime"],
-                project_data["project_target"],
-                project_data["project_budget"],
-                project_data["project_detail"],
-                project_id,
-                teacher_id
-            ))
-            db.commit()
-
-            # สร้าง PDF
-            pdf_buffer = create_project_pdf(project_data)
-            if pdf_buffer:
-                pdf_content = pdf_buffer.getvalue()
-                
-                query = "UPDATE project SET project_pdf = %s WHERE project_id = %s"
-                cursor.execute(query, (pdf_content, project_id))
-                db.commit()
-                
-                logging.info(f"PDF uploaded for project_id: {project_id}")
-                flash("โครงการและ PDF ถูกบันทึกเรียบร้อยแล้ว", "success")
-            else:
-                logging.error("PDF buffer is None")
-                flash("เกิดข้อผิดพลาดในการสร้าง PDF", "error")
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
-
-            return redirect(url_for("teacher_projects"))
-
-        return render_template("edit_project.html", project=project_data, teacher_info=teacher_info)
-
-    except mysql.connector.Error as err:
-        logging.error(f"Database error: {err}")
-        flash(f"เกิดข้อผิดพลาดในการเข้าถึงฐานข้อมูล: {err}", "error")
         return redirect(url_for("teacher_projects"))
 
-<<<<<<< HEAD
     # แปลง JSON strings กลับเป็น Python lists สำหรับการแสดงผลในฟอร์ม
     try:
         if project_data.get("project_activities_json"):
@@ -2304,11 +1843,6 @@ def project_evaluation(project_id):
     # สร้างการเชื่อมต่อฐานข้อมูล
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-=======
-    finally:
-        cursor.close()
-        db.close()
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
     try:
         # ตรวจสอบโครงการและสถานะโครงการ
@@ -3451,7 +2985,6 @@ def check_project_dates():
 @app.route('/check_project_name', methods=['POST'])
 def check_project_name():
     try:
-<<<<<<< HEAD
         # รับข้อมูลจาก form-data แทน JSON
         project_name = request.form.get('project_name', '')
         project_id_str = request.form.get('project_id', 'null')
@@ -3465,25 +2998,6 @@ def check_project_name():
                 is_duplicate = is_project_name_duplicate(project_name)
         else:
             is_duplicate = is_project_name_duplicate(project_name)
-=======
-        data = request.json
-        app.logger.info(f"Received data: {data}")
-        project_name = data.get('project_name')
-        project_id = data.get('project_id')  # รับ project_id เพิ่มเติม
-        
-        with get_db_cursor() as (db, cursor):
-            if project_id:  # กรณีแก้ไขโครงการ
-                query = """
-                SELECT COUNT(*) FROM project 
-                WHERE project_name = %s AND project_id != %s
-                """
-                cursor.execute(query, (project_name, project_id))
-            else:  # กรณีเพิ่มโครงการใหม่
-                query = "SELECT COUNT(*) FROM project WHERE project_name = %s"
-                cursor.execute(query, (project_name,))
-            
-            count = cursor.fetchone()[0]
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         
         return jsonify({'exists': bool(is_duplicate)})
     except Exception as e:
@@ -3532,7 +3046,6 @@ def add_project():
         teacher_info = cursor.fetchone()
     
     if request.method == "POST":
-<<<<<<< HEAD
         # รับข้อมูลพื้นฐาน
         project_budgettype = request.form["project_budgettype"]
         project_year = request.form["project_year"]
@@ -3563,46 +3076,6 @@ def add_project():
         project_time_indicator = request.form["time_indicator"]
         project_cost_indicator = request.form["cost_indicator"]
         project_expected_results = request.form.get("expected_results", "")
-=======
-        project_data = {
-            "project_budgettype": request.form["project_budgettype"],
-            "project_year": request.form["project_year"],
-            "project_name": request.form["project_name"],
-            "project_style": request.form["project_style"],
-            "project_address": request.form["project_address"],
-            "project_dotime": request.form["project_dotime"],
-            "project_endtime": request.form["project_endtime"],
-            "project_target": request.form["project_target"],
-            "project_budget": request.form["project_budget"],  # เพิ่มงบประมาณ
-            "teacher_name": teacher_info[0],
-            "branch_name": teacher_info[1],
-            "project_status": 0,
-            # ข้อมูลที่ไม่ได้บันทึกลงฐานข้อมูล แต่ต้องการแสดงใน PDF
-            "output": request.form["output"],
-            "strategy": request.form["strategy"],
-            "cluster": request.form["cluster"],
-            "commonality": request.form["commonality"],
-            "physical_grouping": request.form["physical_grouping"],
-            "rationale": request.form["rationale"],
-            "objectives": request.form["objectives"],
-            "goals": request.form["goals"],
-            "output_target": request.form["output_target"],
-            "outcome_target": request.form["outcome_target"],
-            "project_activity": request.form["project_activity"],
-            "compensation": [],
-            "expenses": [],
-            "activities": [],
-            "quantity_indicator": request.form["quantity_indicator"],
-            "quality_indicator": request.form["quality_indicator"],
-            "time_indicator": request.form["time_indicator"],
-            "cost_indicator": request.form["cost_indicator"],
-            "expected_results": request.form.get("expected_results", ""),
-            "project_detail": request.form["project_detail"],
-            "teacher_phone": session.get("teacher_phone"),
-        }
-        error_messages = []
-
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         
         # สร้าง JSON สำหรับข้อมูลที่มีหลายรายการ
         # กิจกรรม
@@ -3750,7 +3223,6 @@ def is_project_name_duplicate(project_name, current_project_id=None):
 @app.route("/edit_basic_info", methods=["GET", "POST"])
 @login_required("admin")
 def edit_basic_info():
-    admins = get_admins_from_database()
     if request.method == "POST":
         branch_id = request.form["branch_id"]
         teacher_name = request.form["teacher_name"]
@@ -3758,20 +3230,15 @@ def edit_basic_info():
         teacher_password = request.form["teacher_password"]
         teacher_phone = request.form["teacher_phone"]
         teacher_email = request.form["teacher_email"]
-        admin_name = request.form["admin_name"]
-        admin_username = request.form["admin_username"]
-        admin_password = request.form["admin_password"]
-        admin_phone = request.form["admin_phone"]
-        admin_email = request.form["admin_email"]
+
         if "admin_id" in session:
             return redirect(url_for("admin_home"))
 
     if "admin_id" in session:
         branches = get_branches_from_database()
         teachers = get_teachers_from_database()
-        admins = get_admins_from_database()
         return render_template(
-            "edit_basic_info.html", teachers=teachers, branches=branches ,admins=admins
+            "edit_basic_info.html", teachers=teachers, branches=branches
         )
     else:
         return redirect(url_for("login"))
@@ -3940,50 +3407,6 @@ def add_teacher():
 
         return redirect(url_for("edit_basic_info"))
 
-<<<<<<< HEAD
-=======
-@app.route("/add_branch", methods=["GET", "POST"])
-@login_required("admin")
-def add_branch():
-    if request.method == "POST":
-        branch_name = request.form["branch_name"]
-
-        with get_db_cursor() as (db, cursor):
-            # ตรวจสอบว่ามีสาขานี้อยู่แล้วหรือไม่
-            check_query = "SELECT COUNT(*) FROM branch WHERE branch_name = %s"
-            cursor.execute(check_query, (branch_name,))
-            count = cursor.fetchone()[0]
-
-            if count > 0:
-                flash("สาขานี้มีอยู่ในระบบแล้ว กรุณาตรวจสอบอีกครั้ง", "error")
-                return render_template("add_branch.html", branch_name=branch_name)
-
-            # หา branch_id ล่าสุด
-            cursor.execute("SELECT MAX(branch_id) FROM branch")
-            last_id = cursor.fetchone()[0]
-
-            if last_id:
-                # ถ้ามี branch_id อยู่แล้ว ให้เพิ่มต่อจากเลขล่าสุด
-                last_num = int(last_id[6:])  # ตัดเอาเฉพาะตัวเลข
-                new_num = last_num + 1
-            else:
-                # ถ้ายังไม่มี branch_id เลย ให้เริ่มที่ 1
-                new_num = 1
-
-            new_branch_id = f"branch{new_num:03d}"  # สร้าง branch_id ใหม่
-
-            # เพิ่มสาขาใหม่
-            insert_query = "INSERT INTO branch (branch_id, branch_name) VALUES (%s, %s)"
-            cursor.execute(insert_query, (new_branch_id, branch_name))
-            db.commit()
-
-        flash(f"เพิ่มสาขาใหม่ '{branch_name}' (รหัส: {new_branch_id}) เรียบร้อยแล้ว", "success")
-        return redirect(url_for("edit_basic_info"))
-
-    return render_template("add_branch.html")
-
-
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 @app.route("/teacher_projects")
 @login_required("teacher")
 def teacher_projects():
@@ -3995,34 +3418,24 @@ def teacher_projects():
     per_page = 6  # จำนวนโปรเจคต่อหน้า
 
     with get_db_cursor() as (db, cursor):
-<<<<<<< HEAD
         # นับจำนวนโปรเจคที่ยังไม่เสร็จสิ้นทั้งหมด
         cursor.execute(
             "SELECT COUNT(*) FROM project WHERE teacher_id = %s AND (project_statusStart != 2 OR project_statusStart IS NULL)", 
             (teacher_id,)
-=======
-        # นับจำนวนโปรเจคทั้งหมดที่ยังไม่เสร็จสิ้น
-        cursor.execute(
-            "SELECT COUNT(*) FROM project WHERE teacher_id = %s AND project_status != 4", (teacher_id,)
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         )
         total_projects = cursor.fetchone()[0]
 
         # คำนวณจำนวนหน้าทั้งหมด
         total_pages = ceil(total_projects / per_page)
 
-        # ดึงข้อมูลโปรเจคตามหน้าที่ต้องการ (เฉพาะโครงการที่ยังไม่เสร็จสิ้น)
+        # ดึงข้อมูลโปรเจคตามหน้าที่ต้องการ
         offset = (page - 1) * per_page
         query = """
             SELECT project_id, project_name, project_status, project_statusStart, 
                    CASE WHEN project_pdf IS NOT NULL THEN TRUE ELSE FALSE END as has_pdf,
                    project_reject, project_submit_date, project_reject_date
             FROM project 
-<<<<<<< HEAD
             WHERE teacher_id = %s AND (project_statusStart != 2 OR project_statusStart IS NULL)
-=======
-            WHERE teacher_id = %s AND project_status != 4
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
             ORDER BY project_submit_date DESC
             LIMIT %s OFFSET %s
         """
@@ -4120,22 +3533,6 @@ def project_detail(project_id):
         is_logged_in=is_logged_in,
         user_type=user_type
     )
-<<<<<<< HEAD
-=======
-@app.route("/update_project_status/<int:project_id>", methods=["POST"])
-@login_required("admin")
-def update_project_status(project_id):
-    data = request.json
-    new_status = data.get('status')
-    
-    try:
-        with get_db_cursor() as (db, cursor):
-            cursor.execute("UPDATE project SET project_status = %s WHERE project_id = %s", (new_status, project_id))
-            db.commit()
-        return jsonify({"success": True})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
 @app.route("/update_project_statusStart", methods=["POST"])
 @login_required("teacher")
@@ -4298,154 +3695,6 @@ def approve_participants(project_id):
         "approve_participants.html", project_id=project_id, participants=participants
     )
 
-@app.route("/participation_history", methods=["GET", "POST"])
-def participation_history():
-    if request.method == "POST":
-        phone_number = request.form.get("phone_number")
-        with get_db_cursor() as (db, cursor):
-            query = """
-            SELECT p.project_name, p.project_dotime, p.project_endtime, j.join_status
-            FROM `join` j
-            JOIN project p ON j.project_id = p.project_id
-            WHERE j.join_telephone = %s
-            ORDER BY p.project_dotime DESC
-            """
-            cursor.execute(query, (phone_number,))
-            history = cursor.fetchall()
-        return render_template("participation_history.html", history=history, phone_number=phone_number)
-    return render_template("participation_history.html")
-@app.route("/get_participant_info", methods=["POST"])
-def get_participant_info():
-    data = request.json
-    name = data.get('name')
-    project_id = data.get('project_id')
-    
-    with get_db_cursor() as (db, cursor):
-        query = """
-        SELECT DISTINCT join_telephone, join_email
-        FROM `join`
-        WHERE join_name = %s
-        ORDER BY join_id DESC
-        LIMIT 1
-        """
-        cursor.execute(query, (name,))
-        result = cursor.fetchone()
-        
-        if result:
-            # ตรวจสอบว่าเคยสมัครโครงการนี้แล้วหรือไม่
-            check_query = """
-            SELECT COUNT(*) as joined_count
-            FROM `join`
-            WHERE join_name = %s AND project_id = %s
-            """
-            cursor.execute(check_query, (name, project_id))
-            joined_result = cursor.fetchone()
-            
-            return jsonify({
-                'found': True,
-                'telephone': result[0],
-                'email': result[1],
-                'already_joined': joined_result[0] > 0
-            })
-        else:
-            return jsonify({'found': False})
-@app.route("/delete_teacher/<int:teacher_id>")
-@login_required("admin")
-def delete_teacher(teacher_id):
-    with get_db_cursor() as (db, cursor):
-        cursor.execute("DELETE FROM teacher WHERE teacher_id = %s", (teacher_id,))
-        db.commit()
-    flash("ลบข้อมูลอาจารย์เรียบร้อยแล้ว", "success")
-    return redirect(url_for("edit_basic_info"))
-
-@app.route("/delete_branch/<string:branch_id>")
-@login_required("admin")
-def delete_branch(branch_id):
-    with get_db_cursor() as (db, cursor):
-        cursor.execute("DELETE FROM branch WHERE branch_id = %s", (branch_id,))
-        db.commit()
-    flash("ลบข้อมูลสาขาเรียบร้อยแล้ว", "success")
-    return redirect(url_for("edit_basic_info"))
-@app.route("/edit_branch/<string:branch_id>", methods=["GET", "POST"])
-@login_required("admin")
-def edit_branch(branch_id):
-    with get_db_cursor() as (db, cursor):
-        if request.method == "POST":
-            new_branch_name = request.form["branch_name"]
-            
-            # ตรวจสอบว่ามีชื่อสาขาซ้ำหรือไม่
-            cursor.execute("SELECT COUNT(*) FROM branch WHERE branch_name = %s AND branch_id != %s", (new_branch_name, branch_id))
-            if cursor.fetchone()[0] > 0:
-                flash("ชื่อสาขานี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น", "error")
-                return redirect(url_for("edit_branch", branch_id=branch_id))
-            
-            # อัพเดทข้อมูลสาขา
-            cursor.execute("UPDATE branch SET branch_name = %s WHERE branch_id = %s", (new_branch_name, branch_id))
-            db.commit()
-            flash("แก้ไขข้อมูลสาขาเรียบร้อยแล้ว", "success")
-            return redirect(url_for("edit_basic_info"))
-        
-        # ดึงข้อมูลสาขาที่ต้องการแก้ไข
-        cursor.execute("SELECT * FROM branch WHERE branch_id = %s", (branch_id,))
-        branch = cursor.fetchone()
-        
-        if branch is None:
-            flash("ไม่พบข้อมูลสาขา", "error")
-            return redirect(url_for("edit_basic_info"))
-        
-    return render_template("edit_branch.html", branch=branch)
-@app.route("/add_admin", methods=["GET", "POST"])
-@login_required("admin")
-def add_admin():
-    if request.method == "POST":
-        admin_name = request.form["admin_name"]
-        admin_username = request.form["admin_username"]
-        admin_password = request.form["admin_password"]
-        admin_email = request.form["admin_email"]
-        
-        with get_db_cursor() as (db, cursor):
-            query = """INSERT INTO admin (admin_name, admin_username, admin_password, admin_email) 
-                       VALUES (%s, %s, %s, %s)"""
-            cursor.execute(query, (admin_name, admin_username, admin_password, admin_email))
-            db.commit()
-        
-        flash("เพิ่มข้อมูล Admin เรียบร้อยแล้ว", "success")
-        return redirect(url_for("edit_basic_info"))
-    
-    return render_template("add_admin.html")
-
-@app.route("/edit_admin/<int:admin_id>", methods=["GET", "POST"])
-@login_required("admin")
-def edit_admin(admin_id):
-    with get_db_cursor() as (db, cursor):
-        cursor.execute("SELECT * FROM admin WHERE admin_id = %s", (admin_id,))
-        admin = cursor.fetchone()
-
-    if not admin:
-        flash("ไม่พบข้อมูล Admin", "error")
-        return redirect(url_for("edit_basic_info"))
-
-    if request.method == "POST":
-        admin_name = request.form["admin_name"]
-        admin_username = request.form["admin_username"]
-        admin_password = request.form["admin_password"]
-        admin_email = request.form["admin_email"]
-
-        with get_db_cursor() as (db, cursor):
-            if admin_password:
-                query = """UPDATE admin SET admin_name = %s, admin_username = %s,
-                            admin_password = %s, admin_email = %s WHERE admin_id = %s"""
-                cursor.execute(query, (admin_name, admin_username, admin_password, admin_email, admin_id))
-            else:
-                query = """UPDATE admin SET admin_name = %s, admin_username = %s,
-                            admin_email = %s WHERE admin_id = %s"""
-                cursor.execute(query, (admin_name, admin_username, admin_email, admin_id))
-            db.commit()
-
-        flash("แก้ไขข้อมูล Admin เรียบร้อยแล้ว", "success")
-        return redirect(url_for("edit_basic_info"))
-
-    return render_template("edit_admin.html", admin=admin)
 
 # ตรวจสอบข้อมูลใหม่ทุกๆ 5 นาที
 if __name__ == "__main__":

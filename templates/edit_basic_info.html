@@ -12,10 +12,6 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
       rel="stylesheet"
     />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
-      rel="stylesheet"
-    />
     <style>
       :root {
         --primary-color: #ff8c00;
@@ -129,7 +125,11 @@
             >
           </li>
 
-           
+          <li class="nav-item">
+            <a class="nav-link" href="active_projects"
+              ><i class="fas fa-project-diagram"></i> โครงการ</a
+            >
+          </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('approve_project') }}"
               ><i class="fas fa-check-circle"></i> อนุมัติคำขอโครงการ</a
@@ -186,21 +186,25 @@
       </div>
     </div>
     {% endif %}
-     <!-- ข้อความแจ้งเตือน -->
-     {% with messages = get_flashed_messages(with_categories=true) %}
-     {% if messages %}
-         {% for category, message in messages %}
-             <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                 {{ message }}
-                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                     <span aria-hidden="true">&times;</span>
-                 </button>
-             </div>
-         {% endfor %}
-     {% endif %}
- {% endwith %}
+    <div class="container">
+      <div class="content-box">
+        <h2 class="text-center mb-4">ข้อมูลพื้นฐาน</h2>
+        <div class="form-group">
+          <label for="data_type"
+            ><i class="fas fa-filter"></i> เลือกประเภทข้อมูล:</label
+          >
+          <select id="data_type" class="form-control">
+            <option value="teacher">ข้อมูลอาจารย์</option>
+            <option value="branch">ข้อมูลสาขา</option>
+          </select>
+        </div>
+        <input
+          type="hidden"
+          id="selected_option"
+          name="selected_option"
+          value="teacher"
+        />
 
-<<<<<<< HEAD
         <div class="table-responsive">
           <table class="table table-striped table-hover" id="teacher-table">
             <thead>
@@ -236,187 +240,66 @@
               {% endfor %}
             </tbody>
           </table>
-=======
- <!-- เนื้อหาหลัก -->
- <div class="container">
-     <div class="content-box">
-         <h2 class="text-center mb-4">ข้อมูลพื้นฐาน</h2>
-         
-         <!-- ตัวเลือกประเภทข้อมูล -->
-         <div class="form-group">
-             <label for="data_type"><i class="fas fa-filter"></i> เลือกประเภทข้อมูล:</label>
-             <select id="data_type" class="form-control">
-                 <option value="teacher">ข้อมูลอาจารย์</option>
-                 <option value="branch">ข้อมูลสาขา</option>
-                 <option value="admin">ข้อมูลเจ้าหน้าที่</option>
-             </select>
-         </div>
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
-         <!-- ตารางข้อมูลอาจารย์ -->
-         <div class="table-responsive" id="teacher-table">
-             <table class="table table-striped table-hover">
-                 <thead>
-                     <tr>
-                         <th><i class="fas fa-id-badge"></i> รหัสอาจารย์</th>
-                         <th><i class="fas fa-user"></i> ชื่อ-สกุล</th>
-                         <th><i class="fas fa-user-circle"></i> Username</th>
-                         <th><i class="fas fa-key"></i> Password</th>
-                         <th><i class="fas fa-phone"></i> เบอร์โทร</th>
-                         <th><i class="fas fa-envelope"></i> อีเมล</th>
-                         <th><i class="fas fa-graduation-cap"></i> สาขา</th>
-                         <th><i class="fas fa-cogs"></i> การดำเนินการ</th>
-                     </tr>
-                 </thead>
-                 <tbody>
-                     {% for teacher in teachers %}
-                     <tr>
-                         <td>{{ teacher[0] }}</td>
-                         <td>{{ teacher[1] }}</td>
-                         <td>{{ teacher[2] }}</td>
-                         <td>{{ teacher[3] }}</td>
-                         <td>{{ teacher[4] }}</td>
-                         <td>{{ teacher[5] }}</td>
-                         <td>{{ teacher[6] }}</td>
-                         <td>
-                             <a href="{{ url_for('edit_teacher', teacher_id=teacher[0]) }}" class="btn btn-primary btn-sm">แก้ไข</a>
-                             <button onclick="confirmDeleteTeacher({{ teacher[0] }}, '{{ teacher[1] }}')" class="btn btn-danger btn-sm">ลบ</button>
-                         </td>
-                     </tr>
-                     {% endfor %}
-                 </tbody>
-             </table>
-         </div>
+          <table
+            class="table table-striped table-hover"
+            id="branch-table"
+            style="display: none"
+          >
+            <thead>
+              <tr>
+                <th scope="col"><i class="fas fa-code-branch"></i> รหัสสาขา</th>
+                <th scope="col">
+                  <i class="fas fa-graduation-cap"></i> ชื่อสาขา
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for branch in branches %}
+              <tr class="branch-row">
+                <td>{{ branch[0] }}</td>
+                <td>{{ branch[1] }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
 
-         <!-- ตารางข้อมูลสาขา -->
-         <div class="table-responsive" id="branch-table" style="display: none;">
-             <table class="table table-striped table-hover">
-                 <thead>
-                     <tr>
-                         <th><i class="fas fa-code-branch"></i> รหัสสาขา</th>
-                         <th><i class="fas fa-graduation-cap"></i> ชื่อสาขา</th>
-                         <th><i class="fas fa-cogs"></i> การดำเนินการ</th>
-                     </tr>
-                 </thead>
-                 <tbody>
-                     {% for branch in branches %}
-                     <tr>
-                         <td>{{ branch[0] }}</td>
-                         <td>{{ branch[1] }}</td>
-                         <td>
-                             <a href="{{ url_for('edit_branch', branch_id=branch[0]) }}" class="btn btn-primary btn-sm">แก้ไข</a>
-                             <button onclick="confirmDeleteBranch('{{ branch[0] }}', '{{ branch[1] }}')" class="btn btn-danger btn-sm">ลบ</button>
-                         </td>
-                     </tr>
-                     {% endfor %}
-                 </tbody>
-             </table>
-            </div>
-<!-- ตารางข้อมูลอาจารย์ -->
-<div class="table-responsive" id="admin-table">
-  <table class="table table-striped table-hover">
-      <thead>
-          <tr>
-              <th><i class="fas fa-id-badge"></i> รหัสอาจารย์</th>
-              <th><i class="fas fa-user"></i> ชื่อ-สกุล</th>
-              <th><i class="fas fa-user-circle"></i> Username</th>
-              <th><i class="fas fa-key"></i> Password</th>
-              <th><i class="fas fa-phone"></i> เบอร์โทร</th>
-              <th><i class="fas fa-envelope"></i> อีเมล</th>
-              <th><i class="fas fa-graduation-cap"></i> สาขา</th>
-              <th><i class="fas fa-cogs"></i> การดำเนินการ</th>
-          </tr>
-      </thead>
-      <tbody>
-          {% for admin in admins %}
-          <tr>
-              <td>{{ admin[0] }}</td>
-              <td>{{ admin[1] }}</td>
-              <td>{{ admin[2] }}</td>
-              <td>{{ admin[3] }}</td>
-              <td>{{admin[4] }}</td>
-              <td>{{ admin[5] }}</td>
-              <td>{{ admin[6] }}</td>
-              <td>
-                <a href="{{ url_for('edit_admin', admin_id=admin[0]) }}" class="btn btn-primary btn-sm">แก้ไข</a>
-                  <button onclick="confirmDeleteTeacher({{ admin[0] }}, '{{ admin[1] }}')" class="btn btn-danger btn-sm">ลบ</button>
-              </td>
-          </tr>
-          {% endfor %}
-      </tbody>
-  </table>
-</div>
-         <!-- ปุ่มเพิ่มข้อมูล -->
-         <div class="mt-4">
-             <a href="{{ url_for('add_teacher') }}" class="btn btn-success"><i class="fas fa-user-plus"></i> เพิ่มข้อมูลอาจารย์</a>
-             <a href="{{ url_for('add_branch') }}" class="btn btn-success"><i class="fas fa-plus-circle"></i> เพิ่มข้อมูลสาขา</a>
-             <a href="{{ url_for('add_admin') }}" class="btn btn-success">เพิ่มข้อมูล Admin</a>
-            
-         </div>
-     </div>
- </div>
+        <div class="mt-4">
+          <a href="{{ url_for('add_teacher') }}" class="btn btn-success"
+            ><i class="fas fa-user-plus"></i> เพิ่มข้อมูลอาจารย์</a
+          >
+          <a href="{{ url_for('add_branch') }}" class="btn btn-success"
+            ><i class="fas fa-plus-circle"></i> เพิ่มข้อมูลสาขา</a
+          >
+        </div>
+      </div>
+    </div>
 
-<<<<<<< HEAD
    
-=======
- 
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
       function filterData() {
-          var selectedValue = document.getElementById("data_type").value;
-          var teacherTable = document.getElementById("teacher-table");
-          var branchTable = document.getElementById("branch-table");
-          var adminTable = document.getElementById("admin-table");
-  
-          if (selectedValue === "teacher") {
-              teacherTable.style.display = "table";
-              branchTable.style.display = "none";
-              adminTable.style.display = "none";
-          } else if (selectedValue === "branch") {
-              teacherTable.style.display = "none";
-              branchTable.style.display = "table";
-              adminTable.style.display = "none";
-          } else if (selectedValue === "admin") {
-              teacherTable.style.display = "none";
-              branchTable.style.display = "none";
-              adminTable.style.display = "table";
-          }
+        var selectedValue = document.getElementById("data_type").value;
+        var teacherTable = document.getElementById("teacher-table");
+        var branchTable = document.getElementById("branch-table");
+
+        if (selectedValue === "teacher") {
+          teacherTable.style.display = "table";
+          branchTable.style.display = "none";
+        } else if (selectedValue === "branch") {
+          teacherTable.style.display = "none";
+          branchTable.style.display = "table";
+        }
       }
-  
+
       document
-          .getElementById("data_type")
-          .addEventListener("change", filterData);
+        .getElementById("data_type")
+        .addEventListener("change", filterData);
       filterData();
-  </script>
-    <script>
-      function confirmDeleteTeacher(teacherId, teacherName) {
-          if (confirm(`คุณแน่ใจหรือไม่ที่จะลบอาจารย์ ${teacherName}?`)) {
-              window.location.href = `{{ url_for('delete_teacher', teacher_id=0) }}`.replace('0', teacherId);
-          }
-      }
-      
-      function confirmDeleteBranch(branchId, branchName) {
-          if (confirm(`คุณแน่ใจหรือไม่ที่จะลบสาขา ${branchName}?`)) {
-              window.location.href = `{{ url_for('delete_branch', branch_id='') }}${branchId}`;
-          }
-      }
-      </script>
-      <script>
-        function confirmDeleteTeacher(teacherId, teacherName) {
-            if (confirm('คุณแน่ใจหรือไม่ที่จะลบอาจารย์ ' + teacherName + '?')) {
-                window.location.href = "{{ url_for('delete_teacher', teacher_id=0) }}".replace('0', teacherId);
-            }
-        }
-        
-        function confirmDeleteBranch(branchId, branchName) {
-            if (confirm('คุณแน่ใจหรือไม่ที่จะลบสาขา ' + branchName + '?')) {
-                window.location.href = "{{ url_for('delete_branch', branch_id='') }}" + branchId;
-            }
-        }
-        </script>
+    </script>
   </body>
 </html>

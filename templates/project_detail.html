@@ -12,10 +12,6 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
       rel="stylesheet"
     />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
-      rel="stylesheet"
-    />
     <style>
       :root {
         --primary-color: #ff8c00;
@@ -198,21 +194,6 @@
                     <p class="text-warning">โครงการยังไม่ได้รับการอนุมัติ ไม่สามารถเริ่มดำเนินการได้</p>
                 {% endif %}
             {% endif %}
-<<<<<<< HEAD
-=======
-    
-            {% if g.user %}
-  {% if g.user.type == 'teacher' %}
-    <a href="{{ url_for('teacher_home') }}" class="btn btn-secondary mt-3">กลับ</a>
-  {% elif g.user.type == 'admin' %}
-    <a href="{{ url_for('admin_home') }}" class="btn btn-secondary mt-3">กลับ</a>
-  {% endif %}
-{% else %}
-  <a href="{{ url_for('home') }}" class="btn btn-secondary mt-3">กลับ</a>
-{% endif %}
-    </div>
-</div>
->>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
         </div>
     </div>
 

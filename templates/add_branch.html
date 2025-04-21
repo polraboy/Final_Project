@@ -11,11 +11,7 @@
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
       rel="stylesheet"
-      <link
-      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
-      rel="stylesheet"
     />
- 
     <style>
       :root {
         --primary-color: #ff8c00;
@@ -116,7 +112,11 @@
             >
           </li>
 
-         
+          <li class="nav-item">
+            <a class="nav-link" href="active_projects"
+              ><i class="fas fa-project-diagram"></i> โครงการ</a
+            >
+          </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('approve_project') }}"
               ><i class="fas fa-check-circle"></i> อนุมัติคำขอโครงการ</a
@@ -179,33 +179,42 @@
     {% endif %}
     <div class="container">
       <div class="content-box">
-          <h2 class="text-center mb-4">เพิ่มข้อมูลสาขา</h2>
-  
-          {% with messages = get_flashed_messages(with_categories=true) %}
-              {% if messages %}
-                  {% for category, message in messages %}
-                      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                          {{ message }}
-                          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                          </button>
-                      </div>
-                  {% endfor %}
-              {% endif %}
-          {% endwith %}
-  
-          <form action="{{ url_for('add_branch') }}" method="POST">
-              <div class="form-group">
-                  <label for="branch_name">ชื่อสาขา:</label>
-                  <input type="text" class="form-control" id="branch_name" name="branch_name" value="{{ branch_name or '' }}" required>
-              </div>
-  
-              <div class="text-center mt-4">
-                  <button type="submit" class="btn btn-primary">เพิ่มสาขา</button>
-              </div>
-          </form>
+        <h2 class="text-center mb-4">เพิ่มข้อมูลสาขา</h2>
+        <form action="{{ url_for('add_branch') }}" method="POST">
+          <div class="form-group">
+            <label for="branch_id"
+              ><i class="fas fa-hashtag"></i> รหัสสาขา:</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="branch_id"
+              name="branch_id"
+              required
+              placeholder="กรอกรหัสสาขา"
+            />
+          </div>
+          <div class="form-group">
+            <label for="branch_name"
+              ><i class="fas fa-graduation-cap"></i> ชื่อสาขา:</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="branch_name"
+              name="branch_name"
+              required
+              placeholder="กรอกชื่อสาขา"
+            />
+          </div>
+          <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fas fa-plus-circle"></i> เพิ่มสาขา
+            </button>
+          </div>
+        </form>
       </div>
-  </div>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>

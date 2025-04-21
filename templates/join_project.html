@@ -61,10 +61,7 @@
             จำนวนผู้เข้าร่วมปัจจุบัน:
             <strong>{{ current_count }} / {{ project.project_target }}</strong>
           </p>
-          <p class="text-center mb-4">
-            สำหรับผู้ที่เคยเข้าร่วมโครงการใดโครงการหนึ่งแล้วกรอกแค่ชื่อ
-            
-          </p>
+
           {% with messages = get_flashed_messages(with_categories=true) %} {% if
           messages %} {% for category, message in messages %}
           <div
@@ -83,21 +80,50 @@
           </div>
           {% endfor %} {% endif %} {% endwith %}
 
-          <form method="POST" id="joinForm">
+          <form method="POST">
             <div class="form-group">
-                <label for="join_name">ชื่อ-นามสกุล:</label>
-                <input type="text" class="form-control" id="join_name" name="join_name" required>
+              <label for="join_name"
+                ><i class="fas fa-user"></i> ชื่อ-นามสกุล:</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="join_name"
+                name="join_name"
+                required
+              />
             </div>
+
             <div class="form-group">
-                <label for="join_telephone">เบอร์โทรศัพท์:</label>
-                <input type="tel" class="form-control" id="join_telephone" name="join_telephone" required>
+              <label for="join_telephone"
+                ><i class="fas fa-phone"></i> เบอร์โทรศัพท์:</label
+              >
+              <input
+                type="tel"
+                class="form-control"
+                id="join_telephone"
+                name="join_telephone"
+                required
+              />
             </div>
+
             <div class="form-group">
-                <label for="join_email">อีเมล:</label>
-                <input type="email" class="form-control" id="join_email" name="join_email" required>
+              <label for="join_email"
+                ><i class="fas fa-envelope"></i> อีเมล:</label
+              >
+              <input
+                type="email"
+                class="form-control"
+                id="join_email"
+                name="join_email"
+                required
+              />
             </div>
-            <button type="submit" class="btn btn-primary">สมัครเข้าร่วม</button>
-        </form>
+
+            <button type="submit" class="btn btn-primary btn-block">
+              <i class="fas fa-paper-plane"></i> สมัครเข้าร่วม
+            </button>
+          </form>
         </div>
         <div class="card-footer text-center">
           <a
@@ -112,55 +138,5 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-      document.getElementById('join_name').addEventListener('blur', function() {
-          var name = this.value;
-          if (name) {
-              fetch('/get_participant_info', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({name: name, project_id: {{ project_id }}})
-              })
-              .then(response => response.json())
-              .then(data => {
-                  if (data.found) {
-                      document.getElementById('join_telephone').value = data.telephone;
-                      document.getElementById('join_email').value = data.email;
-                      if (data.already_joined) {
-                          alert('คุณได้สมัครเข้าร่วมโครงการนี้แล้ว ไม่สามารถสมัครซ้ำได้');
-                          document.getElementById('submitButton').disabled = true;
-                      } else {
-                          document.getElementById('submitButton').disabled = false;
-                      }
-                  } else {
-                      document.getElementById('submitButton').disabled = false;
-                  }
-              });
-          }
-      });
-      </script>
-    <script>
-      document.getElementById('join_name').addEventListener('blur', function() {
-          var name = this.value;
-          if (name) {
-              fetch('/get_participant_info', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({name: name})
-              })
-              .then(response => response.json())
-              .then(data => {
-                  if (data.found) {
-                      document.getElementById('join_telephone').value = data.telephone;
-                      document.getElementById('join_email').value = data.email;
-                  }
-              });
-          }
-      });
-      </script>
   </body>
 </html>

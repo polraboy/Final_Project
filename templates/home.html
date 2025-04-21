@@ -184,14 +184,14 @@
               ><i class="fas fa-home"></i> หน้าหลัก</a
             >
           </li>
+
           <li class="nav-item">
-            <a class="nav-link" href="participation_history"
-              ><i class="bi bi-card-checklist"></i> ประวัติการเข้าร่วมโครงการ</a
+            <a class="nav-link" href="active_projects"
+              ><i class="fas fa-project-diagram"></i> โครงการ</a
             >
           </li>
-          
-          <li class="nav-item active">
-            <a class="nav-link" href="/login"
+          <li class="nav-item">
+            <a class="nav-link login-button" href="/login"
               ><i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ</a
             >
           </li>
@@ -199,92 +199,54 @@
       </div>
     </nav>
 
-    
-
-<div class="container mt-5">
-    <div class="content-box">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 id="content-title">ข้อมูลข่าวสาร</h2>
-            <button class="btn btn-primary" onclick="toggleContent()">โครงการที่กำลังจัด</button>
-        </div>
-
-        <div id="news-content">
-            <!-- เนื้อหาข่าวสารเดิม -->
+    <!-- Content -->
+    <div class="container mt-5">
+        <div class="content-box">
+            <h2 class="mb-4">ข้อมูลข่าวสาร</h2>
             <div class="row">
                 {% for constant in constants %}
-                    <div class="col-md-4 mb-4">
-                        <div class="card h-100">
-                            <img src="data:image/jpeg;base64,{{ constant[2] }}" class="card-img-top" alt="{{ constant[0] }}">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ constant[0] }}</h5>
-                                <p>{{ constant[1] }}</p>
-                            </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <img src="data:image/jpeg;base64,{{ constant[2] }}" class="card-img-top" alt="{{ constant[0] }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ constant[0] }}</h5>
+                            <p class="card-text">{{ constant[1] }}</p>
                         </div>
                     </div>
+                </div>
                 {% endfor %}
             </div>
             
-            <!-- การแบ่งหน้า -->
             {% if total_pages > 1 %}
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                            <a class="page-link" href="{{ url_for('home', page=page-1) }}">ก่อนหน้า</a>
-                        </li>
-                        <li class="page-item active">
-                            <span class="page-link">หน้า {{ page }} จาก {{ total_pages }}</span>
-                        </li>
-                        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                            <a class="page-link" href="{{ url_for('home', page=page+1) }}">ถัดไป</a>
-                        </li>
-                    </ul>
-                </nav>
-            {% endif %}
-        </div>
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('home', page=page-1) }}" {% if page == 1 %}tabindex="-1" aria-disabled="true"{% endif %}>ก่อนหน้า</a>
+        </li>
+        
+        <li class="page-item active" aria-current="page">
+            <span class="page-link">
+                หน้า {{ page }} จาก {{ total_pages }}
+            </span>
+        </li>
+        
+        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('home', page=page+1) }}" {% if page == total_pages %}tabindex="-1" aria-disabled="true"{% endif %}>ถัดไป</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
 
-        <div id="projects-content" style="display: none;">
-            <!-- เนื้อหาโครงการที่กำลังจัด -->
-            <div class="row">
-                {% for project in active_projects %}
-                    <div class="col-md-4 mb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ project[1] }}</h5>
-                                <p>วันที่เริ่ม: {{ project[2].strftime('%d/%m/%Y') }}</p>
-                                <p>วันที่สิ้นสุด: {{ project[3].strftime('%d/%m/%Y') }}</p>
-                                <a href="{{ url_for('project_detail', project_id=project[0]) }}" class="btn btn-primary">ดูรายละเอียด</a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
+      <a href="{{ url_for('active_projects') }}" class="active-projects-button">
+        <i class="fas fa-project-diagram"></i> โครงการที่กำลังเริ่ม
+      </a>
     </div>
-</div>
 
-     
-    
+    <!-- Footer -->
     
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-      function toggleContent() {
-          var newsContent = document.getElementById('news-content');
-          var projectsContent = document.getElementById('projects-content');
-          var contentTitle = document.getElementById('content-title');
-      
-          if (newsContent.style.display !== 'none') {
-              newsContent.style.display = 'none';
-              projectsContent.style.display = 'block';
-              contentTitle.textContent = 'โครงการที่กำลังจัด';
-          } else {
-              newsContent.style.display = 'block';
-              projectsContent.style.display = 'none';
-              contentTitle.textContent = 'ข้อมูลข่าวสาร';
-          }
-      }
-      </script>
   </body>
 </html>
