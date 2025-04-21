@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายงานโครงการ - มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.css">
+    <style>
+        :root {
+            --primary-color: #FF8C00;
+            --secondary-color: #007bff;
+            --background-color: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: 'Kanit', sans-serif;
+            padding-bottom: 100px;
+        }
+
+        .content-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .navbar {
+            background-color: var(--primary-color) !important;
+        }
+
+        .navbar-brand img {
+            margin-right: 10px;
+        }
+
+        .navbar-brand span {
+            font-size: 1rem;
+            line-height: 1.2;
+            color: white;
+        }
+
+        .nav-link {
+            color: white !important;
+        }
+        
+        .stats-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stats-card .number {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .stats-card .label {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 30px;
+        }
+        
+        .filter-form .form-group {
+            margin-right: 15px;
+        }
+
+        .user-role-indicator {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- เมนูนำทาง แยกตามประเภทผู้ใช้ -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="{{ url_for('home') }}">
+            <img src="/static/image_2024-02-07_191338051.png"
+                 width="40"
+                 height="40"
+                 class="d-inline-block align-top"
+                 alt="Logo" />
+            <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br />วิทยาเขตขอนแก่น</span>
+        </a>
+        <button class="navbar-toggler"
+                type="button"
+                data-toggle="collapse"
+                data-target="#navbarNav"
+                aria-controls="navbarNav"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                {% if g.user %}
+                    {% if g.user.type == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_home') }}">
+                            <i class="fas fa-home"></i> หน้าหลัก
+                        </a>
+                    </li>
+                    {% elif g.user.type == 'teacher' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('teacher_home') }}">
+                            <i class="fas fa-home"></i> หน้าหลัก
+                        </a>
+                    </li>
+                    {% endif %}
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="fas fa-home"></i> หน้าหลัก
+                        </a>
+                    </li>
+                {% endif %}
+
+                
+                {% if g.user %}
+                    {% if g.user.type == 'admin' %}
+                    <!-- เมนูสำหรับเจ้าหน้าที่ (Admin) -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('active_projects') }}">
+                          <i class="fas fa-project-diagram"></i> โครงการ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('approve_project') }}">
+                            <i class="fas fa-clipboard-check"></i> อนุมัติคำขอโครงการ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('edit_basic_info') }}">
+                            <i class="fas fa-cog"></i> ข้อมูลพื้นฐาน
+                        </a>
+                    </li>
+                    {% elif g.user.type == 'teacher' %}
+                    <!-- เมนูสำหรับครู (Teacher) -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('add_project') }}">
+                            <i class="fas fa-plus"></i> เพิ่มโครงการ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('teacher_projects') }}">
+                            <i class="fas fa-tasks"></i> จัดการโครงการ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('project_history') }}">
+                            <i class="fas fa-history"></i> ประวัติโครงการ
+                        </a>
+                    </li>
+                    {% endif %}
+                
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('project_reports') }}">
+                        <i class="fas fa-chart-bar"></i> รายงาน
+                    </a>
+                </li>
+                
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">
+                        <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                    </a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('login') }}">
+                        <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+    
+   
+    
+    <div class="container mt-5">
+        <div class="content-box">
+            <h2 class="text-center mb-4">
+                รายงานสรุปโครงการที่เสร็จสิ้น
+                {% if g.user and g.user.type == 'admin' %}
+                <small class="text-muted">(สำหรับเจ้าหน้าที่)</small>
+                {% elif g.user and g.user.type == 'teacher' %}
+                <small class="text-muted">(สำหรับอาจารย์)</small>
+                {% endif %}
+            </h2>
+            
+            <!-- ส่วนตัวกรอง -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-filter"></i> ตัวกรองข้อมูล
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('project_reports') }}" method="GET" class="form-inline filter-form">
+                        <div class="form-group">
+                            <label for="branch">สาขา:</label>
+                            <select class="form-control ml-2" id="branch" name="branch">
+                                <option value="all" {% if branch_id == 'all' %}selected{% endif %}>ทั้งหมด</option>
+                                {% for b in branches %}
+                                <option value="{{ b[0] }}" {% if branch_id|string == b[0]|string %}selected{% endif %}>{{ b[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="year">ปีงบประมาณ:</label>
+                            <select class="form-control ml-2" id="year" name="year">
+                                <option value="all" {% if year == 'all' %}selected{% endif %}>ทั้งหมด</option>
+                                {% for y in years %}
+                                <option value="{{ y }}" {% if year|string == y|string %}selected{% endif %}>{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="budget_type">ประเภทงบประมาณ:</label>
+                            <select class="form-control ml-2" id="budget_type" name="budget_type">
+                                <option value="all" {% if budget_type == 'all' %}selected{% endif %}>ทั้งหมด</option>
+                                {% for bt in budget_types %}
+                                <option value="{{ bt }}" {% if budget_type == bt %}selected{% endif %}>{{ bt }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="policy">นโยบาย:</label>
+                            <select class="form-control ml-2" id="policy" name="policy">
+                                <option value="all" {% if policy == 'all' %}selected{% endif %}>ทั้งหมด</option>
+                                {% for p in policies %}
+                                <option value="{{ p }}" {% if policy == p %}selected{% endif %}>{{ p }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                       
+                        
+                        <button type="submit" class="btn btn-primary ml-2">
+                            <i class="fas fa-search"></i> ค้นหา
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- ส่วนแสดงสถิติ -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="number">{{ total_projects }}</div>
+                        <div class="label">จำนวนโครงการทั้งหมด</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="number">{{ "{:,.2f}".format(total_budget) }}</div>
+                        <div class="label">งบประมาณรวม (บาท)</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="number">{{ "{:,.2f}".format(total_budget / total_projects) if total_projects > 0 else 0 }}</div>
+                        <div class="label">งบประมาณเฉลี่ยต่อโครงการ (บาท)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ส่วนแสดงกราฟ -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <i class="fas fa-chart-pie"></i> สัดส่วนโครงการตามสาขา
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="branchChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <i class="fas fa-chart-pie"></i> สัดส่วนโครงการตามนโยบาย
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="policyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ส่วนแสดงตารางข้อมูล -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <i class="fas fa-table"></i> รายการโครงการที่เสร็จสิ้น
+                    {% if g.user and g.user.type == 'teacher' and my_projects_only %}
+                    <span class="badge badge-light ml-2">เฉพาะโครงการของฉัน</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>ลำดับ</th>
+                                    <th>ชื่อโครงการ</th>
+                                    <th>สาขา</th>
+                                    <th>ผู้รับผิดชอบ</th>
+                                    <th>ปีงบประมาณ</th>
+                                    <th>ประเภทงบประมาณ</th>
+                                    <th>นโยบาย</th>
+                                    <th>งบประมาณ (บาท)</th>
+                                    <th>ระยะเวลาดำเนินการ</th>
+                                    <th>วันที่เสร็จสิ้น</th>
+                                    <th>ดูรายละเอียด</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in projects %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ p[1] }}</td>
+                                    <td>{{ p[10] }}</td>
+                                    <td>{{ p[9] }}</td>
+                                    <td>{{ p[2] }}</td>
+                                    <td>{{ p[3] }}</td>
+                                    <td>{{ p[8] or 'ไม่ระบุ' }}</td>
+                                    <td class="text-right">{{ "{:,.2f}".format(p[7]) if p[7] is not none else '-' }}</td>
+                                    <td>
+                                        {% if p[4] and p[5] %}
+                                            {{ p[4]|string|replace(' 00:00:00', '') }} ถึง 
+                                            {{ p[5]|string|replace(' 00:00:00', '') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if p[6] %}
+                                            {{ p[6]|string|replace(' 00:00:00', '') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('project_summary', project_id=p[0]) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-search"></i> ดู
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                
+                                {% if not projects %}
+                                <tr>
+                                    <td colspan="11" class="text-center">ไม่พบข้อมูลโครงการ</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+    
+    <script>
+        // กราฟแสดงสัดส่วนโครงการตามสาขา
+        var branchCtx = document.getElementById('branchChart').getContext('2d');
+        var branchData = {
+            labels: [
+                {% for branch_name, stats in branch_stats.items() %}
+                "{{ branch_name }}",
+                {% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for branch_name, stats in branch_stats.items() %}
+                    {{ stats.count }},
+                    {% endfor %}
+                ],
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+                    '#8C9EFF', '#69F0AE', '#FFD54F', '#7986CB', '#4DB6AC', '#FF8A65'
+                ]
+            }]
+        };
+        
+        var branchChart = new Chart(branchCtx, {
+            type: 'pie',
+            data: branchData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                    position: 'right'
+                },
+                title: {
+                    display: true,
+                    text: 'สัดส่วนโครงการตามสาขา (จำนวน)'
+                }
+            }
+        });
+        
+        // กราฟแสดงสัดส่วนโครงการตามนโยบาย
+        var policyCtx = document.getElementById('policyChart').getContext('2d');
+        var policyData = {
+            labels: [
+                {% for policy_name, stats in policy_stats.items() %}
+                "{{ policy_name }}",
+                {% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for policy_name, stats in policy_stats.items() %}
+                    {{ stats.count }},
+                    {% endfor %}
+                ],
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+                    '#8C9EFF', '#69F0AE', '#FFD54F', '#7986CB', '#4DB6AC', '#FF8A65'
+                ]
+            }]
+        };
+        
+        var policyChart = new Chart(policyCtx, {
+            type: 'pie',
+            data: policyData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                    position: 'right'
+                },
+                title: {
+                    display: true,
+                    text: 'สัดส่วนโครงการตามนโยบาย (จำนวน)'
+                }
+            }
+        });
+    </script>
+</body>
+</html>

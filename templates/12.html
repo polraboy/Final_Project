@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>อนุมัติโครงการ</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #FF8C00;
+            --secondary-color: #007bff;
+            --background-color: #f8f9fa;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            font-family: 'Kanit', sans-serif;
+            padding-bottom: 100px;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+        }
+
+        .navbar-brand img {
+            margin-right: 10px;
+        }
+
+        .navbar-brand span {
+            font-size: 1rem;
+            line-height: 1.2;
+            color: white;
+        }
+
+        .nav-link {
+            color: white !important;
+        }
+
+        .content-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+
+        .table thead th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-success:hover {
+            background-color: darken(var(--secondary-color), 10%);
+            border-color: darken(var(--secondary-color), 10%);
+        }
+
+        .footer {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .footer img {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+
+        #approval {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="#">
+            <img src="/static/image_2024-02-07_191338051.png" width="40" height="40" class="d-inline-block align-top" alt="Logo">
+            <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br>วิทยาเขตขอนแก่น</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="fas fa-info-circle"></i> เกี่ยวกับ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="fas fa-project-diagram"></i> โครงการ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('add_project') }}"><i class="fas fa-plus-circle"></i> เพิ่มโครงการ</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('approve_project') }}"><i class="fas fa-check-circle"></i> อนุมัติคำขอโครงการ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('edit_basic_info') }}"><i class="fas fa-cog"></i> ข้อมูลพื้นฐาน</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="fas fa-user"></i> {{ session['admin_name'] }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="content-box">
+            <h2 class="text-center mb-4">อนุมัติโครงการ</h2>
+            <form id="approval-form" action="/projects" method="get" class="mb-4">
+                <div class="form-group">
+                    <label for="approval"><i class="fas fa-filter"></i> กรองสถานะโครงการ:</label>
+                    <select name="approval" id="approval" class="form-control">
+                        <option value="approved">อนุมัติแล้ว</option>
+                        <option value="pending">รออนุมัติ</option>
+                        <option value="unapproved">ยังไม่ยื่นอนุมัติ</option>
+                    </select>
+                </div>
+            </form>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col"><i class="fas fa-hashtag"></i> ลำดับ</th>
+                            <th scope="col"><i class="fas fa-project-diagram"></i> ชื่อโครงการ</th>
+                            <th scope="col"><i class="fas fa-info-circle"></i> สถานะโครงการ</th>
+                            <th scope="col"><i class="fas fa-cogs"></i> การดำเนินการ</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                        <tr class="{% if project[2] == 0 %}unapproved-projects{% endif %} {% if project[2] == 1 %}pending-projects{% endif %} {% if project[2] == 2 %}approved-projects{% endif %}">
+                            <td>{{ project[0] }}</td>
+                            <td>{{ project[1] }}</td>
+                            <td>
+                                {% if project[2] == 0 %}
+                                    <span class="badge badge-secondary">ยังไม่ยื่นอนุมัติ</span>
+                                {% elif project[2] == 1 %}
+                                    <span class="badge badge-warning">รออนุมัติ</span>
+                                {% elif project[2] == 2 %}
+                                    <span class="badge badge-success">อนุมัติแล้ว</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if project[3] %}
+                                    <span class="badge badge-info">เปิดโครงการ</span>
+                                {% else %}
+                                    <span class="badge badge-danger">ปิดโครงการ</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if project[2] == 1 %}
+                                <form action="{{ url_for('approve_project') }}" method="post" style="display:inline;">
+                                    <input type="hidden" name="project_id" value="{{ project[0] }}">
+                                    <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check"></i> อนุมัติ</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <img src="/static/image_2024-02-07_191338051.png" alt="Logo" class="mb-3">
+            <p>คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ - มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตขอนแก่น</p>
+            <p>150 ถ.ศรีจันทร์ ต.ในเมือง อ.เมือง จ.ขอนแก่น 40000</p>
+            <p>โทร: 043-283-705 | เวลาทำการ: 8.00-16.00 น.</p>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function filterProjects() {
+            var selectedValue = document.getElementById('approval').value;
+            var pendingProjects = document.querySelectorAll('.pending-projects');
+            var approvedProjects = document.querySelectorAll('.approved-projects');
+            var unapprovedProjects = document.querySelectorAll('.unapproved-projects');
+
+            if (selectedValue === 'pending') {
+                pendingProjects.forEach(project => project.style.display = 'table-row');
+                approvedProjects.forEach(project => project.style.display = 'none');
+                unapprovedProjects.forEach(project => project.style.display = 'none');
+            } else if (selectedValue === 'approved') {
+                pendingProjects.forEach(project => project.style.display = 'none');
+                approvedProjects.forEach(project => project.style.display = 'table-row');
+                unapprovedProjects.forEach(project => project.style.display = 'none');
+            } else if (selectedValue === 'unapproved') {
+                pendingProjects.forEach(project => project.style.display = 'none');
+                approvedProjects.forEach(project => project.style.display = 'none');
+                unapprovedProjects.forEach(project => project.style.display = 'table-row');
+            }
+        }
+
+        document.getElementById('approval').addEventListener('change', filterProjects);
+        filterProjects();
+    </script>
+</body>
+
+</html>

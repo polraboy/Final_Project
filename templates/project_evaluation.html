@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบประเมินโครงการ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f8ff;
+            font-family: 'Kanit', sans-serif;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
+        }
+        .card-body {
+            padding: 30px;
+        }
+        .question-block {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .question-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .radio-options {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .radio-option {
+            text-align: center;
+            width: 18%;
+        }
+        .radio-option input[type="radio"] {
+            display: none;
+        }
+        .radio-option label {
+            display: block;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            margin: 0 auto;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        .radio-option input[type="radio"]:checked + label {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .scale-description {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .required {
+            color: red;
+        }
+        .btn-submit {
+            padding: 10px 40px;
+            font-size: 1.1rem;
+            border-radius: 30px;
+        }
+        .thank-you {
+            text-align: center;
+            margin: 20px 0;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+   
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="text-center mb-2">แบบประเมินโครงการ</h2>
+                <h4 class="text-center">{{ project_name }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="evaluationForm">
+                    <!-- ซ่อนฟิลด์จากพารามิเตอร์ URL -->
+                    {% if join_name %}
+                    <input type="hidden" id="join_name" name="join_name" value="{{ join_name }}">
+                    {% endif %}
+                    
+                    {% if join_email %}
+                    <input type="hidden" id="join_email" name="join_email" value="{{ join_email }}">
+                    {% endif %}
+                    
+                    <input type="hidden" id="evaluation_score" name="evaluation_score" value="">
+    
+                    <!-- ถ้าไม่มีข้อมูลจาก URL ให้แสดงฟิลด์สำหรับกรอกข้อมูล -->
+                    {% if not join_name or not join_email %}
+                    <div class="question-block">
+                        <div class="question-title">ข้อมูลผู้ประเมิน</div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="join_name">ชื่อ-นามสกุล {% if not join_name %}<span class="required">*</span>{% endif %}</label>
+                                <input type="text" class="form-control" id="join_name" name="join_name" value="{{ join_name }}" {% if not join_name %}required{% endif %}>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="join_email">อีเมล {% if not join_email %}<span class="required">*</span>{% endif %}</label>
+                                <input type="email" class="form-control" id="join_email" name="join_email" value="{{ join_email }}" {% if not join_email %}required{% endif %}>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="join_telephone">เบอร์โทรศัพท์</label>
+                                <input type="text" class="form-control" id="join_telephone" name="join_telephone">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+    
+                    <!-- คำถามที่ 1 -->
+                    <div class="question-block">
+                        <div class="question-title">1. รูปแบบและขั้นตอนในการดำเนินกิจกรรม <span class="required">*</span></div>
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input type="radio" name="q1_score" id="q1_score_1" value="1" required>
+                                <label for="q1_score_1">1</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q1_score" id="q1_score_2" value="2" required>
+                                <label for="q1_score_2">2</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q1_score" id="q1_score_3" value="3" required>
+                                <label for="q1_score_3">3</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q1_score" id="q1_score_4" value="4" required>
+                                <label for="q1_score_4">4</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q1_score" id="q1_score_5" value="5" required>
+                                <label for="q1_score_5">5</label>
+                            </div>
+                        </div>
+                        <div class="scale-description">
+                            <span>1 หมายถึง พึงพอใจน้อยที่สุด</span>
+                            <span>5 หมายถึง พึงพอใจมากที่สุด</span>
+                        </div>
+                    </div>
+    
+                    <!-- คำถามที่ 2 -->
+                    <div class="question-block">
+                        <div class="question-title">2. ความรู้ที่ได้รับจากการเข้าร่วมกิจกรรม <span class="required">*</span></div>
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input type="radio" name="q2_score" id="q2_score_1" value="1" required>
+                                <label for="q2_score_1">1</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q2_score" id="q2_score_2" value="2" required>
+                                <label for="q2_score_2">2</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q2_score" id="q2_score_3" value="3" required>
+                                <label for="q2_score_3">3</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q2_score" id="q2_score_4" value="4" required>
+                                <label for="q2_score_4">4</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q2_score" id="q2_score_5" value="5" required>
+                                <label for="q2_score_5">5</label>
+                            </div>
+                        </div>
+                        <div class="scale-description">
+                            <span>1 หมายถึง พึงพอใจน้อยที่สุด</span>
+                            <span>5 หมายถึง พึงพอใจมากที่สุด</span>
+                        </div>
+                    </div>
+    
+                    <!-- คำถามที่ 3 -->
+                    <div class="question-block">
+                        <div class="question-title">3. ผู้จัดกิจกรรมฐานมีความรู้ ความชำนาญในเรื่องนั้นๆ <span class="required">*</span></div>
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input type="radio" name="q3_score" id="q3_score_1" value="1" required>
+                                <label for="q3_score_1">1</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q3_score" id="q3_score_2" value="2" required>
+                                <label for="q3_score_2">2</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q3_score" id="q3_score_3" value="3" required>
+                                <label for="q3_score_3">3</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q3_score" id="q3_score_4" value="4" required>
+                                <label for="q3_score_4">4</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q3_score" id="q3_score_5" value="5" required>
+                                <label for="q3_score_5">5</label>
+                            </div>
+                        </div>
+                        <div class="scale-description">
+                            <span>1 หมายถึง พึงพอใจน้อยที่สุด</span>
+                            <span>5 หมายถึง พึงพอใจมากที่สุด</span>
+                        </div>
+                    </div>
+    
+                    <!-- คำถามที่ 4 -->
+                    <div class="question-block">
+                        <div class="question-title">4. วิทยากรฐานมีความสามารถในการถ่ายทอดความรู้เป็นอย่างดี <span class="required">*</span></div>
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input type="radio" name="q4_score" id="q4_score_1" value="1" required>
+                                <label for="q4_score_1">1</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q4_score" id="q4_score_2" value="2" required>
+                                <label for="q4_score_2">2</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q4_score" id="q4_score_3" value="3" required>
+                                <label for="q4_score_3">3</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q4_score" id="q4_score_4" value="4" required>
+                                <label for="q4_score_4">4</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q4_score" id="q4_score_5" value="5" required>
+                                <label for="q4_score_5">5</label>
+                            </div>
+                        </div>
+                        <div class="scale-description">
+                            <span>1 หมายถึง พึงพอใจน้อยที่สุด</span>
+                            <span>5 หมายถึง พึงพอใจมากที่สุด</span>
+                        </div>
+                    </div>
+    
+                    <!-- คำถามที่ 5 -->
+                    <div class="question-block">
+                        <div class="question-title">5. ระยะเวลาที่ใช้ในการเข้าร่วมกิจกรรมมีความเหมาะสม <span class="required">*</span></div>
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input type="radio" name="q5_score" id="q5_score_1" value="1" required>
+                                <label for="q5_score_1">1</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q5_score" id="q5_score_2" value="2" required>
+                                <label for="q5_score_2">2</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q5_score" id="q5_score_3" value="3" required>
+                                <label for="q5_score_3">3</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q5_score" id="q5_score_4" value="4" required>
+                                <label for="q5_score_4">4</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q5_score" id="q5_score_5" value="5" required>
+                                <label for="q5_score_5">5</label>
+                            </div>
+                        </div>
+                        <div class="scale-description">
+                            <span>1 หมายถึง พึงพอใจน้อยที่สุด</span>
+                            <span>5 หมายถึง พึงพอใจมากที่สุด</span>
+                        </div>
+                    </div>
+    
+                    <!-- คำถามที่ 6 -->
+                    <div class="question-block">
+                        <div class="question-title">6. ได้แลกเปลี่ยนเรียนรู้วัฒนธรรมระหว่างการเข้าร่วมกิจกรรม <span class="required">*</span></div>
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input type="radio" name="q6_score" id="q6_score_1" value="1" required>
+                                <label for="q6_score_1">1</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q6_score" id="q6_score_2" value="2" required>
+                                <label for="q6_score_2">2</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q6_score" id="q6_score_3" value="3" required>
+                                <label for="q6_score_3">3</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q6_score" id="q6_score_4" value="4" required>
+                                <label for="q6_score_4">4</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q6_score" id="q6_score_5" value="5" required>
+                                <label for="q6_score_5">5</label>
+                            </div>
+                        </div>
+                        <div class="scale-description">
+                            <span>1 หมายถึง พึงพอใจน้อยที่สุด</span>
+                            <span>5 หมายถึง พึงพอใจมากที่สุด</span>
+                        </div>
+                    </div>
+    
+                    <!-- คำถามที่ 7 -->
+                    <div class="question-block">
+                        <div class="question-title">7. มีความหลากหลายของกิจกรรมด้านวิชาการ <span class="required">*</span></div>
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input type="radio" name="q7_score" id="q7_score_1" value="1" required>
+                                <label for="q7_score_1">1</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q7_score" id="q7_score_2" value="2" required>
+                                <label for="q7_score_2">2</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q7_score" id="q7_score_3" value="3" required>
+                                <label for="q7_score_3">3</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q7_score" id="q7_score_4" value="4" required>
+                                <label for="q7_score_4">4</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q7_score" id="q7_score_5" value="5" required>
+                                <label for="q7_score_5">5</label>
+                            </div>
+                        </div>
+                        <div class="scale-description">
+                            <span>1 หมายถึง พึงพอใจน้อยที่สุด</span>
+                            <span>5 หมายถึง พึงพอใจมากที่สุด</span>
+                        </div>
+                    </div>
+    
+                    <!-- คำถามที่ 8 -->
+                    <div class="question-block">
+                        <div class="question-title">8. ความเหมาะสมของสถานที่ในการดำเนินกิจกรรม <span class="required">*</span></div>
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input type="radio" name="q8_score" id="q8_score_1" value="1" required>
+                                <label for="q8_score_1">1</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q8_score" id="q8_score_2" value="2" required>
+                                <label for="q8_score_2">2</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q8_score" id="q8_score_3" value="3" required>
+                                <label for="q8_score_3">3</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q8_score" id="q8_score_4" value="4" required>
+                                <label for="q8_score_4">4</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q8_score" id="q8_score_5" value="5" required>
+                                <label for="q8_score_5">5</label>
+                            </div>
+                        </div>
+                        <div class="scale-description">
+                            <span>1 หมายถึง พึงพอใจน้อยที่สุด</span>
+                            <span>5 หมายถึง พึงพอใจมากที่สุด</span>
+                        </div>
+                    </div>
+    
+                    <!-- คำถามที่ 9 -->
+                    <div class="question-block">
+                        <div class="question-title">9. มีการประชาสัมพันธ์กิจกรรมล่วงหน้า และอย่างทั่วถึง <span class="required">*</span></div>
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input type="radio" name="q9_score" id="q9_score_1" value="1" required>
+                                <label for="q9_score_1">1</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q9_score" id="q9_score_2" value="2" required>
+                                <label for="q9_score_2">2</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q9_score" id="q9_score_3" value="3" required>
+                                <label for="q9_score_3">3</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q9_score" id="q9_score_4" value="4" required>
+                                <label for="q9_score_4">4</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q9_score" id="q9_score_5" value="5" required>
+                                <label for="q9_score_5">5</label>
+                            </div>
+                        </div>
+                        <div class="scale-description">
+                            <span>1 หมายถึง พึงพอใจน้อยที่สุด</span>
+                            <span>5 หมายถึง พึงพอใจมากที่สุด</span>
+                        </div>
+                    </div>
+    
+                    <!-- คำถามที่ 10 -->
+                    <div class="question-block">
+                        <div class="question-title">10. โดยภาพรวมท่านมีความพึงพอใจในการเข้าร่วมกิจกรรม <span class="required">*</span></div>
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input type="radio" name="q10_score" id="q10_score_1" value="1" required>
+                                <label for="q10_score_1">1</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q10_score" id="q10_score_2" value="2" required>
+                                <label for="q10_score_2">2</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q10_score" id="q10_score_3" value="3" required>
+                                <label for="q10_score_3">3</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q10_score" id="q10_score_4" value="4" required>
+                                <label for="q10_score_4">4</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="q10_score" id="q10_score_5" value="5" required>
+                                <label for="q10_score_5">5</label>
+                            </div>
+                        </div>
+                        <div class="scale-description">
+                            <span>1 หมายถึง พึงพอใจน้อยที่สุด</span>
+                            <span>5 หมายถึง พึงพอใจมากที่สุด</span>
+                        </div>
+                    </div>
+    
+                    <!-- ข้อเสนอแนะเพิ่มเติม -->
+                    <div class="question-block">
+                        <div class="question-title">ข้อคิดเห็นและข้อเสนอแนะเพิ่มเติม</div>
+                        <textarea name="evaluation_comments" class="form-control" rows="4" placeholder="โปรดให้ข้อเสนอแนะเพิ่มเติม (ถ้ามี)"></textarea>
+                    </div>
+    
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary btn-submit">ส่งแบบประเมิน</button>
+                    </div>
+    
+                    <div class="thank-you mt-4">
+                        ขอบคุณที่สละเวลาทำแบบประเมิน ข้อมูลของท่านจะเป็นประโยชน์ต่อการพัฒนาคุณภาพโครงการในอนาคต
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // แก้ไขการส่งแบบฟอร์ม
+            document.getElementById('evaluationForm').addEventListener('submit', function(e) {
+                // ป้องกันการส่งฟอร์มแบบปกติ
+                e.preventDefault();
+                
+                // คำนวณค่าเฉลี่ยจากคำถามทั้ง 10 ข้อ
+                let totalScore = 0;
+                let answeredQuestions = 0;
+                
+                for (let i = 1; i <= 10; i++) {
+                    const fieldName = `q${i}_score`;
+                    const selectedOption = document.querySelector(`input[name="${fieldName}"]:checked`);
+                    if (selectedOption) {
+                        totalScore += parseInt(selectedOption.value);
+                        answeredQuestions++;
+                    }
+                }
+                
+                // ตรวจสอบว่าตอบครบทุกข้อหรือไม่
+                if (answeredQuestions < 10) {
+                    alert('กรุณาตอบคำถามให้ครบทุกข้อ');
+                    return;
+                }
+                
+                // หาค่าเฉลี่ย
+                const averageScore = totalScore / 10;
+                
+                // กำหนดค่าใน hidden field
+                document.getElementById('evaluation_score').value = averageScore.toFixed(2);
+                
+                // แสดง debug log
+                console.log('ส่งข้อมูลการประเมิน:');
+                console.log('evaluation_score: ' + document.getElementById('evaluation_score').value);
+                console.log('evaluation_comments: ' + document.querySelector('textarea[name="evaluation_comments"]').value);
+                if (document.getElementById('join_name')) {
+                    console.log('join_name: ' + document.getElementById('join_name').value);
+                }
+                if (document.getElementById('join_email')) {
+                    console.log('join_email: ' + document.getElementById('join_email').value);
+                }
+                
+                // ส่งฟอร์ม
+                this.submit();
+            });
+        });
+    </script>
+</body>
+</html> 

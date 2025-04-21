@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>สมัครเข้าร่วมโครงการ</title>
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Kanit", sans-serif;
+        background-color: #f8f9fa;
+      }
+      .container {
+        max-width: 600px;
+        margin-top: 50px;
+      }
+      .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      }
+      .card-header {
+        background-color: #ff8c00;
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+      }
+      .btn-primary {
+        background-color: #ff8c00;
+        border-color: #ff8c00;
+      }
+      .btn-primary:hover {
+        background-color: #e67e00;
+        border-color: #e67e00;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-5">
+        <h2 class="mb-4">ประวัติการเข้าร่วมโครงการ</h2>
+        <a href="javascript:history.back()" class="btn btn-secondary mb-3"
+          >กลับ</a
+        >
+        <form method="POST" class="mb-4">
+            <div class="form-group">
+                <label for="phone_number">กรอกเบอร์โทรศัพท์ของคุณ:</label>
+                <input type="tel" class="form-control" id="phone_number" name="phone_number" required>
+            </div>
+            <button type="submit" class="btn btn-primary">ค้นหา</button>
+        </form>
+    
+        {% if history %}
+            <h3>ประวัติการเข้าร่วมโครงการของเบอร์ {{ phone_number }}</h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ชื่อโครงการ</th>
+                        <th>วันที่เริ่ม</th>
+                        <th>วันที่สิ้นสุด</th>
+                        <th>สถานะ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in history %}
+                    <tr>
+                        <td>{{ project[0] }}</td>
+                        <td>{{ project[1].strftime('%d/%m/%Y') }}</td>
+                        <td>{{ project[2].strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {% if project[3] == 0 %}
+                                รอการอนุมัติ
+                            {% elif project[3] == 1 %}
+                                อนุมัติแล้ว
+                            {% else %}
+                                ไม่อนุมัติ
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% elif request.method == "POST" %}
+            <p>ไม่พบประวัติการเข้าร่วมโครงการสำหรับเบอร์โทรศัพท์นี้</p>
+        {% endif %}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </body>
+</html>

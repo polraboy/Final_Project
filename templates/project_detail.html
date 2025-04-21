@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>รายละเอียดโครงการ</title>
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #ff8c00;
+        --secondary-color: #007bff;
+        --background-color: #f8f9fa;
+      }
+
+      body {
+        background-color: var(--background-color);
+        font-family: "Kanit", sans-serif;
+        padding-bottom: 100px;
+      }
+
+      .navbar {
+        background-color: var(--primary-color) !important;
+      }
+
+      .navbar-brand img {
+        margin-right: 10px;
+      }
+
+      .navbar-brand span {
+        font-size: 1rem;
+        line-height: 1.2;
+        color: white;
+      }
+
+      .nav-link {
+        color: white !important;
+      }
+
+      .content-box {
+        background-color: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        margin-top: 30px;
+        margin-bottom: 50px;
+      }
+
+      .btn-secondary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+      }
+
+      .btn-secondary:hover {
+        background-color: darken(var(--secondary-color), 10%);
+        border-color: darken(var(--secondary-color), 10%);
+      }
+
+      .footer {
+        background-color: var(--secondary-color);
+        color: white;
+        text-align: center;
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        height: 5%; 
+      }
+
+      .footer img {
+        max-width: 100px;
+        margin-bottom: 10px;
+      }
+
+      .form-check-input {
+        margin-top: 0.3rem;
+      }
+      
+      /* เพิ่มสไตล์สำหรับแสดงสถานะโครงการ */
+      .project-status {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-weight: bold;
+        margin-bottom: 15px;
+      }
+      
+      .status-active {
+        background-color: #28a745;
+        color: white;
+      }
+      
+      .status-completed {
+        background-color: #dc3545;
+        color: white;
+      }
+      
+      /* เพิ่มสไตล์สำหรับเน้นวันที่จัดอบรม */
+      .training-dates {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #ff8c00;
+        margin-bottom: 20px;
+      }
+      
+      .dates-heading {
+        color: #ff8c00;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+        <div class="content-box">
+            <h2 class="text-center mb-4">รายละเอียดโครงการ</h2>
+            
+            <!-- เพิ่มการแสดงสถานะโครงการ -->
+            {% if project.project_statusStart == 1 %}
+                <div class="project-status status-active mb-3 text-center">
+                    <i class="fas fa-spinner fa-spin mr-2"></i> กำลังดำเนินการ
+                </div>
+            {% elif project.project_statusStart == 2 %}
+                <div class="project-status status-completed mb-3 text-center">
+                    <i class="fas fa-check-circle mr-2"></i> โครงการเสร็จสิ้นแล้ว
+                </div>
+            {% endif %}
+            
+            <p><strong>ชื่อโครงการ:</strong> {{ project.project_name }}</p>
+            <p><strong>ปี:</strong> {{ project.project_year }}</p>
+            <p><strong>รูปแบบโครงการ:</strong> {{ project.project_style }}</p>
+            <p><strong>ที่อยู่โครงการ:</strong> {{ project.project_address }}</p>
+            
+            <!-- เพิ่มส่วนแสดงวันที่จัดอบรมแบบเด่นชัด -->
+            <div class="training-dates">
+                <h5 class="dates-heading"><i class="far fa-calendar-alt mr-2"></i> วันที่จัดอบรม</h5>
+                <p><strong>เริ่มวันที่:</strong> {{ project.project_dotime }}</p>
+                <p><strong>สิ้นสุดวันที่:</strong> {{ project.project_endtime }}</p>
+            </div>
+            
+            <p><strong>เป้าหมายโครงการ:</strong> {{ project.project_target }}</p>
+            <p><strong>รายละเอียดโครงการ:</strong> {{ project.project_detail }}</p>
+            <p><strong>ผู้รับผิดชอบโครงการ:</strong> {{ project.teacher_name }}</p>
+    
+            <p>จำนวนผู้เข้าร่วมปัจจุบัน: {{ current_count }} / {{ project.project_target|default(0) }}</p>
+    
+            {% if project.project_statusStart == 1 and current_count < (project.project_target|int if project.project_target else 0) %}
+                <a href="{{ url_for('join_project', project_id=project.project_id) }}" class="btn btn-primary">สมัครเข้าร่วมโครงการ</a>
+            {% elif project.project_statusStart == 2 %}
+                <p class="text-warning">โครงการนี้เสร็จสิ้นแล้ว ไม่สามารถรับสมัครเพิ่มได้</p>
+             
+            {% else %}
+                <p class="text-danger">ขออภัย โครงการนี้มีผู้เข้าร่วมเต็มแล้ว</p>
+            {% endif %}
+    
+            <a href="{{ url_for('project_participants', project_id=project.project_id) }}" class="btn btn-info mt-2">ดูรายชื่อผู้เข้าร่วมโครงการ</a>
+    
+            {% if is_logged_in and user_type == 'teacher' %}
+                {% if project.project_status == 2 %}  <!-- ตรวจสอบว่าโครงการได้รับการอนุมัติแล้ว -->
+                    <hr class="my-4">
+                    <h5>จัดการสถานะโครงการ</h5>
+                    <form id="projectStatusForm" action="{{ url_for('update_project_statusStart') }}" method="POST">
+                        <input type="hidden" name="project_id" value="{{ project.project_id }}">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="radio" id="openProject" name="projectStatus" value="1" {% if project.project_statusStart == 1 %}checked{% endif %}>
+                            <label class="form-check-label" for="openProject">เริ่มดำเนินโครงการ</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="radio" id="closeProject" name="projectStatus" value="0" {% if project.project_statusStart == 0 %}checked{% endif %}>
+                            <label class="form-check-label" for="closeProject">ปิดโครงการ</label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">บันทึก</button>
+                    </form>
+                    
+                    <!-- แยกฟอร์มสำหรับปุ่มปิดโครงการเพื่อให้แสดงผลอย่างชัดเจน -->
+                    {% if project.project_statusStart == 1 %}
+                    <div class="mt-3">
+                        <form action="{{ url_for('close_project') }}" method="POST" onsubmit="return confirm('คุณแน่ใจหรือว่าต้องการปิดโครงการ?');">
+                            <input type="hidden" name="project_id" value="{{ project.project_id }}">
+                            <button type="submit" class="btn btn-danger">ปิดโครงการ</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-warning">โครงการยังไม่ได้รับการอนุมัติ ไม่สามารถเริ่มดำเนินการได้</p>
+                {% endif %}
+            {% endif %}
+<<<<<<< HEAD
+=======
+    
+            {% if g.user %}
+  {% if g.user.type == 'teacher' %}
+    <a href="{{ url_for('teacher_home') }}" class="btn btn-secondary mt-3">กลับ</a>
+  {% elif g.user.type == 'admin' %}
+    <a href="{{ url_for('admin_home') }}" class="btn btn-secondary mt-3">กลับ</a>
+  {% endif %}
+{% else %}
+  <a href="{{ url_for('home') }}" class="btn btn-secondary mt-3">กลับ</a>
+{% endif %}
+    </div>
+</div>
+>>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container py-2">
+            <p class="mb-0">
+                <button onclick="goBack()" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-left"></i> ย้อนกลับ
+                </button>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+  </body>
+</html>

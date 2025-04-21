@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>อนุมัติโครงการ</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+        :root {
+            --primary-color: #FF8C00;
+            --secondary-color: #007bff;
+            --background-color: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: 'Kanit', sans-serif;
+            padding-bottom: 100px;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+        }
+
+        .navbar-brand img {
+            margin-right: 10px;
+        }
+
+        .navbar-brand span {
+            font-size: 1rem;
+            line-height: 1.2;
+            color: white;
+        }
+
+        .nav-link {
+            color: white !important;
+        }
+
+        .content-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+
+        .table thead th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-success:hover {
+            background-color: darken(var(--secondary-color), 10%);
+            border-color: darken(var(--secondary-color), 10%);
+        }
+
+        .footer {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .footer img {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+
+        #approval {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .pagination {
+            justify-content: center;
+        }
+
+        /* เพิ่มสไตล์สำหรับ checkbox ส่งอีเมล */
+        .email-checkbox {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="#">
+            <img src="/static/image_2024-02-07_191338051.png" width="40" height="40" class="d-inline-block align-top"
+                alt="Logo">
+            <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br>วิทยาเขตขอนแก่น</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
+                </li>
+
+                
+
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('approve_project') }}"><i class="fas fa-check-circle"></i>
+                        อนุมัติคำขอโครงการ</a>
+                </li>
+               
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('edit_basic_info') }}"><i class="fas fa-cog"></i>
+                        ข้อมูลพื้นฐาน</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('project_reports') }}">
+              <i class="fas fa-chart-bar"></i> รายงาน
+          </a>
+        </li>
+                {% if g.user %}
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-toggle="modal" data-target="#userInfoModal">
+                        <i class="fas fa-user"></i> {{ g.user.name }}
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i>
+                        ออกจากระบบ</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    {% if g.user %}
+    <div class="modal fade" id="userInfoModal" tabindex="-1" role="dialog" aria-labelledby="userInfoModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userInfoModalLabel">ข้อมูลผู้ใช้</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>ชื่อ:</strong> {{ g.user.name }}</p>
+                    <p><strong>อีเมล:</strong> {{ g.user.email or 'ไม่มีข้อมูล' }}</p>
+                    {% if g.user.type == 'teacher' %}
+                    <p><strong>เบอร์โทรศัพท์:</strong> {{ g.user.phone or 'ไม่มีข้อมูล' }}</p>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+     
+    <div class="container">
+        <div class="content-box">
+            <h2 class="text-center mb-4">อนุมัติโครงการ</h2>
+<!-- ฟอร์มค้นหา -->
+<form method="GET" action="{{ url_for('approve_project') }}">
+    <div class="form-group">
+        <label for="approval">กรองสถานะโครงการ:</label>
+        <select name="approval" id="approval" class="form-control">
+            <option value="all" {% if approval_filter == 'all' %}selected{% endif %}>ทั้งหมด</option>
+            <option value="approved" {% if approval_filter == 'approved' %}selected{% endif %}>อนุมัติแล้ว</option>
+            <option value="pending" {% if approval_filter == 'pending' %}selected{% endif %}>รออนุมัติ</option>
+            <option value="unapproved" {% if approval_filter == 'unapproved' %}selected{% endif %}>ยังไม่ยื่นอนุมัติ</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="search">ค้นหาโครงการ:</label>
+        <input type="text" name="search" id="search" class="form-control" value="{{ search_query }}">
+    </div>
+    <button type="submit" class="btn btn-primary">ค้นหา</button>
+</form>     
+
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ลำดับ</th>
+                            <th>ชื่อโครงการ</th>
+                            <th>สถานะโครงการ</th>
+                            <th>การดำเนินการ</th>
+                            <th>ดาวน์โหลด PDF</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+    <tr>
+      <td>{{ loop.index + (page - 1) * per_page }}</td>
+      <td>{{ project[1] }}</td>
+      <td>
+        {% if project[2] == 0 %}
+          <span class="badge badge-secondary">ยังไม่ยื่นอนุมัติ</span>
+        {% elif project[2] == 1 %}
+          <span class="badge badge-warning">รออนุมัติ</span>
+          {% if project[4] %}
+            <br><small>ส่งเมื่อ: {{ project[4].strftime('%Y-%m-%d %H:%M:%S') }}</small>
+          {% endif %}
+        {% elif project[2] == 2 %}
+          <span class="badge badge-success">อนุมัติแล้ว</span>
+          {% if project[5] %}
+            <br><small>อนุมัติเมื่อ: {{ project[5].strftime('%Y-%m-%d %H:%M:%S') }}</small>
+          {% endif %}
+        {% elif project[2] == 3 %}
+          <span class="badge badge-danger">ตีกลับ</span>
+          {% if project[6] %}
+            <br><small>ตีกลับเมื่อ: {{ project[6].strftime('%Y-%m-%d %H:%M:%S') }}</small>
+          {% endif %}
+        {% endif %}
+      </td>
+      <td>
+        {% if project[2] == 1 %}
+<form method="POST" action="{{ url_for('approve_project') }}" style="display: inline;">
+    <input type="hidden" name="project_id" value="{{ project[0] }}">
+    <input type="hidden" name="action" value="approve">
+    <button type="submit" class="btn btn-success btn-sm">อนุมัติ</button>
+</form>
+<button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#rejectModal{{ project[0] }}">ตีกลับ</button>
+{% endif %}
+      </td>
+      <td>
+        {% if project[3] %}
+          <a href="{{ url_for('download_project_pdf', project_id=project[0]) }}" class="btn btn-primary btn-sm">ดาวน์โหลด PDF</a>
+        {% else %}
+          <span class="badge badge-secondary">ไม่มี PDF</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal สำหรับการตีกลับ -->
+    {% for project in projects %}
+    {% if project[2] == 1 %}
+    <div class="modal fade" id="rejectModal{{ project[0] }}" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel{{ project[0] }}" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectModalLabel{{ project[0] }}">ตีกลับโครงการ</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="POST" action="{{ url_for('approve_project') }}">
+                    <div class="modal-body">
+                        <input type="hidden" name="project_id" value="{{ project[0] }}">
+                        <input type="hidden" name="action" value="reject">
+                        <div class="form-group">
+                            <label for="reason">เหตุผลในการตีกลับ:</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="send_email{{ project[0] }}" name="send_email" checked>
+                            <label class="form-check-label" for="send_email{{ project[0] }}">ส่งเหตุผลการตีกลับทางอีเมลถึงอาจารย์ผู้รับผิดชอบโครงการ</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-danger">ยืนยันการตีกลับ</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+        {% if total_pages > 1 %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('approve_project', page=page-1, search=search_query) }}" {% if page == 1 %}tabindex="-1" aria-disabled="true"{% endif %}>ก่อนหน้า</a>
+            </li>
+            <li class="page-item active" aria-current="page">
+                <span class="page-link">
+                    หน้า {{ page }} จาก {{ total_pages }}
+                </span>
+            </li>
+            <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('approve_project', page=page+1, search=search_query) }}" {% if page == total_pages %}tabindex="-1" aria-disabled="true"{% endif %}>ถัดไป</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+    <!-- Footer -->
+
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function updateFilter(value) {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('approval', value);
+            currentUrl.searchParams.set('page', 1);  // Reset to first page when changing filter
+            window.location.href = currentUrl.toString();
+        }
+    </script>
+    <script>
+        function filterProjects() {
+            var selectedValue = document.getElementById('approval').value;
+            var pendingProjects = document.querySelectorAll('.pending-projects');
+            var approvedProjects = document.querySelectorAll('.approved-projects');
+            var unapprovedProjects = document.querySelectorAll('.unapproved-projects');
+
+            if (selectedValue === 'pending') {
+                pendingProjects.forEach(project => project.style.display = 'table-row');
+                approvedProjects.forEach(project => project.style.display = 'none');
+                unapprovedProjects.forEach(project => project.style.display = 'none');
+            } else if (selectedValue === 'approved') {
+                pendingProjects.forEach(project => project.style.display = 'none');
+                approvedProjects.forEach(project => project.style.display = 'table-row');
+                unapprovedProjects.forEach(project => project.style.display = 'none');
+            } else if (selectedValue === 'unapproved') {
+                pendingProjects.forEach(project => project.style.display = 'none');
+                approvedProjects.forEach(project => project.style.display = 'none');
+                unapprovedProjects.forEach(project => project.style.display = 'table-row');
+            }
+        }
+
+        document.getElementById('approval').addEventListener('change', filterProjects);
+        filterProjects();
+    </script>
+    <script>
+        // ฟังก์ชันสำหรับอัพเดทสถานะโครงการ
+        function updateProjectStatus(projectId, newStatus) {
+            fetch('/update_project_status/' + projectId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({status: newStatus})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (newStatus === 4) {  // ถ้าสถานะเป็นเสร็จสิ้น
+                        // ลบแถวของโครงการออกจากตาราง
+                        document.getElementById('project-row-' + projectId).remove();
+                        
+                        // ตรวจสอบว่ายังมีโครงการเหลืออยู่หรือไม่
+                        if (document.querySelectorAll('table tbody tr').length === 0) {
+                            // ถ้าไม่มีโครงการเหลือ แสดงข้อความ
+                            document.querySelector('table tbody').innerHTML = '<tr><td colspan="5" class="text-center">ไม่มีโครงการที่รอการอนุมัติ</td></tr>';
+                        }
+                    } else {
+                        // อัพเดทการแสดงผลสถานะในตาราง
+                        // (คุณอาจต้องเพิ่มโค้ดส่วนนี้ตามการออกแบบ UI ของคุณ)
+                    }
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + data.error);
+                }
+            });
+        }
+        </script>
+</body>
+
+</html>

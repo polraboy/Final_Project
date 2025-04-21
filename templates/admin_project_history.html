@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ประวัติโครงการที่เสร็จสิ้น</title>
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #ff8c00;
+        --secondary-color: #007bff;
+        --background-color: #f8f9fa;
+      }
+
+      body {
+        background-color: var(--background-color);
+        font-family: "Kanit", sans-serif;
+        padding-bottom: 100px;
+      }
+
+      .navbar {
+        background-color: var(--primary-color) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .navbar-brand img {
+        margin-right: 10px;
+      }
+
+      .navbar-brand span {
+        font-size: 1rem;
+        line-height: 1.2;
+        color: white;
+      }
+
+      .nav-link {
+        color: white !important;
+        transition: all 0.3s ease;
+      }
+
+      .nav-link:hover {
+        transform: translateY(-2px);
+      }
+
+      .footer {
+        background-color: var(--secondary-color);
+        color: white;
+        padding: 20px 0;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+      }
+
+      .footer .container {
+        text-align: center;
+        flex-grow: 1;
+      }
+
+      .footer img {
+        max-width: 25%;
+        max-height: 25%;
+        margin-right: 20px;
+      }
+
+      .content-box {
+        background-color: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        margin-top: 30px;
+        margin-bottom: 50px;
+      }
+
+      .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary:hover {
+        background-color: darken(var(--primary-color), 10%);
+        border-color: darken(var(--primary-color), 10%);
+        transform: translateY(-2px);
+      }
+
+      .mb-4 {
+        text-align: center;
+        color: var(--primary-color);
+        font-weight: bold;
+        margin-bottom: 30px !important;
+      }
+
+      .constant-item {
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+
+      .pagination {
+        margin-top: 20px;
+      }
+      
+      /* เพิ่มสไตล์สำหรับฟอร์มกรอง */
+      .filter-form {
+        background-color: #f0f0f0;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
+      
+      .table th {
+        background-color: #f8f9fa;
+      }
+      
+      .table-hover tbody tr:hover {
+        background-color: rgba(255, 140, 0, 0.05);
+      }
+      
+      .badge-completed {
+        background-color: #28a745;
+        color: white;
+      }
+      
+      .tooltip-icon {
+        color: #6c757d;
+        cursor: help;
+      }
+
+      .project-year-badge {
+        background-color: #17a2b8;
+        color: white;
+        font-size: 0.85em;
+        padding: 4px 8px;
+        border-radius: 4px;
+        margin-left: 5px;
+      }
+      
+      .project-budget-badge {
+        background-color: #6610f2;
+        color: white;
+        font-size: 0.85em;
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <a class="navbar-brand" href="#">
+        <img
+          src="/static/image_2024-02-07_191338051.png"
+          width="40"
+          height="40"
+          class="d-inline-block align-top"
+          alt="Logo"
+        />
+        <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br />วิทยาเขตขอนแก่น</span>
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('admin_home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('active_projects') }}"><i class="fas fa-project-diagram"></i> โครงการ</a>
+        </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('approve_project') }}"><i class="fas fa-check-circle"></i> อนุมัติคำขอโครงการ</a>
+          </li>
+          
+          <li class="nav-item active">
+            <a class="nav-link" href="{{ url_for('admin_project_history') }}"><i class="fas fa-history"></i> ประวัติโครงการ</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('edit_basic_info') }}"><i class="fas fa-user-edit"></i> ข้อมูลพื้นฐาน</a>
+          </li>
+          {% if g.user %}
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-toggle="modal" data-target="#userInfoModal">
+              <i class="fas fa-user"></i> {{ g.user.name }}
+            </a>
+          </li>
+          {% endif %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    {% if g.user %}
+    <div
+      class="modal fade"
+      id="userInfoModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="userInfoModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="userInfoModalLabel">ข้อมูลผู้ใช้</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p><strong>ชื่อ:</strong> {{ g.user.name }}</p>
+            <p><strong>อีเมล:</strong> {{ g.user.email or 'ไม่มีข้อมูล' }}</p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              ปิด
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="container mt-5">
+      <div class="content-box">
+        <h2 class="text-center mb-4">ประวัติโครงการที่เสร็จสิ้น</h2>
+        
+        <!-- ส่วนของฟอร์มค้นหาและกรอง -->
+        <div class="filter-form mb-4">
+          <form method="GET" action="{{ url_for('admin_project_history') }}" class="form-inline justify-content-between">
+            <div class="form-group mb-2">
+              <input type="text" name="search" class="form-control mr-2" placeholder="ค้นหาชื่อโครงการหรือชื่ออาจารย์" value="{{ search_query }}">
+              <select name="branch" class="form-control">
+                <option value="all" {% if branch_filter == 'all' %}selected{% endif %}>ทุกสาขา</option>
+                {% for branch in branches %}
+                <option value="{{ branch[0] }}" {% if branch_filter|string == branch[0]|string %}selected{% endif %}>{{ branch[1] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <button type="submit" class="btn btn-primary mb-2">
+                <i class="fas fa-search"></i> ค้นหา
+              </button>
+              <a href="{{ url_for('admin_project_history') }}" class="btn btn-secondary mb-2 ml-2">
+                <i class="fas fa-redo"></i> รีเซ็ต
+              </a>
+            </div>
+          </form>
+        </div>
+        
+        <!-- ตารางแสดงข้อมูลโครงการ -->
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th scope="col" style="width: 5%;">ลำดับ</th>
+                <th scope="col" style="width: 30%;">ชื่อโครงการ</th>
+                <th scope="col" style="width: 15%;">ผู้รับผิดชอบ</th>
+                <th scope="col" style="width: 15%;">สาขา</th>
+                <th scope="col" style="width: 15%;">วันที่จัด</th>
+                <th scope="col" style="width: 10%;">วันที่เสร็จสิ้น</th>
+                <th scope="col" style="width: 10%;">รายงานสรุป</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if projects %}
+                {% for project in projects %}
+                <tr>
+                  <td>{{ loop.index + (page - 1) * 6 }}</td>
+                  <td>
+                    <a href="{{ url_for('project_summary', project_id=project[0]) }}">{{ project[1] }}</a>
+                    <span class="project-year-badge">{{ project[2] }}</span>
+                    <span class="project-budget-badge">{{ project[3] }}</span>
+                  </td>
+                  <td>{{ project[7] }}</td>
+                  <td>{{ project[8] }}</td>
+                  <td>{{ project[4].strftime('%d/%m/%Y') }} - {{ project[5].strftime('%d/%m/%Y') }}</td>
+                  <td>{{ project[6].strftime('%d/%m/%Y') if project[6] else "-" }}</td>
+                  <td>
+                    {% if project[9] %}
+                    <a href="{{ url_for('download_summary_pdf', project_id=project[0]) }}" class="btn btn-success btn-sm">
+                      <i class="fas fa-download"></i> ดาวน์โหลด
+                    </a>
+                    {% else %}
+                    <span class="text-muted"><i class="fas fa-times-circle"></i> ไม่มีไฟล์</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="7" class="text-center">ไม่พบข้อมูลโครงการ</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for('admin_project_history', page=page-1, search=search_query, branch=branch_filter) }}" {% if page == 1 %}tabindex="-1" aria-disabled="true"{% endif %}>ก่อนหน้า</a>
+            </li>
+            
+            {% for p in range(1, total_pages + 1) %}
+              {% if p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                  <a class="page-link" href="{{ url_for('admin_project_history', page=p, search=search_query, branch=branch_filter) }}">{{ p }}</a>
+                </li>
+              {% elif p == page - 3 or p == page + 3 %}
+                <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                </li>
+              {% endif %}
+            {% endfor %}
+            
+            <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for('admin_project_history', page=page+1, search=search_query, branch=branch_filter) }}" {% if page == total_pages %}tabindex="-1" aria-disabled="true"{% endif %}>ถัดไป</a>
+            </li>
+          </ul>
+        </nav>
+        {% endif %}
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+      });
+    </script>
+  </body>
+</html>

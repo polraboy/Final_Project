@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน้าหลักผู้ดูแลระบบ</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+        :root {
+            --primary-color: #FF8C00;
+            --secondary-color: #007bff;
+            --background-color: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: 'Kanit', sans-serif;
+            padding-bottom: 100px;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+        }
+
+        .navbar-brand img {
+            margin-right: 10px;
+        }
+
+        .navbar-brand span {
+            font-size: 1rem;
+            line-height: 1.2;
+            color: white;
+        }
+
+        .nav-link {
+            color: white !important;
+        }
+
+        .nav-link i {
+            margin-right: 0.25rem;
+        }
+
+        /* ส่วนอื่นๆ ของหน้าเว็บ */
+        .content-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+        .card-body {
+            position: relative;
+            padding-bottom: 40px; /* เพิ่มพื้นที่ด้านล่างสำหรับปุ่มลบ */
+        }
+        .card-body form {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: darken(var(--primary-color), 10%);
+            border-color: darken(var(--primary-color), 10%);
+            transform: translateY(-2px);
+        }
+
+        .edit-mode-button {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            bottom: 120px;
+            right: 30px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .edit-mode-button:hover {
+            transform: scale(1.1) rotate(90deg);
+            background-color: darken(var(--primary-color), 10%);
+            border-color: darken(var(--primary-color), 10%);
+        }
+        
+        .card {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-img-top {
+            height: 200px;
+            object-fit: cover;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover .card-img-top {
+            transform: scale(1.1);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background-color: red;
+            transform: scale(1.1);
+        }
+
+        .mb-4 {
+            text-align: center;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 30px !important;
+        }
+<<<<<<< HEAD
+=======
+        .btn-custom-blue {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+        .btn-custom-blue:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .edit-mode-button {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            bottom: 120px;
+            /* ปรับตำแหน่งให้อยู่เหนือ footer */
+            right: 30px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            /* ให้แน่ใจว่าปุ่มอยู่ด้านหน้าสุด */
+        }
+
+        .edit-mode-button:hover {
+            transform: scale(1.1) rotate(90deg);
+            background-color: darken(var(--primary-color), 10%);
+            border-color: darken(var(--primary-color), 10%);
+        }
+        
+>>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
+        
+        .constant-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .pagination {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar แก้ไขตามรูปแบบของไฟล์ approve_project.html -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="#">
+            <img src="/static/image_2024-02-07_191338051.png" width="40" height="40" class="d-inline-block align-top"
+                alt="Logo">
+            <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br>วิทยาเขตขอนแก่น</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
+                </li>
+<<<<<<< HEAD
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('active_projects') }}"><i class="fas fa-project-diagram"></i> โครงการ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('approve_project') }}"><i class="fas fa-check-circle"></i> อนุมัติคำขอโครงการ</a>
+                </li>
+=======
+                
+                
+>>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('edit_basic_info') }}"><i class="fas fa-cog"></i> ข้อมูลพื้นฐาน</a>
+                </li>
+                    <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('project_reports') }}">
+              <i class="fas fa-chart-bar"></i> รายงาน
+          </a>
+        </li>
+                {% if g.user %}
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-toggle="modal" data-target="#userInfoModal">
+                        <i class="fas fa-user"></i> {{ g.user.name }}
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    {% if g.user %}
+    <div class="modal fade" id="userInfoModal" tabindex="-1" role="dialog" aria-labelledby="userInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userInfoModalLabel">ข้อมูลผู้ใช้</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>ชื่อ:</strong> {{ g.user.name }}</p>
+                    <p><strong>อีเมล:</strong> {{ g.user.email or 'ไม่มีข้อมูล' }}</p>
+                    {% if g.user.type == 'teacher' %}
+                    <p><strong>เบอร์โทรศัพท์:</strong> {{ g.user.phone or 'ไม่มีข้อมูล' }}</p>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- เนื้อหาหลักของหน้า -->
+    <div class="container mt-5">
+        <button type="button" class="btn btn-primary edit-mode-button" data-toggle="modal"
+            data-target="#addConstantModal" title="เพิ่มข้อมูลข่าวสาร">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <div class="modal fade" id="addConstantModal" tabindex="-1" role="dialog"
+            aria-labelledby="addConstantModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <form method="POST" action="{{ url_for('admin_home') }}" enctype="multipart/form-data">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addConstantModalLabel">เพิ่มข้อมูลข่าวสาร</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="constant_headname">หัวข้อข่าวสาร</label>
+                                <input type="text" class="form-control" id="constant_headname" name="constant_headname"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label for="constant_detail">รายละเอียดข่าวสาร</label>
+                                <textarea class="form-control" id="constant_detail" name="constant_detail" rows="3"
+                                    required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="constant_image">รูปภาพประกอบ</label>
+                                <input type="file" class="form-control-file" id="constant_image" name="constant_image"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                            <button type="submit" class="btn btn-primary">เพิ่มข้อมูล</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+<<<<<<< HEAD
+        <div class="content-box">
+            <h2 class="mb-4">ข้อมูลข่าวสาร</h2>
+            <div class="row">
+                {% for constant in constants %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <img src="data:image/jpeg;base64,{{ constant[2] }}" class="card-img-top"
+                            alt="{{ constant[0] }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ constant[0] }}</h5>
+                            <p class="card-text">{{ constant[1] }}</p>
+                        </div>
+                        <button class="btn delete-btn" onclick="confirmDelete('{{ constant[0] }}')">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% if total_pages > 1 %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin_home', page=page-1, search=search_query) }}" {% if page == 1 %}tabindex="-1" aria-disabled="true"{% endif %}>ก่อนหน้า</a>
+                    </li>
+                    <li class="page-item active" aria-current="page">
+                        <span class="page-link">
+                            หน้า {{ page }} จาก {{ total_pages }}
+                        </span>
+                    </li>
+                    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin_home', page=page+1, search=search_query) }}" {% if page == total_pages %}tabindex="-1" aria-disabled="true"{% endif %}>ถัดไป</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function confirmDelete(headname) {
+            if (confirm("คุณแน่ใจหรือไม่ที่จะลบข้อมูลนี้?")) {
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ url_for('admin_home') }}";
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'delete_constant_headname';
+                input.value = headname;
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+=======
+        <div class="container mt-5">
+            <div class="content-box">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 id="content-title">ข้อมูลข่าวสาร</h2>
+                    <button class="btn btn-custom-blue" onclick="toggleContent()">โครงการที่กำลังจัด</button>
+                </div>
+          
+                <div id="news-content">
+                    <!-- เนื้อหาข่าวสารเดิม -->
+                    <div class="row">
+                        {% for constant in constants %}
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <img src="data:image/jpeg;base64,{{ constant[2] }}" class="card-img-top" alt="{{ constant[0] }}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ constant[0] }}</h5>
+                                        <p>{{ constant[1] }}</p>
+                                        <form action="{{ url_for('delete_constant') }}" method="POST" onsubmit="return confirm('คุณแน่ใจหรือไม่ที่จะลบข่าวสารนี้?');">
+                                            <input type="hidden" name="constant_headname" value="{{ constant[0] }}">
+                                            <button type="submit" class="btn btn-danger btn-sm">ลบ</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- การแบ่งหน้า -->
+                    {% if total_pages > 1 %}
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                                    <a class="page-link" href="{{ url_for('admin_home', page=page-1) }}">ก่อนหน้า</a>
+                                </li>
+                                <li class="page-item active">
+                                    <span class="page-link">หน้า {{ page }} จาก {{ total_pages }}</span>
+                                </li>
+                                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                                    <a class="page-link" href="{{ url_for('admin_home', page=page+1) }}">ถัดไป</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    {% endif %}
+                </div>
+          
+                <div id="projects-content" style="display: none;">
+                    <!-- เนื้อหาโครงการที่กำลังจัด -->
+                    <div class="row">
+                        {% for project in active_projects %}
+                            <div class="col-md-4 mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ project[1] }}</h5>
+                                        <p>วันที่เริ่ม: {{ project[2].strftime('%d/%m/%Y') }}</p>
+                                        <p>วันที่สิ้นสุด: {{ project[3].strftime('%d/%m/%Y') }}</p>
+                                        <a href="{{ url_for('project_detail', project_id=project[0]) }}" class="btn btn-primary">ดูรายละเอียด</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+          </div>
+        <!-- Footer -->
+        
+
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script>
+            function confirmDelete(headname) {
+                if (confirm("คุณแน่ใจหรือไม่ที่จะลบข้อมูลนี้?")) {
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = "{{ url_for('admin_home') }}";
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'delete_constant_headname';
+                    input.value = headname;
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            }
+        </script>
+        <script>
+            function toggleContent() {
+                var newsContent = document.getElementById('news-content');
+                var projectsContent = document.getElementById('projects-content');
+                var contentTitle = document.getElementById('content-title');
+            
+                if (newsContent.style.display !== 'none') {
+                    newsContent.style.display = 'none';
+                    projectsContent.style.display = 'block';
+                    contentTitle.textContent = 'โครงการที่กำลังจัด';
+                } else {
+                    newsContent.style.display = 'block';
+                    projectsContent.style.display = 'none';
+                    contentTitle.textContent = 'ข้อมูลข่าวสาร';
+                }
+            }
+            </script>
+>>>>>>> 36da05ea2f8c402bb17b38660b59cf3c356c0d63
+</body>
+</html>

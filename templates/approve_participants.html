@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>อนุมัติผู้เข้าร่วมโครงการ</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
+      rel="stylesheet"
+    />
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-center mb-0"><i class="fas fa-user-check"></i> อนุมัติผู้เข้าร่วมโครงการ</h2>
+            </div>
+            <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% if participants %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ชื่อ</th>
+                                <th>อีเมล</th>
+                                <th>เบอร์โทรศัพท์</th>
+                                <th>สถานะ</th>
+                                <th>การดำเนินการ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for participant in participants %}
+                            <tr>
+                                <td>{{ participant['join_name'] }}</td>
+                                <td>{{ participant['join_email'] }}</td>
+                                <td>{{ participant['join_telephone'] }}</td>
+                                <td>
+                                    {% if participant['join_status'] == 0 %}
+                                        <span class="badge badge-warning">รอการอนุมัติ</span>
+                                    {% elif participant['join_status'] == 1 %}
+                                        <span class="badge badge-success">อนุมัติแล้ว</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">ไม่อนุมัติ</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form action="{{ url_for('update_join_status', join_id=participant['join_id']) }}" method="POST">
+                                        <select name="join_status" class="form-control form-control-sm" onchange="this.form.submit()">
+                                            <option value="0" {% if participant['join_status'] == 0 %}selected{% endif %}>รอการอนุมัติ</option>
+                                            <option value="1" {% if participant['join_status'] == 1 %}selected{% endif %}>อนุมัติ</option>
+                                            <option value="2" {% if participant['join_status'] == 2 %}selected{% endif %}>ไม่อนุมัติ</option>
+                                        </select>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>ไม่มีผู้เข้าร่วมโครงการในขณะนี้</p>
+                {% endif %}
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('project_detail', project_id=project_id) }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> กลับไปหน้ารายละเอียดโครงการ</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

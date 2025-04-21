@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}ระบบจัดการโครงการ{% endblock %}</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
+    />
+    <style>
+      .back-button {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- เนื้อหาของ Navbar ที่มีอยู่เดิม -->
+
+    <div class="container mt-4">{% block content %} {% endblock %}</div>
+
+    <!-- ปุ่มกลับ -->
+    <button onclick="goBack()" class="btn btn-secondary back-button">
+      กลับ
+    </button>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+      function goBack() {
+        window.history.back();
+      }
+    </script>
+  </body>
+</html>
