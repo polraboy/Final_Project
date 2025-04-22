@@ -38,6 +38,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.units import mm
 from reportlab.lib.units import inch, cm
+from flask_apscheduler import APScheduler
 from reportlab.lib.utils import ImageReader
 import logging
 from reportlab.lib.utils import simpleSplit
@@ -63,7 +64,73 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 pdfmetrics.registerFont(TTFont("THSarabunNew", "THSarabunNew.ttf"))
 
 
+scheduler = APScheduler()
 
+def init_scheduler(app):
+    scheduler.init_app(app)
+    scheduler.start()
+
+# ตั้งค่าการทำงานอัตโนมัติ
+@scheduler.task('cron', id='check_confirmations', hour=0, minute=0)  # รันทุกวันเวลาเที่ยงคืน
+def scheduled_check():
+    with app.app_context():  # จำเป็นต้องมี app context
+        check_pending_confirmations()
+
+# ฟังก์ชันตรวจสอบและอัปเดตสถานะการยืนยันที่หมดเวลา
+@scheduler.task('cron', id='check_confirmations', hour=0, minute=0)  # รันทุกวันเวลาเที่ยงคืน
+def check_pending_confirmations():
+    with get_db_cursor() as (db, cursor):
+        # ดึงข้อมูลผู้สมัครที่รอการยืนยันและโครงการที่ใกล้เริ่ม
+        cursor.execute("""
+            SELECT j.join_id, j.join_name, j.join_email, p.project_id, p.project_name, p.project_dotime
+            FROM `join` j 
+            JOIN project p ON j.project_id = p.project_id 
+            WHERE j.join_status = 3  # สถานะรอการยืนยัน
+        """)
+        pending_participants = cursor.fetchall()
+        
+        current_date = datetime.now().date()
+        
+        for participant in pending_participants:
+            join_id = participant[0]
+            name = participant[1]
+            email = participant[2]
+            project_id = participant[3]
+            project_name = participant[4]
+            project_date = participant[5]
+            
+            # แปลง project_dotime เป็น date ถ้าจำเป็น
+            if isinstance(project_date, datetime):
+                project_date = project_date.date()
+                
+            # ตรวจสอบว่าโครงการจะเริ่มในอีกไม่เกิน 1 วัน
+            if (project_date - current_date).days <= 1:
+                # อัปเดตสถานะเป็นไม่อนุมัติ
+                cursor.execute(
+                    "UPDATE `join` SET join_status = 2 WHERE join_id = %s",
+                    (join_id,)
+                )
+                
+                # ส่งอีเมลแจ้งเตือนการยกเลิกอัตโนมัติ
+                subject = f"การยกเลิกการเข้าร่วมโครงการ: {project_name}"
+                message = f"""
+เรียน {name}
+
+เนื่องจากคุณไม่ได้ยืนยันการเข้าร่วมโครงการ "{project_name}" ภายในระยะเวลาที่กำหนด และขณะนี้ใกล้ถึงวันจัดกิจกรรมแล้ว 
+ทางระบบจึงได้ยกเลิกการลงทะเบียนของคุณโดยอัตโนมัติ
+
+หากคุณยังสนใจเข้าร่วมโครงการ กรุณาติดต่อผู้ประสานงานโครงการโดยตรง
+
+ขอแสดงความนับถือ
+ทีมงานบริหารโครงการ
+มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตขอนแก่น
+"""
+                send_email_notification(subject, message, email)
+            
+        # Commit การเปลี่ยนแปลงทั้งหมด
+        db.commit()
+        
+        return len(pending_participants)  # จำนวนรายการที่ถูกตรวจสอบ
 
 @app.route("/home")
 def index():
@@ -217,7 +284,48 @@ def login():
                     )
 
     return render_template("login.html")
-
+# เพิ่มเส้นทางใหม่สำหรับการยืนยันการเข้าร่วม
+@app.route("/confirm_participation/<int:join_id>/<token>", methods=["GET"])
+def confirm_participation(join_id, token):
+    # ตรวจสอบความถูกต้องของโทเค็น
+    with get_db_cursor() as (db, cursor):
+        # ดึงข้อมูลผู้สมัคร
+        cursor.execute(
+            """SELECT j.join_name, j.join_email, p.project_id, p.project_name 
+               FROM `join` j 
+               JOIN project p ON j.project_id = p.project_id 
+               WHERE j.join_id = %s""", 
+            (join_id,)
+        )
+        participant_info = cursor.fetchone()
+        
+        if not participant_info:
+            flash("ไม่พบข้อมูลการลงทะเบียน", "error")
+            return redirect(url_for("home"))
+        
+        # สร้างโทเค็นเพื่อเปรียบเทียบ (ต้องใช้วิธีเดียวกับที่ใช้สร้างโทเค็นในอีเมล)
+        expected_token = generate_confirmation_token(join_id, participant_info[1])  # join_id และ email
+        
+        if token != expected_token:
+            flash("ลิงก์ยืนยันไม่ถูกต้อง", "error")
+            return redirect(url_for("home"))
+        
+        # อัปเดตสถานะเป็นอนุมัติแล้ว
+        cursor.execute(
+            "UPDATE `join` SET join_status = 1 WHERE join_id = %s",
+            (join_id,)
+        )
+        db.commit()
+        
+        flash("การลงทะเบียนเข้าร่วมโครงการได้รับการยืนยันเรียบร้อยแล้ว", "success")
+        return redirect(url_for("project_detail", project_id=participant_info[2]))
+    # ฟังก์ชันสร้างโทเค็นสำหรับยืนยันเข้าร่วม
+def generate_confirmation_token(join_id, email):
+    # สร้างโทเค็นอย่างง่ายจาก join_id และ email
+    # ในระบบจริงควรใช้วิธีที่ปลอดภัยกว่านี้ เช่น ใช้ itsdangerous
+    import hashlib
+    token = hashlib.md5(f"{join_id}:{email}:{app.secret_key}".encode()).hexdigest()
+    return token
 
 @app.route("/dashboard")
 def dashboard():
@@ -581,6 +689,15 @@ def join_project(project_id):
         current_count=current_count,
     )
 
+# เพิ่มเส้นทางใหม่สำหรับการยืนยันการเข้าร่วม
+# ฟังก์ชันสร้างโทเค็นสำหรับยืนยันเข้าร่วม
+def generate_confirmation_token(join_id, email):
+    # สร้างโทเค็นอย่างง่ายจาก join_id และ email
+    # ในระบบจริงควรใช้วิธีที่ปลอดภัยกว่านี้ เช่น ใช้ itsdangerous
+    import hashlib
+    token = hashlib.md5(f"{join_id}:{email}:{app.secret_key}".encode()).hexdigest()
+    return token
+
 
 @app.route("/project/<int:project_id>/participants")
 def project_participants(project_id):
@@ -627,6 +744,51 @@ def get_teachers_from_database():
         cursor.execute(query)
         teachers = cursor.fetchall()
     return teachers
+def check_pending_confirmations():
+    with get_db_cursor() as (db, cursor):
+        # ดึงข้อมูลผู้สมัครที่รอการยืนยันและโครงการที่ใกล้เริ่ม
+        cursor.execute("""
+            SELECT j.join_id, j.join_name, j.join_email, p.project_id, p.project_name, p.project_dotime
+            FROM `join` j 
+            JOIN project p ON j.project_id = p.project_id 
+            WHERE j.join_status = 3  # สถานะรอการยืนยัน
+            AND DATEDIFF(p.project_dotime, CURRENT_DATE()) <= 1  # เหลือเวลาไม่เกิน 1 วัน
+        """)
+        pending_participants = cursor.fetchall()
+        
+        for participant in pending_participants:
+            join_id = participant[0]
+            name = participant[1]
+            email = participant[2]
+            project_id = participant[3]
+            project_name = participant[4]
+            
+            # อัปเดตสถานะเป็นไม่อนุมัติ
+            cursor.execute(
+                "UPDATE `join` SET join_status = 2 WHERE join_id = %s",
+                (join_id,)
+            )
+            
+            # ส่งอีเมลแจ้งเตือนการยกเลิกอัตโนมัติ
+            subject = f"การยกเลิกการเข้าร่วมโครงการ: {project_name}"
+            message = f"""
+เรียน {name}
+
+เนื่องจากคุณไม่ได้ยืนยันการเข้าร่วมโครงการ "{project_name}" ภายในระยะเวลาที่กำหนด และขณะนี้ใกล้ถึงวันจัดกิจกรรมแล้ว 
+ทางระบบจึงได้ยกเลิกการลงทะเบียนของคุณโดยอัตโนมัติ
+
+หากคุณยังสนใจเข้าร่วมโครงการ กรุณาติดต่อผู้ประสานงานโครงการโดยตรง
+
+ขอแสดงความนับถือ
+ทีมงานบริหารโครงการ
+มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตขอนแก่น
+"""
+            send_email_notification(subject, message, email)
+            
+        # Commit การเปลี่ยนแปลงทั้งหมด
+        db.commit()
+        
+        return len(pending_participants)  # จำนวนรายการที่ถูกปรับเปลี่ยน
 
 @app.route("/download_project_pdf/<int:project_id>")
 @login_required("teacher", "admin")
@@ -755,7 +917,140 @@ def download_project_pdf(project_id):
             # ไม่มี PDF หรือไม่พบโครงการ
             flash("ไม่พบไฟล์ PDF สำหรับโครงการนี้", "error")
             return redirect(url_for("teacher_projects" if user_type == "teacher" else "approve_project"))
+@app.route("/project/<int:project_id>/approve_all", methods=["POST"])
+@login_required("teacher")
+def approve_all_participants(project_id):
+    if "teacher_id" not in session:
+        flash("คุณไม่มีสิทธิ์ในการดำเนินการนี้", "error")
+        return redirect(url_for("home"))
 
+    teacher_id = session["teacher_id"]
+    
+    with get_db_cursor() as (db, cursor):
+        # ตรวจสอบว่าเป็นอาจารย์เจ้าของโครงการหรือไม่
+        cursor.execute(
+            "SELECT teacher_id FROM project WHERE project_id = %s", 
+            (project_id,)
+        )
+        project = cursor.fetchone()
+        
+        if not project or project[0] != teacher_id:
+            flash("คุณไม่มีสิทธิ์อนุมัติผู้เข้าร่วมโครงการนี้", "error")
+            return redirect(url_for("project_detail", project_id=project_id))
+            
+        # ดึงรายชื่อผู้เข้าร่วมที่รออนุมัติ (สถานะ 0)
+        cursor.execute(
+            """SELECT j.join_id, j.join_name, j.join_email 
+               FROM `join` j 
+               WHERE j.project_id = %s AND j.join_status = 0""",
+            (project_id,)
+        )
+        pending_participants = cursor.fetchall()
+        
+        if not pending_participants:
+            flash("ไม่มีผู้เข้าร่วมที่รออนุมัติ", "info")
+            return redirect(url_for("approve_participants", project_id=project_id))
+        
+        # ดึงข้อมูลโครงการ
+        cursor.execute(
+            "SELECT project_name, project_dotime FROM project WHERE project_id = %s",
+            (project_id,)
+        )
+        project_info = cursor.fetchone()
+        project_name = project_info[0]
+        project_dotime = project_info[1]
+        
+        # แปลงวันที่โครงการให้เป็น date object ถ้าจำเป็น
+        if isinstance(project_dotime, datetime):
+            project_date = project_dotime.date()
+        else:
+            project_date = project_dotime
+            
+        # คำนวณวันที่เหลือก่อนถึงวันโครงการ
+        current_date = datetime.now().date()
+        days_until_project = (project_date - current_date).days
+        
+        approved_count = 0
+        pending_confirmation_count = 0
+        
+        for participant in pending_participants:
+            join_id = participant[0]
+            join_name = participant[1]
+            join_email = participant[2]
+            
+            # ถ้าโครงการจะเริ่มในอีกไม่เกิน 1 วัน อนุมัติเลยโดยไม่ต้องยืนยัน
+            if days_until_project <= 1:
+                cursor.execute(
+                    "UPDATE `join` SET join_status = 1 WHERE join_id = %s",
+                    (join_id,)
+                )
+                
+                # ส่งอีเมลแจ้งการอนุมัติ
+                subject = f"การอนุมัติเข้าร่วมโครงการ: {project_name}"
+                message = f"""
+เรียน {join_name} 
+
+ยินดีด้วย! คุณได้รับการอนุมัติให้เข้าร่วมโครงการ "{project_name}" แล้ว
+
+เนื่องจากโครงการใกล้จะเริ่มในเร็วๆ นี้ จึงไม่จำเป็นต้องยืนยันการเข้าร่วม
+โปรดเตรียมตัวให้พร้อมสำหรับการเข้าร่วมกิจกรรมตามวันและเวลาที่กำหนด
+
+ขอแสดงความนับถือ
+ทีมงานบริหารโครงการ
+มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตขอนแก่น
+"""
+                send_email_notification(subject, message, join_email)
+                approved_count += 1
+            
+            # กรณีปกติ - ส่งอีเมลยืนยัน
+            else:
+                # สร้างโทเค็นสำหรับยืนยัน
+                token = generate_confirmation_token(join_id, join_email)
+                
+                # สร้าง URL สำหรับยืนยัน
+                base_url = request.host_url.rstrip('/')
+                confirmation_url = f"{base_url}{url_for('confirm_participation', join_id=join_id, token=token)}"
+                
+                # ส่งอีเมลยืนยันให้ผู้สมัคร
+                subject = f"ยืนยันการเข้าร่วมโครงการ: {project_name}"
+                message = f"""
+เรียน {join_name} 
+
+ยินดีด้วย! คำขอเข้าร่วมโครงการ "{project_name}" ของคุณได้รับการอนุมัติเบื้องต้นแล้ว
+
+กรุณายืนยันการเข้าร่วมโครงการโดยคลิกที่ลิงก์ด้านล่าง:
+{confirmation_url}
+
+หมายเหตุ: การยืนยันนี้จะหมดอายุใน 1 วันก่อนวันเริ่มโครงการ หากไม่ได้รับการยืนยันภายในเวลาดังกล่าว 
+ระบบจะยกเลิกการลงทะเบียนของคุณโดยอัตโนมัติ
+
+หากคุณไม่ได้ลงทะเบียนเข้าร่วมโครงการนี้ กรุณาละเว้นอีเมลฉบับนี้
+
+ขอแสดงความนับถือ
+ทีมงานบริหารโครงการ
+มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตขอนแก่น
+"""
+                # ส่งอีเมล
+                send_email_notification(subject, message, join_email)
+                
+                # อัปเดตสถานะเป็น "รอการยืนยัน" (สถานะ 3)
+                cursor.execute(
+                    "UPDATE `join` SET join_status = 3 WHERE join_id = %s",
+                    (join_id,)
+                )
+                pending_confirmation_count += 1
+        
+        # Commit การเปลี่ยนแปลงทั้งหมด
+        db.commit()
+        
+        if approved_count > 0 and pending_confirmation_count > 0:
+            flash(f"อนุมัติผู้เข้าร่วมทั้งหมด {approved_count} คน และส่งอีเมลยืนยันให้อีก {pending_confirmation_count} คนแล้ว", "success")
+        elif approved_count > 0:
+            flash(f"อนุมัติผู้เข้าร่วมทั้งหมด {approved_count} คนเรียบร้อยแล้ว", "success")
+        elif pending_confirmation_count > 0:
+            flash(f"ส่งอีเมลยืนยันให้ผู้เข้าร่วมทั้งหมด {pending_confirmation_count} คนแล้ว", "success")
+        
+    return redirect(url_for("approve_participants", project_id=project_id))
 def prepare_logo(logo_path):
     with Image.open(logo_path) as img:
         img = img.convert("RGBA")
@@ -3607,44 +3902,103 @@ def update_join_status(join_id):
         return redirect(url_for("home"))
 
     new_status = request.form.get("join_status")
-
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
     try:
-        # ดึงข้อมูลผู้เข้าร่วม
+        # ดึงข้อมูลผู้เข้าร่วมและโครงการ
         cursor.execute(
-            """SELECT j.join_name, j.join_email, p.project_name 
+            """SELECT j.join_id, j.join_name, j.join_email, p.project_id, p.project_name, j.join_status, p.project_dotime
                FROM `join` j 
                JOIN project p ON j.project_id = p.project_id 
                WHERE j.join_id = %s""", 
             (join_id,)
         )
         participant_info = cursor.fetchone()
-
-        # อัปเดตสถานะการเข้าร่วม
-        cursor.execute(
-            "UPDATE `join` SET join_status = %s WHERE join_id = %s",
-            (new_status, join_id),
-        )
-        conn.commit()
-
-        # ส่งอีเมลแจ้งเตือนถ้าสถานะเป็นอนุมัติ (สมมติว่าสถานะ 1 คือการอนุมัติ)
-        if new_status == '1' and participant_info:
-            subject = f"การอนุมัติการเข้าร่วมโครงการ: {participant_info['project_name']}"
+        
+        if not participant_info:
+            flash("ไม่พบข้อมูลผู้สมัคร", "error")
+            return redirect(request.referrer)
+        
+        # ถ้าสถานะคือ "1" (อนุมัติ) และยังไม่เคยอนุมัติมาก่อน
+        if new_status == '1' and participant_info['join_status'] != 1:
+            # สร้างโทเค็นสำหรับยืนยัน
+            token = generate_confirmation_token(join_id, participant_info['join_email'])
+            
+            # สร้าง URL สำหรับยืนยัน
+            base_url = request.host_url.rstrip('/')
+            confirmation_url = f"{base_url}{url_for('confirm_participation', join_id=join_id, token=token)}"
+            
+            # ส่งอีเมลยืนยันให้ผู้สมัคร
+            subject = f"ยืนยันการเข้าร่วมโครงการ: {participant_info['project_name']}"
             message = f"""
 เรียน {participant_info['join_name']} 
 
-ยินดีด้วย! คุณได้รับการอนุมัติให้เข้าร่วมโครงการ {participant_info['project_name']} 
+ยินดีด้วย! คำขอเข้าร่วมโครงการ "{participant_info['project_name']}" ของคุณได้รับการพิจารณาอนุมัติในเบื้องต้นแล้ว
 
-ขอบคุณที่สนใจเข้าร่วมโครงการ
+กรุณายืนยันการเข้าร่วมโครงการโดยคลิกที่ลิงก์ด้านล่าง:
+{confirmation_url}
+
+*สำคัญ*: หากไม่ได้คลิกลิงก์ยืนยันการเข้าร่วม คุณจะไม่ได้รับอนุมัติให้เข้าร่วมโครงการนี้
+และการยืนยันนี้จะหมดอายุใน 1 วันก่อนวันเริ่มโครงการ หากไม่ได้รับการยืนยันภายในเวลาดังกล่าว 
+ระบบจะยกเลิกการลงทะเบียนของคุณโดยอัตโนมัติ
+
+หากคุณไม่ได้ลงทะเบียนเข้าร่วมโครงการนี้ กรุณาละเว้นอีเมลฉบับนี้
 
 ขอแสดงความนับถือ
 ทีมงานบริหารโครงการ
+มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตขอนแก่น
+"""
+            # ส่งอีเมล
+            email_result = send_email_notification(subject, message, participant_info['join_email'])
+            
+            # อัปเดตสถานะเป็น "รอการยืนยัน" (สถานะ 3)
+            cursor.execute(
+                "UPDATE `join` SET join_status = 3 WHERE join_id = %s",
+                (join_id,)
+            )
+            conn.commit()
+            
+            if email_result:
+                flash(f"ส่งอีเมลยืนยันไปยัง {participant_info['join_name']} แล้ว รอผู้สมัครคลิกลิงก์ยืนยันในอีเมล", "success")
+            else:
+                flash(f"ไม่สามารถส่งอีเมลยืนยันได้ กรุณาลองอีกครั้ง", "warning")
+                
+        # ถ้าสถานะคือ "2" (ไม่อนุมัติ)
+        elif new_status == '2':
+            # อัปเดตสถานะเป็นไม่อนุมัติ
+            cursor.execute(
+                "UPDATE `join` SET join_status = 2 WHERE join_id = %s",
+                (join_id,)
+            )
+            conn.commit()
+            
+            # ส่งอีเมลแจ้งเตือน
+            subject = f"ผลการพิจารณาการเข้าร่วมโครงการ: {participant_info['project_name']}"
+            message = f"""
+เรียน {participant_info['join_name']} 
+
+ขออภัย คำขอเข้าร่วมโครงการ "{participant_info['project_name']}" ของคุณไม่ได้รับการอนุมัติ
+
+หากมีข้อสงสัยประการใด กรุณาติดต่อผู้ประสานงานโครงการ
+
+ขอแสดงความนับถือ
+ทีมงานบริหารโครงการ
+มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตขอนแก่น
 """
             send_email_notification(subject, message, participant_info['join_email'])
-
-        flash("อัพเดทสถานะการเข้าร่วมเรียบร้อยแล้ว", "success")
+            flash("อัพเดทสถานะการเข้าร่วมเป็น 'ไม่อนุมัติ' เรียบร้อยแล้ว", "success")
+        
+        # สถานะอื่นๆ (เช่น "0" - รอการอนุมัติ)
+        else:
+            cursor.execute(
+                "UPDATE `join` SET join_status = %s WHERE join_id = %s",
+                (new_status, join_id)
+            )
+            conn.commit()
+            flash("อัพเดทสถานะการเข้าร่วมเรียบร้อยแล้ว", "success")
+            
     except mysql.connector.Error as err:
         flash(f"เกิดข้อผิดพลาดในการอัพเดทสถานะ: {err}", "error")
     finally:
@@ -3652,7 +4006,6 @@ def update_join_status(join_id):
         conn.close()
 
     return redirect(request.referrer)
-
 @app.route("/project/<int:project_id>/approve_participants")
 @login_required("teacher")
 def approve_participants(project_id):
@@ -3698,4 +4051,5 @@ def approve_participants(project_id):
 
 # ตรวจสอบข้อมูลใหม่ทุกๆ 5 นาที
 if __name__ == "__main__":
+    init_scheduler(app)
     app.run(debug=True, port=5000)

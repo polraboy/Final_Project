@@ -17,6 +17,15 @@
         <div class="card">
             <div class="card-header">
                 <h2 class="text-center mb-0"><i class="fas fa-users"></i> รายชื่อผู้เข้าร่วมโครงการ</h2>
+                {% if is_logged_in %}
+                <div class="text-right mt-2">
+                    <form action="{{ url_for('approve_all_participants', project_id=project_id) }}" method="POST" onsubmit="return confirm('คุณต้องการอนุมัติผู้เข้าร่วมทั้งหมดที่กำลังรออนุมัติใช่หรือไม่?');">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check-double"></i> อนุมัติทั้งหมด
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -45,8 +54,10 @@
                                         <span class="badge badge-waiting">รอการอนุมัติ</span>
                                     {% elif participant.join_status == 1 %}
                                         <span class="badge badge-approved">อนุมัติแล้ว</span>
-                                    {% else %}
+                                    {% elif participant.join_status == 2 %}
                                         <span class="badge badge-rejected">ไม่อนุมัติ</span>
+                                    {% elif participant.join_status == 3 %}
+                                        <span class="badge badge-info">รอการยืนยันจากผู้สมัคร</span>
                                     {% endif %}
                                 </td>
                                 {% if is_logged_in %}
