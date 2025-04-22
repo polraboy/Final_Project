@@ -31,49 +31,60 @@
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
-                            <tr>
-                                <th>ลำดับ</th>
-                                <th>ชื่อ-นามสกุล</th>
-                                <th>อีเมล</th>
-                                <th>เบอร์โทรศัพท์</th>
-                                <th>สถานะ</th>
-                                {% if is_logged_in %}
-                                <th>การดำเนินการ</th>
-                                {% endif %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for participant in participants %}
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td>{{ participant.join_name }}</td>
-                                <td>{{ participant.join_email }}</td>
-                                <td>{{ participant.join_telephone }}</td>
-                                <td>
-                                    {% if participant.join_status == 0 %}
-                                        <span class="badge badge-waiting">รอการอนุมัติ</span>
-                                    {% elif participant.join_status == 1 %}
-                                        <span class="badge badge-approved">อนุมัติแล้ว</span>
-                                    {% elif participant.join_status == 2 %}
-                                        <span class="badge badge-rejected">ไม่อนุมัติ</span>
-                                    {% elif participant.join_status == 3 %}
-                                        <span class="badge badge-info">รอการยืนยันจากผู้สมัคร</span>
+                            <thead>
+                                <tr>
+                                  <th>ลำดับ</th>
+                                  <th>ชื่อ-นามสกุล</th>
+                                  <th>สถานะ</th><!-- เพิ่มคอลัมน์สถานะ -->
+                                  <th>อีเมล</th>
+                                  <th>เบอร์โทรศัพท์</th>
+                                  <th>สถานะการอนุมัติ</th>
+                                  {% if is_logged_in %}
+                                  <th>การดำเนินการ</th>
+                                  {% endif %}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for participant in participants %}
+                                <tr>
+                                  <td>{{ loop.index }}</td>
+                                  <td>{{ participant.join_name }}</td>
+                                  <td>
+                                    {% if participant.join_role == 'student' %}
+                                      <span class="badge badge-primary">นักศึกษา</span>
+                                    {% elif participant.join_role == 'external' %}
+                                      <span class="badge badge-secondary">บุคคลภายนอก</span>
+                                    {% else %}
+                                      <span class="badge badge-light">ไม่ระบุ</span>
                                     {% endif %}
-                                </td>
-                                {% if is_logged_in %}
-                                <td>
+                                  </td>
+                                  <td>{{ participant.join_email }}</td>
+                                  <td>{{ participant.join_telephone }}</td>
+                                  <td>
+                                    {% if participant.join_status == 0 %}
+                                      <span class="badge badge-waiting">รอการอนุมัติ</span>
+                                    {% elif participant.join_status == 1 %}
+                                      <span class="badge badge-approved">อนุมัติแล้ว</span>
+                                    {% elif participant.join_status == 2 %}
+                                      <span class="badge badge-rejected">ไม่อนุมัติ</span>
+                                    {% elif participant.join_status == 3 %}
+                                      <span class="badge badge-info">รอการยืนยันจากผู้สมัคร</span>
+                                    {% endif %}
+                                  </td>
+                                  {% if is_logged_in %}
+                                  <td>
                                     <form action="{{ url_for('update_join_status', join_id=participant.join_id) }}" method="POST">
-                                        <select name="join_status" class="form-control form-control-sm" onchange="this.form.submit()">
-                                            <option value="0" {% if participant.join_status == 0 %}selected{% endif %}>รอการอนุมัติ</option>
-                                            <option value="1" {% if participant.join_status == 1 %}selected{% endif %}>อนุมัติ</option>
-                                            <option value="2" {% if participant.join_status == 2 %}selected{% endif %}>ไม่อนุมัติ</option>
-                                        </select>
+                                      <select name="join_status" class="form-control form-control-sm" onchange="this.form.submit()">
+                                        <option value="0" {% if participant.join_status == 0 %}selected{% endif %}>รอการอนุมัติ</option>
+                                        <option value="1" {% if participant.join_status == 1 %}selected{% endif %}>อนุมัติ</option>
+                                        <option value="2" {% if participant.join_status == 2 %}selected{% endif %}>ไม่อนุมัติ</option>
+                                      </select>
                                     </form>
-                                </td>
-                                {% endif %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
+                                  </td>
+                                  {% endif %}
+                                </tr>
+                                {% endfor %}
+                              </tbody>
                     </table>
                 </div>
             </div>
@@ -86,5 +97,41 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // เมื่อหน้าโหลดเสร็จ
+        document.addEventListener('DOMContentLoaded', function() {
+            // ตรงนี้เราจะเพิ่ม timestamp ให้กับ URL ทุกครั้งที่รีเฟรช
+            
+            // เมื่อกดปุ่มอนุมัติทั้งหมด
+            const approveAllForm = document.querySelector('form[action*="approve_all"]');
+            if (approveAllForm) {
+                approveAllForm.addEventListener('submit', function(e) {
+                    // หลังจากส่งฟอร์ม รอเวลาสักครู่แล้วรีเฟรชหน้าด้วย timestamp ใหม่
+                    setTimeout(function() {
+                        const newUrl = window.location.href.split('?')[0] + '?t=' + new Date().getTime();
+                        window.location.href = newUrl;
+                    }, 5000); // รอ 5 วินาทีก่อนรีเฟรช
+                });
+            }
+            
+            // เมื่อเปลี่ยนสถานะแต่ละคน
+            const statusSelects = document.querySelectorAll('select[name="join_status"]');
+            statusSelects.forEach(function(select) {
+                select.addEventListener('change', function() {
+                    // บันทึกค่าที่เลือกไว้
+                    const selectedValue = this.value;
+                    const form = this.closest('form');
+                    
+                    // ส่งฟอร์ม
+                    form.submit();
+                    
+                    // ตั้งค่าเลือกกลับเป็นค่าเดิมจนกว่าจะโหลดหน้าใหม่
+                    setTimeout(function() {
+                        select.value = selectedValue;
+                    }, 100);
+                });
+            });
+        });
+        </script>
 </body>
 </html>

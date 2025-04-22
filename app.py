@@ -10,10 +10,11 @@ from flask import (
     send_file,
     make_response,
     g,
-  
+   
     jsonify
 )
 import re
+import time
 from markupsafe import Markup
 import mysql.connector
 import base64
@@ -148,9 +149,9 @@ def send_email_notification(subject, message, recipient_email):
         from email.mime.multipart import MIMEMultipart
         import os
         
-        # กำหนดค่าสำหรับการส่งอีเมล - ควรเก็บในตัวแปรสภาพแวดล้อมหรือไฟล์การกำหนดค่า
+        # กำหนดค่าสำหรับการส่งอีเมล
         sender_email = os.environ.get("EMAIL_SENDER", "chawanakorn.ca@gmail.com")  
-        password = os.environ.get("EMAIL_PASSWORD", "nosv mtub ctqn wnbv")
+        password = os.environ.get("EMAIL_PASSWORD", "zdtv okmn qgmz jedc")
         
         # สร้างข้อความ
         msg = MIMEMultipart()
@@ -164,15 +165,30 @@ def send_email_notification(subject, message, recipient_email):
         # เชื่อมต่อกับเซิร์ฟเวอร์ SMTP และส่งอีเมล
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
-        server.login(sender_email, password)
-        text = msg.as_string()
-        server.sendmail(sender_email, recipient_email, text)
-        server.quit()
+        
+        # ทำการล็อกอินด้วย try/except
+        try:
+            server.login(sender_email, password)
+        except smtplib.SMTPAuthenticationError as auth_error:
+            logging.error(f"การยืนยันตัวตนล้มเหลว: {auth_error}")
+            print(f"การยืนยันตัวตน SMTP ล้มเหลว: {auth_error}")
+            return False
+            
+        try:
+            text = msg.as_string()
+            server.sendmail(sender_email, recipient_email, text)
+        except Exception as send_error:
+            logging.error(f"การส่งอีเมลล้มเหลว: {send_error}")
+            print(f"การส่งอีเมลล้มเหลว: {send_error}")
+            return False
+        finally:
+            server.quit()
         
         logging.info(f"ส่งอีเมลถึง {recipient_email} สำเร็จ")
         return True
     except Exception as e:
         logging.error(f"เกิดข้อผิดพลาดในการส่งอีเมล: {e}")
+        print(f"เกิดข้อผิดพลาดในการส่งอีเมล: {e}")
         return False
 @contextmanager
 def get_db_cursor():
@@ -284,6 +300,14 @@ def login():
                     )
 
     return render_template("login.html")
+
+def generate_confirmation_token(join_id, email):
+    # สร้างโทเค็นอย่างง่ายจาก join_id และ email
+    import hashlib
+    token = hashlib.md5(f"{join_id}:{email}:{app.secret_key}".encode()).hexdigest()
+    print(f"สร้างโทเค็นสำหรับ join_id: {join_id}, email: {email}, token: {token}")
+    return token
+
 # เพิ่มเส้นทางใหม่สำหรับการยืนยันการเข้าร่วม
 @app.route("/confirm_participation/<int:join_id>/<token>", methods=["GET"])
 def confirm_participation(join_id, token):
@@ -303,8 +327,13 @@ def confirm_participation(join_id, token):
             flash("ไม่พบข้อมูลการลงทะเบียน", "error")
             return redirect(url_for("home"))
         
-        # สร้างโทเค็นเพื่อเปรียบเทียบ (ต้องใช้วิธีเดียวกับที่ใช้สร้างโทเค็นในอีเมล)
+        print(f"ข้อมูลผู้ยืนยัน: {participant_info}")
+        
+        # สร้างโทเค็นเพื่อเปรียบเทียบ
         expected_token = generate_confirmation_token(join_id, participant_info[1])  # join_id และ email
+        
+        print(f"โทเค็นที่คาดหวัง: {expected_token}")
+        print(f"โทเค็นที่ได้รับ: {token}")
         
         if token != expected_token:
             flash("ลิงก์ยืนยันไม่ถูกต้อง", "error")
@@ -319,13 +348,6 @@ def confirm_participation(join_id, token):
         
         flash("การลงทะเบียนเข้าร่วมโครงการได้รับการยืนยันเรียบร้อยแล้ว", "success")
         return redirect(url_for("project_detail", project_id=participant_info[2]))
-    # ฟังก์ชันสร้างโทเค็นสำหรับยืนยันเข้าร่วม
-def generate_confirmation_token(join_id, email):
-    # สร้างโทเค็นอย่างง่ายจาก join_id และ email
-    # ในระบบจริงควรใช้วิธีที่ปลอดภัยกว่านี้ เช่น ใช้ itsdangerous
-    import hashlib
-    token = hashlib.md5(f"{join_id}:{email}:{app.secret_key}".encode()).hexdigest()
-    return token
 
 @app.route("/dashboard")
 def dashboard():
@@ -640,6 +662,7 @@ def join_project(project_id):
 
     if request.method == "POST":
         join_name = request.form["join_name"]
+        join_role = request.form["join_role"]  # รับค่า role
         join_telephone = request.form["join_telephone"]
         join_email = request.form["join_email"]
 
@@ -668,10 +691,10 @@ def join_project(project_id):
         try:
             cursor.execute(
                 """
-                INSERT INTO `join` (join_name, join_telephone, join_email, project_id, join_status)
-                VALUES (%s, %s, %s, %s, 0)
+                INSERT INTO `join` (join_name, join_role, join_telephone, join_email, project_id, join_status)
+                VALUES (%s, %s, %s, %s, %s, 0)
             """,
-                (join_name, join_telephone, join_email, project_id),
+                (join_name, join_role, join_telephone, join_email, project_id),
             )
             conn.commit()
             flash("คุณได้ลงทะเบียนเข้าร่วมโครงการเรียบร้อยแล้ว โปรดรอการอนุมัติ", "success")
@@ -689,13 +712,11 @@ def join_project(project_id):
         current_count=current_count,
     )
 
-# เพิ่มเส้นทางใหม่สำหรับการยืนยันการเข้าร่วม
-# ฟังก์ชันสร้างโทเค็นสำหรับยืนยันเข้าร่วม
 def generate_confirmation_token(join_id, email):
     # สร้างโทเค็นอย่างง่ายจาก join_id และ email
-    # ในระบบจริงควรใช้วิธีที่ปลอดภัยกว่านี้ เช่น ใช้ itsdangerous
     import hashlib
     token = hashlib.md5(f"{join_id}:{email}:{app.secret_key}".encode()).hexdigest()
+    print(f"สร้างโทเค็นสำหรับ join_id: {join_id}, email: {email}, token: {token}")
     return token
 
 
@@ -704,9 +725,12 @@ def project_participants(project_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
+    # เพิ่มตัวแปร timestamp เพื่อป้องกันการ cache
+    timestamp = int(time.time())
+
     cursor.execute(
         """
-        SELECT join_id, join_name, join_email, join_telephone, join_status
+        SELECT join_id, join_name, join_email, join_telephone, join_status, join_role
         FROM `join`
         WHERE project_id = %s
         ORDER BY join_id
@@ -720,13 +744,20 @@ def project_participants(project_id):
 
     is_logged_in = "teacher_id" in session
 
-    return render_template(
+    response = make_response(render_template(
         "project_participants.html",
         project_id=project_id,
         participants=participants,
         is_logged_in=is_logged_in,
-    )
-
+        timestamp=timestamp  # ส่ง timestamp ไปกับเทมเพลต
+    ))
+    
+    # ตั้งค่า headers เพื่อป้องกันการ cache
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    
+    return response
 
 @app.route("/uploads/<filename>")
 @login_required("teacher")
@@ -917,6 +948,7 @@ def download_project_pdf(project_id):
             # ไม่มี PDF หรือไม่พบโครงการ
             flash("ไม่พบไฟล์ PDF สำหรับโครงการนี้", "error")
             return redirect(url_for("teacher_projects" if user_type == "teacher" else "approve_project"))
+
 @app.route("/project/<int:project_id>/approve_all", methods=["POST"])
 @login_required("teacher")
 def approve_all_participants(project_id):
@@ -953,57 +985,25 @@ def approve_all_participants(project_id):
         
         # ดึงข้อมูลโครงการ
         cursor.execute(
-            "SELECT project_name, project_dotime FROM project WHERE project_id = %s",
+            "SELECT project_name FROM project WHERE project_id = %s",
             (project_id,)
         )
         project_info = cursor.fetchone()
         project_name = project_info[0]
-        project_dotime = project_info[1]
         
-        # แปลงวันที่โครงการให้เป็น date object ถ้าจำเป็น
-        if isinstance(project_dotime, datetime):
-            project_date = project_dotime.date()
-        else:
-            project_date = project_dotime
-            
-        # คำนวณวันที่เหลือก่อนถึงวันโครงการ
-        current_date = datetime.now().date()
-        days_until_project = (project_date - current_date).days
-        
-        approved_count = 0
+        import time
         pending_confirmation_count = 0
+        failed_emails = []
         
+        # ใช้ for loop เพื่อให้ส่งทีละคน
         for participant in pending_participants:
-            join_id = participant[0]
-            join_name = participant[1]
-            join_email = participant[2]
-            
-            # ถ้าโครงการจะเริ่มในอีกไม่เกิน 1 วัน อนุมัติเลยโดยไม่ต้องยืนยัน
-            if days_until_project <= 1:
-                cursor.execute(
-                    "UPDATE `join` SET join_status = 1 WHERE join_id = %s",
-                    (join_id,)
-                )
+            try:
+                join_id = participant[0]
+                join_name = participant[1]
+                join_email = participant[2]
                 
-                # ส่งอีเมลแจ้งการอนุมัติ
-                subject = f"การอนุมัติเข้าร่วมโครงการ: {project_name}"
-                message = f"""
-เรียน {join_name} 
-
-ยินดีด้วย! คุณได้รับการอนุมัติให้เข้าร่วมโครงการ "{project_name}" แล้ว
-
-เนื่องจากโครงการใกล้จะเริ่มในเร็วๆ นี้ จึงไม่จำเป็นต้องยืนยันการเข้าร่วม
-โปรดเตรียมตัวให้พร้อมสำหรับการเข้าร่วมกิจกรรมตามวันและเวลาที่กำหนด
-
-ขอแสดงความนับถือ
-ทีมงานบริหารโครงการ
-มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตขอนแก่น
-"""
-                send_email_notification(subject, message, join_email)
-                approved_count += 1
-            
-            # กรณีปกติ - ส่งอีเมลยืนยัน
-            else:
+                print(f"กำลังประมวลผลผู้เข้าร่วม: {join_name}, {join_email}")
+                
                 # สร้างโทเค็นสำหรับยืนยัน
                 token = generate_confirmation_token(join_id, join_email)
                 
@@ -1016,12 +1016,13 @@ def approve_all_participants(project_id):
                 message = f"""
 เรียน {join_name} 
 
-ยินดีด้วย! คำขอเข้าร่วมโครงการ "{project_name}" ของคุณได้รับการอนุมัติเบื้องต้นแล้ว
+ยินดีด้วย! คำขอเข้าร่วมโครงการ "{project_name}" ของคุณได้รับการพิจารณาอนุมัติในเบื้องต้นแล้ว
 
 กรุณายืนยันการเข้าร่วมโครงการโดยคลิกที่ลิงก์ด้านล่าง:
 {confirmation_url}
 
-หมายเหตุ: การยืนยันนี้จะหมดอายุใน 1 วันก่อนวันเริ่มโครงการ หากไม่ได้รับการยืนยันภายในเวลาดังกล่าว 
+*สำคัญ*: หากไม่ได้คลิกลิงก์ยืนยันการเข้าร่วม คุณจะไม่ได้รับอนุมัติให้เข้าร่วมโครงการนี้
+และการยืนยันนี้จะหมดอายุใน 1 วันก่อนวันเริ่มโครงการ หากไม่ได้รับการยืนยันภายในเวลาดังกล่าว 
 ระบบจะยกเลิกการลงทะเบียนของคุณโดยอัตโนมัติ
 
 หากคุณไม่ได้ลงทะเบียนเข้าร่วมโครงการนี้ กรุณาละเว้นอีเมลฉบับนี้
@@ -1031,24 +1032,36 @@ def approve_all_participants(project_id):
 มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตขอนแก่น
 """
                 # ส่งอีเมล
-                send_email_notification(subject, message, join_email)
+                print(f"กำลังส่งอีเมลไปยัง: {join_email}")
+                result = send_email_notification(subject, message, join_email)
+                print(f"ผลการส่งอีเมล: {result}")
                 
-                # อัปเดตสถานะเป็น "รอการยืนยัน" (สถานะ 3)
-                cursor.execute(
-                    "UPDATE `join` SET join_status = 3 WHERE join_id = %s",
-                    (join_id,)
-                )
-                pending_confirmation_count += 1
+                if result:
+                    # อัปเดตสถานะเป็น "รอการยืนยัน" (สถานะ 3)
+                    cursor.execute(
+                        "UPDATE `join` SET join_status = 3 WHERE join_id = %s",
+                        (join_id,)
+                    )
+                    db.commit()  # commit สำหรับแต่ละรายการ
+                    pending_confirmation_count += 1
+                    
+                    # หน่วงเวลาระหว่างการส่งอีเมล 1 วินาที เพื่อหลีกเลี่ยงการถูกจำกัดการส่ง
+                    time.sleep(1)
+                else:
+                    failed_emails.append(join_email)
+                    print(f"ไม่สามารถส่งอีเมลไปยัง {join_email}")
+            
+            except Exception as e:
+                print(f"เกิดข้อผิดพลาดในการประมวลผลผู้เข้าร่วม: {e}")
+                failed_emails.append(participant[2])
+                # ไม่หยุดการทำงาน ให้ดำเนินการต่อไปกับผู้เข้าร่วมคนอื่น
         
-        # Commit การเปลี่ยนแปลงทั้งหมด
-        db.commit()
+        # แสดงผลสรุป
+        if pending_confirmation_count > 0:
+            flash(f"ส่งอีเมลยืนยันให้ผู้เข้าร่วมแล้ว {pending_confirmation_count} คน", "success")
         
-        if approved_count > 0 and pending_confirmation_count > 0:
-            flash(f"อนุมัติผู้เข้าร่วมทั้งหมด {approved_count} คน และส่งอีเมลยืนยันให้อีก {pending_confirmation_count} คนแล้ว", "success")
-        elif approved_count > 0:
-            flash(f"อนุมัติผู้เข้าร่วมทั้งหมด {approved_count} คนเรียบร้อยแล้ว", "success")
-        elif pending_confirmation_count > 0:
-            flash(f"ส่งอีเมลยืนยันให้ผู้เข้าร่วมทั้งหมด {pending_confirmation_count} คนแล้ว", "success")
+        if failed_emails:
+            flash(f"ไม่สามารถส่งอีเมลไปยัง {len(failed_emails)} คน: {', '.join(failed_emails)}", "warning")
         
     return redirect(url_for("approve_participants", project_id=project_id))
 def prepare_logo(logo_path):
@@ -2045,7 +2058,6 @@ def verify_pdf(pdf_content):
     except Exception as e:
         logging.error(f"Error verifying PDF: {e}")
         return False
-   
 @app.route("/teacher_evaluation_project/<int:project_id>")
 @login_required("teacher")
 def teacher_evaluation_project(project_id):
@@ -2069,6 +2081,14 @@ def teacher_evaluation_project(project_id):
         if project_teacher_id != session.get('teacher_id'):
             flash('คุณไม่มีสิทธิ์ดูข้อมูลโครงการนี้', 'error')
             return redirect(url_for('teacher_projects'))
+        
+        # ดึงข้อมูลผู้เข้าร่วมโครงการทั้งหมด
+        cursor.execute("""
+            SELECT COUNT(*) as total_participants
+            FROM `join`
+            WHERE project_id = %s
+        """, (project_id,))
+        participants_count = cursor.fetchone()[0]
         
         # ดึงข้อมูลการประเมิน
         query = """
@@ -2131,7 +2151,8 @@ def teacher_evaluation_project(project_id):
         evaluations=evaluation_list,
         project_id=project_id,
         project_name=project_name,
-        summary=summary_data
+        summary=summary_data,
+        participants_count=participants_count  # เพิ่มข้อมูลจำนวนผู้เข้าร่วม
     )
 @app.route("/project/<int:project_id>/evaluation", methods=["GET", "POST"])
 def project_evaluation(project_id):
@@ -2295,7 +2316,39 @@ def project_evaluation(project_id):
                          join_name=join_name,
                          join_email=join_email)
 
+@app.route("/cancel_submission", methods=["POST"])
+@login_required("teacher")
+def cancel_submission():
+    if "teacher_id" not in session:
+        return jsonify({"success": False, "message": "ไม่มีสิทธิ์ในการดำเนินการนี้"})
 
+    data = request.json
+    project_id = data.get("project_id")
+    teacher_id = session["teacher_id"]
+    
+    try:
+        with get_db_cursor() as (db, cursor):
+            # ตรวจสอบว่าเป็นโครงการของอาจารย์และสถานะเป็น "รออนุมัติ" หรือไม่
+            cursor.execute(
+                "SELECT project_id FROM project WHERE project_id = %s AND teacher_id = %s AND project_status = 1",
+                (project_id, teacher_id)
+            )
+            project = cursor.fetchone()
+            
+            if not project:
+                return jsonify({"success": False, "message": "ไม่พบโครงการหรือไม่มีสิทธิ์ในการยกเลิก"})
+            
+            # อัปเดตสถานะกลับเป็น "ยังไม่ยื่นอนุมัติ"
+            cursor.execute(
+                "UPDATE project SET project_status = 0 WHERE project_id = %s",
+                (project_id,)
+            )
+            db.commit()
+            
+            return jsonify({"success": True})
+    except Exception as e:
+        logging.error(f"Error in cancel_submission: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route("/project/<int:project_id>/summary")
 @login_required("teacher", "admin")
@@ -3921,6 +3974,10 @@ def update_join_status(join_id):
             flash("ไม่พบข้อมูลผู้สมัคร", "error")
             return redirect(request.referrer)
         
+        # เพิ่ม debug logging
+        print(f"ข้อมูลผู้สมัคร: {participant_info}")
+        print(f"สถานะใหม่: {new_status}, สถานะเดิม: {participant_info['join_status']}")
+        
         # ถ้าสถานะคือ "1" (อนุมัติ) และยังไม่เคยอนุมัติมาก่อน
         if new_status == '1' and participant_info['join_status'] != 1:
             # สร้างโทเค็นสำหรับยืนยัน
@@ -3929,6 +3986,8 @@ def update_join_status(join_id):
             # สร้าง URL สำหรับยืนยัน
             base_url = request.host_url.rstrip('/')
             confirmation_url = f"{base_url}{url_for('confirm_participation', join_id=join_id, token=token)}"
+            
+            print(f"URL ยืนยัน: {confirmation_url}")  # เพิ่ม debug log
             
             # ส่งอีเมลยืนยันให้ผู้สมัคร
             subject = f"ยืนยันการเข้าร่วมโครงการ: {participant_info['project_name']}"
@@ -3951,7 +4010,9 @@ def update_join_status(join_id):
 มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตขอนแก่น
 """
             # ส่งอีเมล
+            print(f"กำลังส่งอีเมลไปยัง: {participant_info['join_email']}")  # เพิ่ม debug log
             email_result = send_email_notification(subject, message, participant_info['join_email'])
+            print(f"ผลการส่งอีเมล: {email_result}")  # เพิ่ม debug log
             
             # อัปเดตสถานะเป็น "รอการยืนยัน" (สถานะ 3)
             cursor.execute(
@@ -4000,12 +4061,14 @@ def update_join_status(join_id):
             flash("อัพเดทสถานะการเข้าร่วมเรียบร้อยแล้ว", "success")
             
     except mysql.connector.Error as err:
+        print(f"Database error: {err}")  # เพิ่ม debug log
         flash(f"เกิดข้อผิดพลาดในการอัพเดทสถานะ: {err}", "error")
     finally:
         cursor.close()
         conn.close()
 
     return redirect(request.referrer)
+
 @app.route("/project/<int:project_id>/approve_participants")
 @login_required("teacher")
 def approve_participants(project_id):

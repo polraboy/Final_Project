@@ -404,6 +404,13 @@
                   {% endif %}
                 </td>
                 <td>
+                  <!-- แก้ไขส่วนนี้ใน teacher_projects.html -->
+<!-- ใส่ปุ่มนี้ใน teacher_projects.html ตรงส่วนของการจัดการโครงการ -->
+{% if project[2] == 1 %}
+<button onclick="confirmCancelSubmission({{ project[0] }}, '{{ project[1] }}')" class="btn btn-warning btn-sm">
+  <i class="fas fa-times-circle"></i> ยกเลิกการส่ง
+</button>
+{% endif %}
                   {% if project[2] == 0 or project[2] == 3 %}
                   <button onclick="confirmApproval({{ project[0] }})" class="btn btn-primary btn-sm">
                     ขออนุมัติ
@@ -421,6 +428,7 @@
                     class="btn btn-warning btn-sm"
                     >แก้ไข</a
                   >
+                  
                 </td>
                 <td>
                   {% if project[4] %}
@@ -543,7 +551,47 @@
               }
           });
       }
-      
+     // เพิ่มที่ส่วนล่างของไฟล์ teacher_projects.html ในส่วน <script>
+function confirmCancelSubmission(projectId, projectName) {
+  Swal.fire({
+      title: 'ยืนยันการยกเลิกการส่ง',
+      text: `คุณต้องการยกเลิกการส่งโครงการ "${projectName}" เพื่อขออนุมัติใช่หรือไม่?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'ใช่, ยกเลิกการส่ง',
+      cancelButtonText: 'ไม่ใช่'
+  }).then((result) => {
+      if (result.isConfirmed) {
+          fetch('/cancel_submission', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ project_id: projectId })
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  Swal.fire(
+                      'สำเร็จ!',
+                      'ยกเลิกการส่งโครงการเรียบร้อยแล้ว',
+                      'success'
+                  ).then(() => {
+                      location.reload();
+                  });
+              } else {
+                  Swal.fire(
+                      'เกิดข้อผิดพลาด!',
+                      'ไม่สามารถยกเลิกการส่งโครงการได้ กรุณาลองใหม่อีกครั้ง',
+                      'error'
+                  );
+              }
+          });
+      }
+  });
+}
       function confirmDownload(projectId, projectName) {
         Swal.fire({
             title: 'ยืนยันการดาวน์โหลด',

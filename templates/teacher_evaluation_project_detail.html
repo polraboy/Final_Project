@@ -26,6 +26,8 @@
                                             {{ "%.2f"|format(summary.average_score) }}/5
                                         </h2>
                                         <p>จำนวนผู้ประเมิน: {{ summary.total_evaluations }} คน</p>
+                                        <!-- เพิ่มแสดงจำนวนผู้สมัคร -->
+                                        <p>จำนวนผู้สมัคร: {{ participants_count }} คน</p>
                                     </div>
                                 </div>
                             </div>
@@ -50,53 +52,47 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-12">
-                        <h3>รายละเอียดการประเมิน</h3>
-                        <div class="table-responsive">
-                            <table class="table table-hover table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>รหัสประเมิน</th>
-                                        <th>ชื่อผู้ประเมิน</th>
-                                        <th>อีเมล</th>
-                                        <th>คะแนน</th>
-                                        <th>วันที่ประเมิน</th>
-                                        <th>ความคิดเห็น</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for eval in evaluations %}
-                                    <tr>
-                                        <td>{{ eval.evaluation_id }}</td>
-                                        <td>{{ eval.join_name }}</td>
-                                        <td>{{ eval.join_email }}</td>
-                                        <td class="text-center">
-                                            {{ eval.evaluation_score }}/5
-                                            <div class="progress">
-                                                <div class="progress-bar 
-                                                    {% if eval.evaluation_score >= 4 %}bg-success
-                                                    {% elif eval.evaluation_score >= 3 %}bg-warning
-                                                    {% else %}bg-danger{% endif %}" 
-                                                    role="progressbar" 
-                                                    style="width: {{ eval.evaluation_score / 5 * 100 }}%"
-                                                    aria-valuenow="{{ eval.evaluation_score }}" 
-                                                    aria-valuemin="0" 
-                                                    aria-valuemax="5">
+                
+                        <!-- ปุ่มดูความคิดเห็นทั้งหมด -->
+                        <div class="text-center mt-4 mb-4">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#allCommentsModal">
+                                ดูความคิดเห็นทั้งหมด
+                            </button>
+                        </div>
+                        
+                        <!-- Modal สำหรับแสดงความคิดเห็นทั้งหมด -->
+                        <div class="modal fade" id="allCommentsModal" tabindex="-1" aria-labelledby="allCommentsModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="allCommentsModalLabel">ความคิดเห็นทั้งหมดจากผู้ประเมิน</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        {% set has_comments = false %}
+                                        {% for eval in evaluations %}
+                                            {% if eval.evaluation_comments %}
+                                                {% set has_comments = true %}
+                                                <div class="card mb-3">
+                                                    <div class="card-body">
+                                                        <p class="card-text">{{ eval.evaluation_comments }}</p>
+                                                        <p class="card-text text-muted text-end">ประเมินเมื่อ: {{ eval.evaluation_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                                                    </div>
                                                 </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if not has_comments %}
+                                            <div class="alert alert-info">
+                                                ไม่มีความคิดเห็นจากผู้ประเมิน
                                             </div>
-                                        </td>
-                                        <td>{{ eval.evaluation_date.strftime('%Y-%m-%d %H:%M') }}</td>
-                                        <td>{{ eval.evaluation_comments or 'ไม่มีความคิดเห็นเพิ่มเติม' }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                                    
-                                    <!-- Modal สำหรับแสดงความคิดเห็น -->
-                                   
-                                   
-                                </tbody>
-                            </table>
+                                        {% endif %}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -161,7 +157,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'การกระจายของคะแนนประเมิน'
+                            text: 'การกระจายของคะแนนประเมิน (จากทั้งหมด {{ participants_count }} คน)'
                         }
                     }
                 }
