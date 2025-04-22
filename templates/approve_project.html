@@ -176,23 +176,23 @@
     <div class="container">
         <div class="content-box">
             <h2 class="text-center mb-4">อนุมัติโครงการ</h2>
-<!-- ฟอร์มค้นหา -->
-<form method="GET" action="{{ url_for('approve_project') }}">
-    <div class="form-group">
-        <label for="approval">กรองสถานะโครงการ:</label>
-        <select name="approval" id="approval" class="form-control">
-            <option value="all" {% if approval_filter == 'all' %}selected{% endif %}>ทั้งหมด</option>
-            <option value="approved" {% if approval_filter == 'approved' %}selected{% endif %}>อนุมัติแล้ว</option>
-            <option value="pending" {% if approval_filter == 'pending' %}selected{% endif %}>รออนุมัติ</option>
-            <option value="unapproved" {% if approval_filter == 'unapproved' %}selected{% endif %}>ยังไม่ยื่นอนุมัติ</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label for="search">ค้นหาโครงการ:</label>
-        <input type="text" name="search" id="search" class="form-control" value="{{ search_query }}">
-    </div>
-    <button type="submit" class="btn btn-primary">ค้นหา</button>
-</form>     
+            <!-- ฟอร์มค้นหา -->
+            <form method="GET" action="{{ url_for('approve_project') }}">
+                <div class="form-group">
+                    <label for="approval">กรองสถานะโครงการ:</label>
+                    <select name="approval" id="approval" class="form-control">
+                        <option value="all" {% if approval_filter == 'all' %}selected{% endif %}>ทั้งหมด</option>
+                        <option value="approved" {% if approval_filter == 'approved' %}selected{% endif %}>อนุมัติแล้ว</option>
+                        <option value="pending" {% if approval_filter == 'pending' %}selected{% endif %}>รออนุมัติ</option>
+                        <option value="unapproved" {% if approval_filter == 'unapproved' %}selected{% endif %}>ยังไม่ยื่นอนุมัติ</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="search">ค้นหาโครงการ:</label>
+                    <input type="text" name="search" id="search" class="form-control" value="{{ search_query }}">
+                </div>
+                <button type="submit" class="btn btn-primary">ค้นหา</button>
+            </form>     
 
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -207,50 +207,60 @@
                     </thead>
                     <tbody>
                         {% for project in projects %}
-    <tr>
-      <td>{{ loop.index + (page - 1) * per_page }}</td>
-      <td>{{ project[1] }}</td>
-      <td>
-        {% if project[2] == 0 %}
-          <span class="badge badge-secondary">ยังไม่ยื่นอนุมัติ</span>
-        {% elif project[2] == 1 %}
-          <span class="badge badge-warning">รออนุมัติ</span>
-          {% if project[4] %}
-            <br><small>ส่งเมื่อ: {{ project[4].strftime('%Y-%m-%d %H:%M:%S') }}</small>
-          {% endif %}
-        {% elif project[2] == 2 %}
-          <span class="badge badge-success">อนุมัติแล้ว</span>
-          {% if project[5] %}
-            <br><small>อนุมัติเมื่อ: {{ project[5].strftime('%Y-%m-%d %H:%M:%S') }}</small>
-          {% endif %}
-        {% elif project[2] == 3 %}
-          <span class="badge badge-danger">ตีกลับ</span>
-          {% if project[6] %}
-            <br><small>ตีกลับเมื่อ: {{ project[6].strftime('%Y-%m-%d %H:%M:%S') }}</small>
-          {% endif %}
-        {% endif %}
-      </td>
-      <td>
-        {% if project[2] == 1 %}
-<form method="POST" action="{{ url_for('approve_project') }}" style="display: inline;">
-    <input type="hidden" name="project_id" value="{{ project[0] }}">
-    <input type="hidden" name="action" value="approve">
-    <button type="submit" class="btn btn-success btn-sm">อนุมัติ</button>
-</form>
-<button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#rejectModal{{ project[0] }}">ตีกลับ</button>
-{% endif %}
-      </td>
-      <td>
-        {% if project[3] %}
-          <a href="{{ url_for('download_project_pdf', project_id=project[0]) }}" class="btn btn-primary btn-sm">ดาวน์โหลด PDF</a>
-        {% else %}
-          <span class="badge badge-secondary">ไม่มี PDF</span>
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+                        <tr>
+                          <td>{{ loop.index + (page - 1) * per_page }}</td>
+                          <td>{{ project[1] }}</td>
+                          <td>
+                            {% if project[2] == 0 %}
+                              <span class="badge badge-secondary">ยังไม่ยื่นอนุมัติ</span>
+                            {% elif project[2] == 1 %}
+                              <span class="badge badge-warning">รออนุมัติ</span>
+                              {% if project[4] %}
+                                <br><small>ส่งเมื่อ: {{ project[4].strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                              {% endif %}
+                            {% elif project[2] == 2 %}
+                              <span class="badge badge-success">อนุมัติแล้ว</span>
+                              {% if project[5] %}
+                                <br><small>อนุมัติเมื่อ: {{ project[5].strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                              {% endif %}
+                            {% elif project[2] == 3 %}
+                              <span class="badge badge-danger">ตีกลับ</span>
+                              {% if project[6] %}
+                                <br><small>ตีกลับเมื่อ: {{ project[6].strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                              {% endif %}
+                            {% endif %}
+                          </td>
+                          <td>
+                            {% if project[2] == 1 %}
+                                <!-- ปุ่มอนุมัติโครงการ -->
+                                <form method="POST" action="{{ url_for('approve_project') }}" style="display: inline;">
+                                    <input type="hidden" name="project_id" value="{{ project[0] }}">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="btn btn-success btn-sm">อนุมัติ</button>
+                                </form>
+                                
+                                <!-- ปุ่มตีกลับ -->
+                                <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#rejectModal{{ project[0] }}">ตีกลับ</button>
+                                
+                                <!-- ปุ่มดูเหตุผลการตีกลับครั้งก่อน (แสดงเฉพาะเมื่อมีข้อมูล) -->
+                                {% if project_prev_reject and project_prev_reject.get(project[0]) %}
+                                    <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#prevRejectReasonModal{{ project[0] }}">
+                                        <i class="fas fa-history"></i> ดูเหตุผลครั้งก่อน
+                                    </button>
+                                {% endif %}
+                            {% endif %}
+                          </td>
+                          <td>
+                            {% if project[3] %}
+                              <a href="{{ url_for('download_project_pdf', project_id=project[0]) }}" class="btn btn-primary btn-sm">ดาวน์โหลด PDF</a>
+                            {% else %}
+                              <span class="badge badge-secondary">ไม่มี PDF</span>
+                            {% endif %}
+                          </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -271,8 +281,9 @@
                     <div class="modal-body">
                         <input type="hidden" name="project_id" value="{{ project[0] }}">
                         <input type="hidden" name="action" value="reject">
+                        
                         <div class="form-group">
-                            <label for="reason">เหตุผลในการตีกลับ:</label>
+                            <label for="reason"><strong>เหตุผลในการตีกลับ:</strong></label>
                             <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
                         </div>
                         <div class="form-check">
@@ -291,7 +302,35 @@
     {% endif %}
     {% endfor %}
 
-        {% if total_pages > 1 %}
+    <!-- Modal สำหรับดูเหตุผลการตีกลับครั้งก่อน -->
+    {% for project in projects %}
+    {% if project[2] == 1 and project_prev_reject and project_prev_reject.get(project[0]) %}
+    <div class="modal fade" id="prevRejectReasonModal{{ project[0] }}" tabindex="-1" role="dialog" aria-labelledby="prevRejectReasonModalLabel{{ project[0] }}" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="prevRejectReasonModalLabel{{ project[0] }}">
+                        เหตุผลการตีกลับครั้งก่อน
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        {{ project_prev_reject.get(project[0]) }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    {% if total_pages > 1 %}
     <nav aria-label="Page navigation">
         <ul class="pagination justify-content-center">
             <li class="page-item {% if page == 1 %}disabled{% endif %}">
@@ -308,10 +347,6 @@
         </ul>
     </nav>
     {% endif %}
-</div>
-
-    <!-- Footer -->
-
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>

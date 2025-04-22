@@ -604,6 +604,24 @@ def approve_project():
 
         cursor.execute(base_query, query_params)
         projects = cursor.fetchall()
+        
+        # ดึงข้อมูลเหตุผลการตีกลับของโครงการที่รออนุมัติในหน้านี้
+        project_prev_reject = {}
+        pending_project_ids = [p[0] for p in projects if p[2] == 1]  # ดึง ID ของโครงการสถานะ "รออนุมัติ"
+        
+        if pending_project_ids:
+            placeholders = ', '.join(['%s'] * len(pending_project_ids))
+            cursor.execute(
+                f"""
+                SELECT p.project_id, p.project_reject 
+                FROM project p
+                WHERE p.project_id IN ({placeholders})
+                AND p.project_reject IS NOT NULL AND p.project_reject != ''
+                """,
+                pending_project_ids
+            )
+            for proj_id, reject_reason in cursor.fetchall():
+                project_prev_reject[proj_id] = reject_reason
 
     return render_template(
         "approve_project.html",
@@ -612,7 +630,8 @@ def approve_project():
         page=page,
         total_pages=total_pages,
         search_query=search_query,
-        per_page=per_page
+        per_page=per_page,
+        project_prev_reject=project_prev_reject  # ส่งข้อมูลเหตุผลการตีกลับครั้งก่อนไปยัง template
     )
 
 def get_projects():
