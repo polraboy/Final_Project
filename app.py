@@ -18,6 +18,7 @@ import time
 from markupsafe import Markup
 import mysql.connector
 import base64
+import urllib.parse
 import os
 import urllib
 from contextlib import contextmanager
@@ -2107,7 +2108,7 @@ def teacher_evaluation_project(project_id):
             FROM `join`
             WHERE project_id = %s
         """, (project_id,))
-        participants_count = cursor.fetchone()[0]
+        participants_count = cursor.fetchone()[0] or 0  # เพิ่มการป้องกันค่า None
         
         # ดึงข้อมูลการประเมิน
         query = """
@@ -2150,19 +2151,24 @@ def teacher_evaluation_project(project_id):
         for row in evaluations:
             evaluation_list.append({
                 'evaluation_id': row[0],
-                'join_name': row[1],
-                'join_email': row[2],
-                'evaluation_score': row[3],
-                'evaluation_comments': row[4],
+                'join_name': row[1] or 'ไม่ระบุชื่อ',
+                'join_email': row[2] or 'ไม่ระบุอีเมล',
+                'evaluation_score': row[3] or 0,
+                'evaluation_comments': row[4] or '',
                 'evaluation_date': row[5]
             })
         
-        # เตรียมข้อมูลสรุป
+        # เตรียมข้อมูลสรุป และป้องกันค่า None
+        total_evaluations = summary[0] if summary and summary[0] is not None else 0
+        average_score = summary[1] if summary and summary[1] is not None else 0
+        min_score = summary[2] if summary and summary[2] is not None else 0
+        max_score = summary[3] if summary and summary[3] is not None else 0
+        
         summary_data = {
-            'total_evaluations': summary[0],
-            'average_score': summary[1],
-            'min_score': summary[2],
-            'max_score': summary[3]
+            'total_evaluations': total_evaluations,
+            'average_score': average_score,
+            'min_score': min_score,
+            'max_score': max_score
         }
     
     return render_template(
@@ -2705,352 +2711,559 @@ def save_project_summary(project_id):
             )
             db.commit()
             
-            # สร้าง PDF ใหม่หลังจากบันทึกข้อความ
-            generate_summary_pdf(project_id)
+            # สร้าง PDF ทันทีหลังจากบันทึกข้อความ
+            pdf_created = generate_summary_pdf(project_id)
             
-            flash("บันทึกสรุปรายงานโครงการเรียบร้อยแล้ว", "success")
-            return redirect(url_for("project_summary", project_id=project_id))
-        except mysql.connector.Error as err:
+            if pdf_created:
+                flash("บันทึกสรุปรายงานและสร้าง PDF เรียบร้อยแล้ว", "success")
+                # เปลี่ยนเส้นทางไปยังหน้าดาวน์โหลด PDF ทันที
+                return redirect(url_for("download_summary_pdf", project_id=project_id))
+            else:
+                flash("บันทึกข้อความสรุปเรียบร้อยแล้ว แต่ไม่สามารถสร้าง PDF ได้", "warning")
+                return redirect(url_for("project_summary", project_id=project_id))
+        except Exception as err:
             flash(f"เกิดข้อผิดพลาดในการบันทึกข้อมูล: {err}", "error")
             return redirect(url_for("project_summary", project_id=project_id))
-
 # ฟังก์ชันสร้าง PDF สรุปผลการดำเนินโครงการ
 def generate_summary_pdf(project_id):
-    with get_db_cursor() as (db, cursor):
-        # ดึงข้อมูลโครงการ
-        cursor.execute("""
-            SELECT p.project_id, p.project_name, p.project_budgettype, p.project_year, 
-                   p.project_style, p.project_address, p.project_dotime, p.project_endtime, 
-                   p.project_target, p.project_status, p.project_statusStart, 
-                   p.project_budget, p.project_submit_date, p.project_approve_date,
-                   p.project_close_date, t.teacher_name, b.branch_name, p.summary_text
-            FROM project p
-            JOIN teacher t ON p.teacher_id = t.teacher_id
-            JOIN branch b ON t.branch_id = b.branch_id
-            WHERE p.project_id = %s
-        """, (project_id,))
-        project = cursor.fetchone()
-        
-        if not project:
-            logging.error(f"ไม่พบข้อมูลโครงการ ID: {project_id}")
-            return None
-        
-        # ดึงข้อมูลผู้เข้าร่วมโครงการ
-        cursor.execute("""
-            SELECT COUNT(*) as approved_count
-            FROM `join` 
-            WHERE project_id = %s AND join_status = 1
-        """, (project_id,))
-        participant_count = int(cursor.fetchone()[0])
-        
-        # ดึงข้อมูลการประเมินความพึงพอใจ
-        cursor.execute("""
-            SELECT 
-                COUNT(*) as total_evaluations,
-                ROUND(AVG(evaluation_score), 2) as average_score,
-                MIN(evaluation_score) as min_score,
-                MAX(evaluation_score) as max_score
-            FROM 
-                project_evaluation
-            WHERE 
-                project_id = %s
-        """, (project_id,))
-        evaluation_summary = cursor.fetchone()
-        
-        if evaluation_summary:
-            evaluation_dict = {
-                "total_evaluations": int(evaluation_summary[0]),
-                "average_score": float(evaluation_summary[1] or 0),
-                "min_score": float(evaluation_summary[2] or 0),
-                "max_score": float(evaluation_summary[3] or 0)
-            }
-        else:
-            evaluation_dict = {
-                "total_evaluations": 0,
-                "average_score": 0.0,
-                "min_score": 0.0,
-                "max_score": 0.0
-            }
-        
-        # ดึงข้อมูลการเข้าร่วม (แทนการดึงคะแนนทดสอบ)
-        cursor.execute("""
-            SELECT COUNT(*) as total_participants
-            FROM `join`
-            WHERE project_id = %s AND join_status = 1
-        """, (project_id,))
-        attendance_data = cursor.fetchone()
-        
-        attendance_dict = {
-            "total_participants": int(attendance_data[0] if attendance_data[0] else 0),
-            "attendance_rate": round((int(attendance_data[0] if attendance_data[0] else 0) / float(project[8])) * 100, 2) if int(project[8]) > 0 else 0
-        }
-        
-        # คำนวณประสิทธิผลโครงการ (ใช้เฉพาะผลการประเมินความพึงพอใจ)
-        project_success = {}
-        if evaluation_dict["total_evaluations"] > 0:
-            # มีผลประเมินความพึงพอใจ
-            score = float(evaluation_dict["average_score"]) * 20  # ปรับสเกลจาก 0-5 เป็น 0-100
-            project_success = {
-                "score": round(score, 2),
-                "level": get_success_level(score)
-            }
-        else:
-            # ไม่มีข้อมูลประเมิน
-            project_success = {
-                "score": 0.0,
-                "level": "ไม่สามารถประเมินได้"
-            }
-    
     try:
+        # นำเข้าคลาส PageBreak
+        from reportlab.platypus import PageBreak
+        
+        # ดึงข้อมูลโครงการ
+        with get_db_cursor() as (db, cursor):
+            # ดึงข้อมูลโครงการและสาขาของอาจารย์
+            cursor.execute("""
+                SELECT p.project_id, p.project_name, p.project_budgettype, p.project_year, 
+                       p.project_style, p.project_address, p.project_dotime, p.project_endtime, 
+                       p.project_target, p.project_budget, p.project_detail,
+                       p.project_output, p.project_strategy, p.project_indicator, 
+                       p.project_cluster, p.project_commonality, p.project_physical_grouping,
+                       p.project_rationale, p.project_objectives, p.project_goals, 
+                       p.project_output_target, p.project_outcome_target, p.project_activity,
+                       p.project_quantity_indicator, p.project_quality_indicator,
+                       p.project_time_indicator, p.project_cost_indicator,
+                       p.project_expected_results, p.summary_text, p.project_close_date,
+                       t.teacher_id, t.teacher_name, b.branch_name
+                FROM project p
+                JOIN teacher t ON p.teacher_id = t.teacher_id
+                JOIN branch b ON t.branch_id = b.branch_id
+                WHERE p.project_id = %s
+            """, (project_id,))
+            project = cursor.fetchone()
+            
+            if not project:
+                logging.error(f"ไม่พบข้อมูลโครงการ ID: {project_id}")
+                return False
+            
+            # ดึงข้อมูลผู้เข้าร่วมโครงการ
+            cursor.execute("""
+                SELECT COUNT(*) as approved_count
+                FROM `join` 
+                WHERE project_id = %s AND join_status = 1
+            """, (project_id,))
+            participant_count = int(cursor.fetchone()[0])
+            
+            # ดึงข้อมูลการประเมินความพึงพอใจ
+            cursor.execute("""
+                SELECT 
+                    COUNT(*) as total_evaluations,
+                    ROUND(AVG(evaluation_score), 2) as average_score,
+                    MIN(evaluation_score) as min_score,
+                    MAX(evaluation_score) as max_score
+                FROM 
+                    project_evaluation
+                WHERE 
+                    project_id = %s
+            """, (project_id,))
+            evaluation_summary = cursor.fetchone()
+            
+            # แปลงข้อมูลประเมินให้พร้อมใช้งาน
+            if evaluation_summary:
+                total_evaluations = int(evaluation_summary[0]) if evaluation_summary[0] is not None else 0
+                average_score = float(evaluation_summary[1]) if evaluation_summary[1] is not None else 0
+                min_score = float(evaluation_summary[2]) if evaluation_summary[2] is not None else 0
+                max_score = float(evaluation_summary[3]) if evaluation_summary[3] is not None else 0
+            else:
+                total_evaluations = 0
+                average_score = 0
+                min_score = 0
+                max_score = 0
+            
+            # คำนวณประสิทธิผลโครงการ (จากความพึงพอใจ)
+            satisfaction_percentage = average_score * 20  # แปลงคะแนนจาก 0-5 เป็น 0-100
+            target_percentage = (participant_count / int(project[8])) * 100 if int(project[8]) > 0 else 0
+            
+            # สาขาที่ถูกต้อง (branch_name)
+            branch_name = project[32]
+        
+        # สร้าง PDF
         buffer = BytesIO()
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            rightMargin=72,
-            leftMargin=72,
-            topMargin=72,
-            bottomMargin=18,
+            rightMargin=40,
+            leftMargin=40,
+            topMargin=60,
+            bottomMargin=20,  # ลดระยะห่างขอบล่าง
         )
 
         # ลงทะเบียนฟอนต์ไทย
         font_path = os.path.join(os.path.dirname(__file__), "THSarabunNew.ttf")
-        bold_font_path = os.path.join(
-            os.path.dirname(__file__), "THSarabunNew-Bold.ttf"
-        )
-
+        bold_font_path = os.path.join(os.path.dirname(__file__), "THSarabunNew-Bold.ttf")
         pdfmetrics.registerFont(TTFont("THSarabunNew", font_path))
-        if os.path.exists(bold_font_path):
-            pdfmetrics.registerFont(TTFont("THSarabunNew-Bold", bold_font_path))
-        else:
-            logging.warning(
-                "THSarabunNew-Bold font not found, using regular font for bold text"
-            )
-            pdfmetrics.registerFont(TTFont("THSarabunNew-Bold", font_path))
+        pdfmetrics.registerFont(TTFont("THSarabunNew-Bold", bold_font_path))
 
         # สร้างสไตล์
-        styles = getSampleStyleSheet()
-        styles["Normal"].fontName = "THSarabunNew"
-        styles["Normal"].fontSize = 12
-        styles["Heading1"].fontName = "THSarabunNew-Bold"
-        styles["Heading1"].fontSize = 16
-        styles["Heading2"].fontName = "THSarabunNew-Bold"
-        styles["Heading2"].fontSize = 14
-        styles["Heading3"].fontName = "THSarabunNew"
-        styles["Heading3"].fontSize = 12
+        normal_style = ParagraphStyle(
+            'Normal',
+            fontName='THSarabunNew',
+            fontSize=14,  # ลดขนาดตัวอักษร
+            leading=18,   # ลดช่องว่างระหว่างบรรทัด
+            spaceBefore=4,
+            spaceAfter=4
+        )
+        
+        heading_style = ParagraphStyle(
+            'Heading',
+            fontName='THSarabunNew-Bold',
+            fontSize=16,  # ลดขนาดตัวอักษร
+            leading=20,   # ลดช่องว่างระหว่างบรรทัด
+            alignment=1,  # center
+            spaceAfter=8
+        )
+        
+        title_style = ParagraphStyle(
+            'Title',
+            fontName='THSarabunNew-Bold',
+            fontSize=18,  # ลดขนาดตัวอักษร
+            alignment=1,  # center
+            spaceAfter=8
+        )
+        
+        # สไตล์ที่ปรับปรุงสำหรับตาราง
+        table_header_style = ParagraphStyle(
+            'TableHeader',
+            fontName='THSarabunNew-Bold',
+            fontSize=14,  # ลดขนาดตัวอักษร
+            alignment=1,  # center alignment
+            spaceBefore=4,
+            spaceAfter=4
+        )
+        
+        table_item_style = ParagraphStyle(
+            'TableItem',
+            fontName='THSarabunNew',
+            fontSize=14,  # ลดขนาดตัวอักษร
+            spaceBefore=4,
+            spaceAfter=4,
+            alignment=1  # center alignment by default
+        )
+        
+        table_item_left_style = ParagraphStyle(
+            'TableItemLeft',
+            fontName='THSarabunNew',
+            fontSize=14,  # ลดขนาดตัวอักษร
+            spaceBefore=4,
+            spaceAfter=4,
+            alignment=0  # left alignment
+        )
 
         def header(canvas, doc):
             canvas.saveState()
-            page_width = doc.pagesize[0]
-            page_height = doc.pagesize[1]
-
-            logo_path = os.path.join(app.static_folder, "2.png")
-
-            if os.path.exists(logo_path):
-                try:
-                    img = Image.open(logo_path)
-                    img = img.convert("RGB")
-                    img_buffer = BytesIO()
-                    img.save(img_buffer, format="PNG")
-                    img_buffer.seek(0)
-
-                    logo_width = 0.7 * inch
-                    logo_height = 0.7 * inch
-                    logo_x = (page_width - logo_width) / 2
-                    logo_y = page_height - 0.7 * inch
-
-                    canvas.drawImage(
-                        ImageReader(img_buffer),
-                        logo_x,
-                        logo_y,
-                        width=logo_width,
-                        height=logo_height,
-                    )
-                except Exception as e:
-                    print(f"Error loading logo: {e}")
-            else:
-                print(f"Logo file not found at {logo_path}")
-
-            canvas.setFont("THSarabunNew-Bold", 16)
-            canvas.drawCentredString(
-                page_width / 2, page_height - 1.1 * inch, "มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน"
-            )
-            canvas.setFont("THSarabunNew", 14)
-            canvas.drawCentredString(
-                page_width / 2, page_height - 1.3 * inch, "วิทยาเขต ขอนแก่น"
-            )
-            canvas.drawCentredString(
-                page_width / 2,
-                page_height - 1.5 * inch,
-                "สรุปผลการดำเนินโครงการ"
-            )
-            canvas.drawCentredString(
-                page_width / 2,
-                page_height - 1.7 * inch,
-                "-----------------------------------------------------"
-            )
-
-            # วันที่พิมพ์เอกสาร
+            # วันที่พิมพ์
+            canvas.setFont('THSarabunNew', 12)
             today = datetime.now().strftime("%d/%m/%Y")
-            canvas.setFont("THSarabunNew", 10)
-            canvas.drawRightString(
-                page_width - 72, page_height - 0.7 * inch, f"พิมพ์เมื่อ: {today}"
-            )
-
+            canvas.drawRightString(doc.pagesize[0] - 40, doc.pagesize[1] - 40, f"พิมพ์เมื่อ: {today}")
+            
             # หมายเลขหน้า
-            canvas.setFont("THSarabunNew", 10)
-            page_num = f"หน้า {canvas.getPageNumber()}"
-            canvas.drawRightString(
-                page_width - 72, 30, page_num
-            )
+            canvas.setFont('THSarabunNew', 12)
+            canvas.drawRightString(doc.pagesize[0] - 40, 30, f"หน้า {canvas.getPageNumber()}")
+            
+            # โลโก้และหัวกระดาษเฉพาะหน้าแรก
+            if canvas.getPageNumber() == 1:  # เฉพาะหน้าแรก
+                # โลโก้มหาวิทยาลัย
+                logo_path = os.path.join(app.static_folder, "2.png")
+                if os.path.exists(logo_path):
+                    try:
+                        img = Image.open(logo_path)
+                        img = img.convert("RGB")
+                        img_buffer = BytesIO()
+                        img.save(img_buffer, format="PNG")
+                        img_buffer.seek(0)
 
+                        logo_width = 1 * inch
+                        logo_height = 1 * inch
+                        page_width = doc.pagesize[0]
+                        page_center = page_width / 2
+                        
+                        canvas.drawImage(
+                            ImageReader(img_buffer),
+                            page_center - (logo_width/2),
+                            doc.pagesize[1] - 130,
+                            width=logo_width,
+                            height=logo_height,
+                            mask='auto'
+                        )
+                    except Exception as e:
+                        logging.error(f"Error loading logo: {e}")
+                else:
+                    logging.error(f"Logo file not found at {logo_path}")
+                
+                # หัวเรื่องโปรไฟล์
+                canvas.setFont('THSarabunNew-Bold', 20)
+                canvas.drawCentredString(
+                    page_center,
+                    doc.pagesize[1] - 175,
+                    "บันทึกข้อความ"
+                )
+                
+                # เส้นคั่นด้านล่างหลังจากข้อมูลส่วนงานภายใน
+                
+                
+            
             canvas.restoreState()
 
-        # เนื้อหา PDF
+        def footer(canvas, doc):
+            canvas.saveState()
+            # เส้นคั่นด้านล่าง
+            canvas.setLineWidth(1)
+            canvas.line(40, 50, doc.pagesize[0] - 40, 50)
+            canvas.setFont('THSarabunNew', 12)
+            canvas.drawCentredString(
+                doc.pagesize[0] / 2,
+                35,
+                "มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตขอนแก่น"
+            )
+            canvas.restoreState()
+
         content = []
-        content.append(Spacer(1, 2 * inch))  # เพิ่มระยะห่างด้านบน
         
-        # ข้อมูลโครงการ
-        content.append(Paragraph("ข้อมูลโครงการ", styles["Heading2"]))
-        content.append(Spacer(1, 0.1 * inch))
+        # สร้างหัวกระดาษ - บันทึกข้อความ
+        content.append(Spacer(1, 120))  # เพิ่มระยะห่างด้านบนให้มากขึ้น
         
-        # สร้างตารางข้อมูลโครงการ
-        project_data = [
-            ["ชื่อโครงการ:", project[1]],
-            ["ผู้รับผิดชอบโครงการ:", project[15]],
-            ["สาขาวิชา:", project[16]],
-            ["ประเภทงบประมาณ:", project[2]],
-            ["ปีงบประมาณ:", str(project[3])],
-            ["งบประมาณ:", f"{project[11]:,.2f} บาท"],
-            ["สถานที่จัด:", project[5]],
-            ["ระยะเวลา:", f"{project[6].strftime('%d/%m/%Y')} - {project[7].strftime('%d/%m/%Y')}"],
-            ["จำนวนผู้เข้าร่วมเป้าหมาย:", f"{project[8]} คน"],
-            ["วันที่เสร็จสิ้น:", f"{project[14].strftime('%d/%m/%Y')}" if project[14] else "ไม่ระบุ"],
+        # ส่วนงานภายใน - ใช้ branch_name แทนที่จะใช้เบอร์โทรศัพท์
+        content.append(Paragraph(f"<b>ส่วนงานภายใน</b> สาขา/แผนก{branch_name} คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ โทร. (IP) ................", normal_style))
+        
+        # เลขที่และวันที่
+        # สร้าง format วันที่
+        today = datetime.now()
+        thai_month = [
+            "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+            "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+        ]
+        thai_year = today.year + 543
+        thai_date = f"{today.day} {thai_month[today.month-1]} {thai_year}"
+        
+        content.append(Paragraph(f"<b>ที่</b> มทร.อีสาน 34............/ <b>วันที่</b> {today.day} {thai_month[today.month-1]} {thai_year}", normal_style))
+        
+        # เรื่องและเรียน
+        content.append(Paragraph("<b>เรื่อง</b> ขอส่งรายงานผลการดำเนินโครงการ", normal_style))
+        content.append(Paragraph("<b>เรียน</b> คณบดีคณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ", normal_style))
+        
+        # เว้นระยะห่างจากเส้นแบ่ง
+        content.append(Spacer(1, 15))  # เพิ่มระยะห่างหลังจากส่วนหัว
+        
+        # เนื้อหา
+        content.append(Spacer(1, 6))
+        project_date_format = project[6].strftime('%d/%m/%Y') + " ถึง " + project[7].strftime('%d/%m/%Y')
+        main_text = f"""        ตามที่ สาขา/แผนก{branch_name} คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ ได้ดำเนินโครงการ{project[1]} งบประมาณ{project[1]} (ในแผน) ประจำปีงบประมาณ พ.ศ. {project[3]} จำนวนเงิน {'{:,.2f}'.format(float(project[9]))} บาท ({thai_money_text(float(project[9]))}) วันที่{project_date_format} ณ {project[5]}
+        
+        ในการนี้ สาขา/แผนก{branch_name} คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ ได้ดำเนินโครงการเสร็จเป็นที่เรียบร้อยแล้ว จึงขอนำส่งรายงานสรุปผลประเมินความสำเร็จตามวัตถุประสงค์ของแผนการจัดกิจกรรมตามผลผลิต โดยมีรายละเอียดดังเอกสารแนบ"""
+        content.append(Paragraph(main_text, normal_style))
+        
+        # สร้างตารางสรุป - ปรับปรุงการจัดวางข้อความในตาราง
+        target_percent = '{:.1f}'.format(target_percentage)
+        data = [
+            [Paragraph("<b>ตัวชี้วัด</b>", table_header_style), 
+             Paragraph("<b>หน่วยนับ</b>", table_header_style), 
+             Paragraph("<b>แผน</b>", table_header_style), 
+             Paragraph("<b>ผลดำเนินงาน</b>", table_header_style),
+             Paragraph("<b>สรุปผล</b>", table_header_style)],
+             
+            [Paragraph("<b>เชิงปริมาณ</b>", table_header_style), "", "", "", ""],
+            
+            [Paragraph(f"ผู้เข้าร่วมโครงการจำนวน {project[8]} คน", table_item_left_style),
+             Paragraph("คน", table_item_style),
+             Paragraph(f"{project[8]}", table_item_style),
+             Paragraph(f"{participant_count}", table_item_style),
+             Paragraph("บรรลุ" if target_percentage >= 80 else "ไม่บรรลุ", table_item_style)],
+             
+            [Paragraph(f"จำนวนผู้เข้าร่วมโครงการไม่ต่ำกว่าร้อยละ 80", table_item_left_style),
+             Paragraph("ร้อยละ", table_item_style),
+             Paragraph("80", table_item_style),
+             Paragraph(f"{target_percent}", table_item_style),
+             Paragraph("บรรลุ" if target_percentage >= 80 else "ไม่บรรลุ", table_item_style)],
+             
+            [Paragraph("<b>เชิงคุณภาพ</b>", table_header_style), "", "", "", ""],
+            
+            [Paragraph(f"ผู้เข้าร่วมโครงการมีความพึงพอใจไม่ต่ำกว่าร้อยละ 70", table_item_left_style),
+             Paragraph("ร้อยละ", table_item_style),
+             Paragraph("70", table_item_style),
+             Paragraph(f"{average_score * 20:.1f}", table_item_style),
+             Paragraph("บรรลุ" if average_score >= 3.5 else "ไม่บรรลุ", table_item_style)],
+             
+            [Paragraph("รายงานผลการดำเนินโครงการ 1 ชุด", table_item_left_style),
+             Paragraph("ชุด", table_item_style),
+             Paragraph("1", table_item_style),
+             Paragraph("1", table_item_style),
+             Paragraph("บรรลุ", table_item_style)],
+             
+            [Paragraph("<b>เชิงเวลา</b>", table_header_style), "", "", "", ""],
+            
+            [Paragraph("โครงการแล้วเสร็จตามระยะเวลาที่กำหนด ไม่ต่ำกว่าร้อยละ 100", table_item_left_style),
+             Paragraph("ร้อยละ", table_item_style),
+             Paragraph("100", table_item_style),
+             Paragraph("100", table_item_style),
+             Paragraph("บรรลุ", table_item_style)],
+             
+            [Paragraph("<b>เชิงค่าใช้จ่าย</b>", table_header_style), "", "", "", ""],
+            
+            [Paragraph(f"งบประมาณที่ใช้ดำเนินโครงการ {'{:,.2f}'.format(float(project[9]))} บาท", table_item_left_style),
+             Paragraph("บาท", table_item_style),
+             Paragraph(f"{'{:,.2f}'.format(float(project[9]))}", table_item_style),
+             Paragraph(f"{'{:,.2f}'.format(float(project[9]))}", table_item_style),
+             Paragraph("บรรลุ", table_item_style)]
         ]
         
-        # ตารางข้อมูลโครงการ
-        project_info_table = Table(project_data, colWidths=[120, 300])
-        project_info_table.setStyle(TableStyle([
-            ('FONT', (0,0), (-1,-1), 'THSarabunNew', 12),
-            ('FONT', (0,0), (0,-1), 'THSarabunNew-Bold', 12),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.white),
-            ('LEFTPADDING', (0,0), (-1,-1), 0),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-            ('TOPPADDING', (0,0), (-1,-1), 6),
+        col_widths = [200, 70, 70, 100, 70]  # กำหนดความกว้างคอลัมน์
+        summary_table = Table(data, colWidths=col_widths)
+        
+        # ปรับปรุงการจัดวางในตาราง เพิ่ม padding และ align ที่ดีขึ้น
+        summary_table.setStyle(TableStyle([
+            ('FONT', (0, 0), (-1, -1), 'THSarabunNew', 14),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (1, 0), (-1, -1), 'CENTER'),  # Center align all cells except first column
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),   # Center align header row
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('BACKGROUND', (0, 1), (0, 1), colors.lightgrey),
+            ('BACKGROUND', (0, 4), (0, 4), colors.lightgrey),
+            ('BACKGROUND', (0, 7), (0, 7), colors.lightgrey),
+            ('BACKGROUND', (0, 9), (0, 9), colors.lightgrey),
+            ('SPAN', (1, 1), (4, 1)),  # ช่วงเชิงปริมาณ
+            ('SPAN', (1, 4), (4, 4)),  # ช่วงเชิงคุณภาพ
+            ('SPAN', (1, 7), (4, 7)),  # ช่วงเชิงเวลา
+            ('SPAN', (1, 9), (4, 9)),  # ช่วงเชิงค่าใช้จ่าย
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),   # เพิ่ม padding ซ้าย
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),  # เพิ่ม padding ขวา
+            ('TOPPADDING', (0, 0), (-1, -1), 4),    # เพิ่ม padding บน
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4), # เพิ่ม padding ล่าง
         ]))
         
-        content.append(project_info_table)
-        content.append(Spacer(1, 0.2 * inch))
+        content.append(Spacer(1, 6))  # ลดระยะห่างลง
+        content.append(summary_table)
+        content.append(Spacer(1, 6))  # ลดระยะห่างลง
         
-        # ผลการดำเนินงาน
-        content.append(Paragraph("ผลการดำเนินงาน", styles["Heading2"]))
-        content.append(Spacer(1, 0.1 * inch))
+        # ลงชื่อ - ลดระยะห่างและทำให้อยู่ในหน้าเดียวกัน
+        content.append(Paragraph("จึงเรียนมาเพื่อโปรดพิจารณา", normal_style))
+        content.append(Spacer(1, 15))  # ลดระยะห่างลง
+        content.append(Paragraph(f"({project[31]})", normal_style))
+        content.append(Paragraph("ผู้รับผิดชอบโครงการ", normal_style))
         
-        # ตารางสรุปการเข้าร่วม
-        participation_data = [
-            ["สรุปการเข้าร่วม"],
-            [f"- จำนวนผู้เข้าร่วม: {participant_count} คน ({attendance_dict['attendance_rate']:.1f}% ของเป้าหมาย)"]
+        # ส่วนรายงานสรุปผล - แยกไปหน้าต่อไป
+        content.append(PageBreak())
+        
+        # หัวรายงานสรุปผล
+        content.append(Paragraph(f"<b>ชื่อโครงการ :</b> {project[1]}", normal_style))
+        content.append(Paragraph(f"<b>สาขา :</b> {branch_name} <b>งบประมาณเงินรายได้</b> (ในแผน) ประจำปีงบประมาณ {project[3]}", normal_style))
+        content.append(Paragraph(f"<b>ระยะเวลา</b> วันที่{project[6].strftime('%d/%m/%Y')}ถึง{project[7].strftime('%d/%m/%Y')} <b>สถานที่</b> ณ {project[5]}", normal_style))
+        content.append(Paragraph(f"<b>ผู้รับผิดชอบ</b> ชื่อ{project[31]}", normal_style))
+        
+        # สร้างตารางข้อมูลวัตถุประสงค์และเป้าหมาย - ปรับปรุงการจัดวาง
+        # อ้างอิงตามภาพที่ 2 - ลบคอลัมน์ "แผน" และ "ผลลัพธ์"
+        objective_data = [
+            [Paragraph(f"<b>วัตถุประสงค์ :</b> {project[18]}", normal_style)],
+            [Paragraph(f"<b>เป้าหมายเชิงผลผลิต (Output) :</b> {project[20]}", normal_style)],
+            [Paragraph(f"<b>เป้าหมายเชิงผลลัพธ์ (Outcome) :</b> {project[21]}", normal_style)]
         ]
         
-        participation_table = Table(participation_data, colWidths=[420])
-        participation_table.setStyle(TableStyle([
-            ('FONT', (0,0), (-1,-1), 'THSarabunNew', 12),
-            ('FONT', (0,0), (0,0), 'THSarabunNew-Bold', 12),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.white),
-            ('LEFTPADDING', (0,0), (-1,-1), 0),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-            ('TOPPADDING', (0,0), (-1,-1), 6),
+        objective_table = Table(objective_data, colWidths=[550])
+        objective_table.setStyle(TableStyle([
+            ('FONT', (0, 0), (-1, -1), 'THSarabunNew', 14),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),   # เพิ่ม padding ซ้าย
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),  # เพิ่ม padding ขวา
+            ('TOPPADDING', (0, 0), (-1, -1), 4),    # เพิ่ม padding บน
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4), # เพิ่ม padding ล่าง
         ]))
         
-        content.append(participation_table)
-        content.append(Spacer(1, 0.1 * inch))
+        content.append(Spacer(1, 12))
+        content.append(objective_table)
+        content.append(Spacer(1, 12))
         
-        # ตารางสรุปผลการประเมินความพึงพอใจ
-        eval_data = [
-            ["สรุปผลการประเมินความพึงพอใจ"],
-            [f"- จำนวนผู้ประเมิน: {evaluation_dict['total_evaluations']} คน"],
-            [f"- คะแนนเฉลี่ย: {evaluation_dict['average_score']:.2f}/5 คะแนน"],
-            [f"- คะแนนต่ำสุด: {evaluation_dict['min_score']:.1f} คะแนน"],
-            [f"- คะแนนสูงสุด: {evaluation_dict['max_score']:.1f} คะแนน"]
+        # สร้างตารางตัวบ่งชี้ - ปรับปรุงการจัดวาง
+        indicator_data = [
+            [Paragraph("<b>ตัวบ่งชี้</b>", table_header_style), 
+             Paragraph("<b>ค่าเป้าหมาย</b>", table_header_style), 
+             Paragraph("<b>บรรลุ (/ X)</b>", table_header_style)],
+             
+            [Paragraph("<b>เชิงปริมาณ :</b>", table_item_style),
+             Paragraph(f"{project[8]}", table_item_style),
+             Paragraph("/" if target_percentage >= 80 else "X", table_item_style)],
+             
+            [Paragraph(f"- ผู้เข้าร่วมโครงการจำนวน {project[8]} คน", table_item_left_style),
+             "2", "/"],
+             
+            [Paragraph("- จำนวนโครงการที่ได้ดำเนินการ", table_item_left_style),
+             Paragraph("1", table_item_style),
+             Paragraph("/", table_item_style)],
+             
+            [Paragraph("<b>เชิงคุณภาพ :</b>", table_item_style),
+             Paragraph("", table_item_style),
+             Paragraph("" if average_score >= 3.5 else "", table_item_style)],
+             
+            [Paragraph("- ร้อยละของผู้เข้าร่วมโครงการ", table_item_left_style),
+             Paragraph("80%", table_item_style),
+             Paragraph("/" if target_percentage >= 80 else "X", table_item_style)],
+             
+            [Paragraph("- พึงพอใจของผู้เข้าร่วมโครงการ", table_item_left_style),
+             Paragraph("3/5", table_item_style),
+             Paragraph("/" if average_score >= 3.5 else "X", table_item_style)],
+             
+            [Paragraph("<b>เชิงเวลา :</b>", table_item_style),
+             Paragraph("", table_item_style),
+             Paragraph("", table_item_style)],
+             
+            [Paragraph("- โครงการแล้วเสร็จตามระยะเวลาที่กำหนด", table_item_left_style),
+             "100%", "/"],
+             
+            [Paragraph("<b>เชิงค่าใช้จ่าย :</b>", table_item_style),
+             Paragraph(f"{'{:,.2f}'.format(float(project[9]))} บาท", table_item_style),
+             Paragraph("/", table_item_style)],
+             
+            [Paragraph(f"- งบประมาณที่ใช้ในการดำเนินโครงการ {'{:,.2f}'.format(float(project[9]))} บาท", table_item_left_style),
+             "", ""]
         ]
         
-        eval_table = Table(eval_data, colWidths=[420])
-        eval_table.setStyle(TableStyle([
-            ('FONT', (0,0), (-1,-1), 'THSarabunNew', 12),
-            ('FONT', (0,0), (0,0), 'THSarabunNew-Bold', 12),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.white),
-            ('LEFTPADDING', (0,0), (-1,-1), 0),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-            ('TOPPADDING', (0,0), (-1,-1), 6),
+        indicator_table = Table(indicator_data, colWidths=[270, 120, 160])
+        indicator_table.setStyle(TableStyle([
+            ('FONT', (0, 0), (-1, -1), 'THSarabunNew', 14),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (1, 0), (2, -1), 'CENTER'),  # Center align second and third columns
+            ('ALIGN', (0, 0), (2, 0), 'CENTER'),   # Center align header row
+            ('ALIGN', (0, 1), (0, -1), 'LEFT'),    # Left align first column
+            ('BACKGROUND', (0, 0), (2, 0), colors.lightgrey),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),   # เพิ่ม padding ซ้าย
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),  # เพิ่ม padding ขวา
+            ('TOPPADDING', (0, 0), (-1, -1), 4),    # เพิ่ม padding บน
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4), # เพิ่ม padding ล่าง
         ]))
         
-        content.append(eval_table)
-        content.append(Spacer(1, 0.1 * inch))
+        content.append(indicator_table)
+        content.append(Spacer(1, 12))
         
-        # ตารางประสิทธิผลโครงการ
-        effectiveness_data = [
-            ["ประสิทธิผลโครงการ"],
-            [f"- ประสิทธิผลรวม: {project_success['score']}% ({project_success['level']})"],
+        # ปัญหาและแนวทางแก้ไข - ปรับปรุงการจัดวาง
+        problem_data = [
+            [Paragraph("<b>ปัญหา :</b>", normal_style),
+             ""],
+            [Paragraph("การประชาสัมพันธ์ยังไม่ทั่วถึงทำให้มีผู้เข้าร่วมน้อยกว่าเป้าหมาย", normal_style),
+             ""],
+            [Paragraph("<b>แนวทางแก้ไข :</b>", normal_style),
+             ""],
+            [Paragraph("เพิ่มช่องทางประชาสัมพันธ์ให้หลากหลายและครอบคลุมกลุ่มเป้าหมายทุกกลุ่ม", normal_style),
+             ""]
         ]
         
-        effectiveness_text = "- การดำเนินโครงการครั้งนี้บรรลุวัตถุประสงค์"
-        if project_success['score'] >= 80:
-            effectiveness_text += "อยู่ในระดับดีมาก ประสบความสำเร็จตามเป้าหมายที่ตั้งไว้"
-        elif project_success['score'] >= 70:
-            effectiveness_text += "อยู่ในระดับดี ส่วนใหญ่บรรลุตามเป้าหมายที่ตั้งไว้"
-        elif project_success['score'] >= 60:
-            effectiveness_text += "อยู่ในระดับค่อนข้างดี บรรลุตามเป้าหมายหลักที่สำคัญ"
-        elif project_success['score'] >= 50:
-            effectiveness_text += "อยู่ในระดับพอใช้ บรรลุตามเป้าหมายได้บางส่วน"
-        else:
-            effectiveness_text += "อยู่ในระดับที่ควรปรับปรุง ยังไม่บรรลุตามเป้าหมายที่ตั้งไว้"
-            
-        effectiveness_data.append([effectiveness_text])
-        
-        effectiveness_table = Table(effectiveness_data, colWidths=[420])
-        effectiveness_table.setStyle(TableStyle([
-            ('FONT', (0,0), (-1,-1), 'THSarabunNew', 12),
-            ('FONT', (0,0), (0,0), 'THSarabunNew-Bold', 12),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.white),
-            ('LEFTPADDING', (0,0), (-1,-1), 0),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-            ('TOPPADDING', (0,0), (-1,-1), 6),
+        problem_table = Table(problem_data, colWidths=[520, 30])
+        problem_table.setStyle(TableStyle([
+            ('FONT', (0, 0), (-1, -1), 'THSarabunNew', 14),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),   # เพิ่ม padding ซ้าย
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),  # เพิ่ม padding ขวา
+            ('TOPPADDING', (0, 0), (-1, -1), 4),    # เพิ่ม padding บน
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4), # เพิ่ม padding ล่าง
+            ('SPAN', (0, 0), (1, 0)),  # ปัญหา
+            ('SPAN', (0, 1), (1, 1)),  # รายละเอียดปัญหา
+            ('SPAN', (0, 2), (1, 2)),  # แนวทางแก้ไข
+            ('SPAN', (0, 3), (1, 3)),  # รายละเอียดแนวทางแก้ไข
         ]))
         
-        content.append(effectiveness_table)
-        content.append(Spacer(1, 0.3 * inch))
+        content.append(problem_table)
         
-        # ข้อความสรุปรายงาน (ถ้ามี)
-        if project[17]:  # summary_text
-            content.append(Paragraph("ข้อความสรุปผลการดำเนินโครงการ", styles["Heading2"]))
-            content.append(Spacer(1, 0.1 * inch))
+        # สรุปข้อมูลจากผู้ใช้
+        if project[28]:  # summary_text
+            content.append(PageBreak())
+            content.append(Paragraph("<b>สรุปผลการดำเนินโครงการ</b>", heading_style))
+            content.append(Spacer(1, 10))
             
-            # แปลงข้อความที่มีการขึ้นบรรทัดใหม่เป็นย่อหน้า
-            summary_lines = project[17].split("\n")
-            for line in summary_lines:
-                if line.strip():  # ข้ามบรรทัดว่าง
-                    content.append(Paragraph(line, styles["Normal"]))
-                    content.append(Spacer(1, 0.05 * inch))
+            # แยกข้อความเป็นย่อหน้า
+            paragraphs = project[28].split('\n')
+            for para in paragraphs:
+                if para.strip():
+                    content.append(Paragraph(para, normal_style))
             
-            content.append(Spacer(1, 0.2 * inch))
-        
-        # สร้าง PDF
-        doc.build(content, onFirstPage=header, onLaterPages=header)
-        buffer.seek(0)
-        
-        # บันทึก PDF ลงฐานข้อมูล
-        with get_db_cursor() as (db, cursor):
-            query = "UPDATE project SET summary_pdf = %s WHERE project_id = %s"
-            cursor.execute(query, (buffer.getvalue(), project_id))
-            db.commit()
+        try:
+            doc.build(content, onFirstPage=header, onLaterPages=header)
+            buffer.seek(0)
             
-        return True
+            # บันทึก PDF ลงฐานข้อมูล
+            with get_db_cursor() as (db, cursor):
+                query = "UPDATE project SET summary_pdf = %s WHERE project_id = %s"
+                cursor.execute(query, (buffer.getvalue(), project_id))
+                db.commit()
+                
+            return True
+        except Exception as e:
+            logging.error(f"Error building PDF: {e}", exc_info=True)
+            return False
+            
     except Exception as e:
         logging.error(f"Error creating summary PDF: {e}", exc_info=True)
         return False
+        
+def thai_money_text(amount):
+    """แปลงตัวเลขเป็นคำอ่านจำนวนเงินภาษาไทย"""
+    # ตัดทศนิยมให้เหลือ 2 ตำแหน่ง
+    amount = round(amount, 2)
+    
+    # แยกจำนวนเต็มกับทศนิยม
+    integer_part = int(amount)
+    decimal_part = int(round((amount - integer_part) * 100))
+    
+    # ถ้าไม่มีทศนิยม
+    if decimal_part == 0:
+        return f"{num_to_thai_text(integer_part)}บาทถ้วน"
+    else:
+        return f"{num_to_thai_text(integer_part)}บาท{num_to_thai_text(decimal_part)}สตางค์"
+
+def num_to_thai_text(number):
+    """แปลงตัวเลขเป็นคำอ่านภาษาไทย"""
+    # ตัวเลขเป็นคำอ่าน
+    thai_numbers = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า", "หก", "เจ็ด", "แปด", "เก้า"]
+    thai_units = ["", "สิบ", "ร้อย", "พัน", "หมื่น", "แสน", "ล้าน"]
+    
+    if number == 0:
+        return "ศูนย์"
+    
+    # แปลงเป็นข้อความ
+    text = ""
+    unit_count = 0
+    
+    while number > 0:
+        digit = number % 10
+        
+        if digit == 1 and unit_count == 1:  # เลข 1 หลักสิบ อ่านว่า สิบ (ไม่ใช่ หนึ่งสิบ)
+            text = "สิบ" + text
+        elif digit == 2 and unit_count == 1:  # เลข 2 หลักสิบ อ่านว่า ยี่สิบ (ไม่ใช่ สองสิบ)
+            text = "ยี่สิบ" + text
+        elif digit != 0:  # ถ้าไม่ใช่เลข 0 ให้เติมคำอ่านและหน่วย
+            text = thai_numbers[digit] + thai_units[unit_count] + text
+        
+        number //= 10
+        unit_count += 1
+        # รีเซ็ตหน่วยเมื่อถึงล้าน
+        if unit_count == 7:
+            unit_count = 1
+    
+    return text
 
 # Route สำหรับดาวน์โหลด PDF สรุปผลการดำเนินโครงการ
 @app.route("/download_summary_pdf/<int:project_id>")
@@ -3058,7 +3271,7 @@ def generate_summary_pdf(project_id):
 def download_summary_pdf(project_id):
     try:
         with get_db_cursor() as (db, cursor):
-            # ถ้าเป็น admin สามารถเข้าถึงได้ทุกโครงการ แต่ถ้าเป็น teacher ต้องเป็นโครงการของตัวเอง
+            # ดึงข้อมูล PDF
             if g.user["type"] == "teacher":
                 query = """
                     SELECT project_name, summary_pdf 
@@ -3077,8 +3290,10 @@ def download_summary_pdf(project_id):
             result = cursor.fetchone()
             
             if not result or not result[1]:  # ไม่พบข้อมูลหรือไม่มี PDF
-                # ลองสร้าง PDF ใหม่
-                if generate_summary_pdf(project_id):
+                # พยายามสร้าง PDF ใหม่
+                pdf_created = generate_summary_pdf(project_id)
+                
+                if pdf_created:
                     # ดึงข้อมูล PDF ที่เพิ่งสร้าง
                     cursor.execute(
                         "SELECT project_name, summary_pdf FROM project WHERE project_id = %s",
@@ -3092,12 +3307,14 @@ def download_summary_pdf(project_id):
                     
             project_name, pdf_content = result
             
-            return send_file(
-                BytesIO(pdf_content),
-                as_attachment=True,
-                download_name=f"สรุปโครงการ_{project_name}.pdf",
-                mimetype="application/pdf",
-            )
+            # สร้างชื่อไฟล์ที่ใช้เฉพาะตัวอักษรภาษาอังกฤษและตัวเลข
+            safe_filename = f"project_summary_{project_id}.pdf"
+            
+            # ส่ง PDF กลับไปยังผู้ใช้
+            response = make_response(pdf_content)
+            response.headers['Content-Type'] = 'application/pdf'
+            response.headers['Content-Disposition'] = f'attachment; filename="{safe_filename}"'
+            return response
             
     except Exception as e:
         flash(f"เกิดข้อผิดพลาดในการดาวน์โหลดไฟล์: {str(e)}", "error")
