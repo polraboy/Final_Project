@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แก้ไขโครงการ - มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-  
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
     <style>
-        
         :root {
             --primary-color: #FF8C00;
             --secondary-color: #007bff;
@@ -66,36 +64,36 @@
         .nav-link {
             color: white !important;
         }
-            .expense-form {
-                width: 100%;
-                max-width: 600px;
-                margin: left auto;
-              }
-              
-              .expense-item, .expense-total, .expense-grand-total {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 10px;
-              }
-              
-              .expense-description {
-                width: 70%;
-              }
-              
-              .expense-amount {
-                width: 20%;
-                text-align: right;
-              }
-              
-              .currency {
-                width: 10%;
-                text-align: right;
-              }
-              
-              .expense-total, .expense-grand-total {
-                font-weight: bold;
-              }
-        </style>
+        .expense-form {
+            width: 100%;
+            max-width: 600px;
+            margin: left auto;
+        }
+        
+        .expense-item, .expense-total, .expense-grand-total {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .expense-description {
+            width: 70%;
+        }
+        
+        .expense-amount {
+            width: 20%;
+            text-align: right;
+        }
+        
+        .currency {
+            width: 10%;
+            text-align: right;
+        }
+        
+        .expense-total, .expense-grand-total {
+            font-weight: bold;
+        }
+    </style>
 </head>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <body>
@@ -218,12 +216,13 @@
     
                     <div class="form-group">
                         <label for="project_year">ปีงบประมาณ (พ.ศ.):</label>
-                        <input type="text" class="form-control" id="project_year" name="project_year" value="{{ project.project_year }}" required>
+                        <input type="number" class="form-control" id="project_year" name="project_year" value="{{ project.project_year }}" required>
                     </div>
     
                     <div class="form-group">
-                        <label for="project_name">ชื่อโครงการ:</label>
+                        <label for="project_name">ชื่อโครงการ: <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="project_name" name="project_name" value="{{ project.project_name }}" required>
+                        <div class="invalid-feedback" id="project_name_feedback">กรุณากรอกชื่อโครงการ</div>
                     </div>
     
                     <div class="form-group">
@@ -247,16 +246,15 @@
                         <input type="text" class="form-control" id="project_address" name="project_address" value="{{ project.project_address }}" required>
                     </div>
                 </div>
-    
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="project_dotime">วันที่เริ่มโครงการ:</label>
-                        <input type="date" class="form-control" id="project_dotime" name="project_dotime" value="{{ project.project_dotime }}" required>
+                        <input type="date" class="form-control" id="project_dotime" name="project_dotime" value="{{ project.project_dotime|string|truncate(10, True, '') }}" required>
                     </div>
     
                     <div class="form-group">
                         <label for="project_endtime">วันที่สิ้นสุดโครงการ:</label>
-                        <input type="date" class="form-control" id="project_endtime" name="project_endtime" value="{{ project.project_endtime }}" required>
+                        <input type="date" class="form-control" id="project_endtime" name="project_endtime" value="{{ project.project_endtime|string|truncate(10, True, '') }}" required>
                     </div>
     
                     <div class="form-group">
@@ -271,7 +269,7 @@
                     <option value="1.ด้านบัณฑิต" {% if project.policy == "1.ด้านบัณฑิต" %}selected{% endif %}>1.ด้านบัณฑิต</option>
                     <option value="2.ด้านบริการวิชาการ" {% if project.policy == "2.ด้านบริการวิชาการ" %}selected{% endif %}>2.ด้านบริการวิชาการ</option>
                     <option value="3.ด้านวิจัย" {% if project.policy == "3.ด้านวิจัย" %}selected{% endif %}>3.ด้านวิจัย</option>
-                    <option value="4.ด้านศิลปะวัฒนธรรม"> 4.ด้านศิลปะวัฒนธรรม</option>
+                    <option value="4.ด้านศิลปะวัฒนธรรม" {% if project.policy == "4.ด้านศิลปะวัฒนธรรม" %}selected{% endif %}>4.ด้านศิลปะวัฒนธรรม</option>
                 </select>
             </div>
             <div class="form-group">
@@ -292,15 +290,15 @@
             </div>
             <div class="form-group">
                 <label for="cluster">Cluster:</label>
-                <input type="text" class="form-control" id="cluster" name="cluster" value="{{ project.project_cluster }}">
+                <input type="text" class="form-control" id="cluster" name="cluster" value="{{ project.project_cluster }}" readonly>
             </div>
             <div class="form-group">
                 <label for="commonality">Commonality:</label>
-                <input type="text" class="form-control" id="commonality" name="commonality" value="{{ project.project_commonality }}">
+                <input type="text" class="form-control" id="commonality" name="commonality" value="{{ project.project_commonality }}" readonly>
             </div>
             <div class="form-group">
                 <label for="physical_grouping">Physical grouping:</label>
-                <input type="text" class="form-control" id="physical_grouping" name="physical_grouping" value="{{ project.project_physical_grouping }}">
+                <input type="text" class="form-control" id="physical_grouping" name="physical_grouping" value="{{ project.project_physical_grouping }}" readonly>
             </div>
             <div class="form-group">
                 <label for="rationale">หลักการและเหตุผล:</label>
@@ -328,10 +326,9 @@
             </div>
 
             <div class="form-group">
-                <label for="project_target">13. กลุ่มเป้าหมายผู้เข้าร่วมโครงการ:</label>
+                <label for="project_target">13. กลุ่มเป้าหมายผู้เข้าร่วมโครงการ (ให้ระบุกลุ่มเป้าหมาย และจำนวนให้ชัดเจน):</label>
                 <input type="text" class="form-control" id="project_target" name="project_target" value="{{ project.project_target }}" required>
             </div>
-
             <h3 class="mt-4">14. งบประมาณ</h3>
                 <div class="expense-form">
                     <div class="form-group">
@@ -365,9 +362,7 @@
                     
                     <div class="text-center">
                         <label for="note" class="note">หมายเหตุ: งบประมาณ ให้ระบุรายละเอียดการคำนวณรายการค่าใช้จ่ายที่ต้องการให้ชัดเจน ตามระเบียบ กระทรวงการคลัง และตามนโยบายมาตรการประหยัดของมหาวิทยาลัยฯ ทั้งนี้ให้ผู้รับผิดชอบโครงการ ประสานในส่วนนี้กับกองคลัง หรืองานคลังแต่ละวิทยาเขต ก่อนเสนอขออนุมัติโครงการ</label>
-                    
-                    
-                    <h3 class="mt-4">15. แผนปฏิบัติงาน (แผนงาน) แผนการใช้จ่ายงบประมาณ (แผนเงิน) และตัวชี้วัดเป้าหมายผลผลิต</h3>
+                        <h3 class="mt-4">15. แผนปฏิบัติงาน (แผนงาน) แผนการใช้จ่ายงบประมาณ (แผนเงิน) และตัวชี้วัดเป้าหมายผลผลิต</h3>
 <div class="table-responsive">
     <table class="table table-bordered">
         <thead>
@@ -398,7 +393,6 @@
     </table>
 </div>
 <button type="button" class="btn btn-secondary mt-2" id="add-activity">เพิ่มกิจกรรม</button>
-
 <h4 class="mt-4">ตัวชี้วัดเป้าหมายผลผลิต</h4>
 <div class="form-group">
     <label>ตัวชี้วัดเชิงปริมาณ</label>
@@ -424,38 +418,29 @@
     <input type="number" class="form-control" name="cost_indicator" placeholder="งบประมาณที่ใช้ในการดำเนินโครงการ (บาท)" value="{{ project.project_cost_indicator }}" required>
 </div>
                         
-                        <div class="form-group">
-                            <label>16. ผลที่คาดว่าจะเกิด (Impact):</label>
-                            <textarea class="form-control" id="expected_results" name="expected_results" rows="4" required>{{ project.project_expected_results }}</textarea>
-                        </div>
-                    <div class="col-md-12">
-                        <label for="note" class="note">หมายเหตุ:   กรุณากรอกข้อมูลให้ครบถ้วนสมบูรณ์ เพื่อประกอบการพิจารณางบประมาณ</label>
-                    </div>
-                    <div class="form-group text-right">
-                        <label for="teacher_id"><i class="fas fa-chalkboard-teacher"></i>
-                            ลงชื่อ:</label>
-                       
-                            <p class="form-control">{{ teacher_info[0] }}</p>
-                        <label>ตำแหน่ง:</label>
-                        <p class="form-control">อาจารย์ประจำสาขา{{ teacher_info[1] }}
-                        <br>  
-                      
-                       <div class="form-group">
-                        <label>เบอร์โทรศัพท์:</label>
-                        <input type="tel" class="form-control" name="phone" value="{{ g.user.phone }}" required>
-                    </div>
-                    <div class="text-center mt-4">
-                        <button type="submit" class="btn btn-primary">บันทึกการแก้ไขโครงการ</button>
-                        <a href="{{ url_for('teacher_projects') }}" class="btn btn-secondary">ยกเลิก</a>
-                    </div>
-                </form>
-                      </div>
-                  </div>
-                </div>
-            </div>
-        </div>
+<div class="form-group">
+    <label>16. ผลที่คาดว่าจะเกิด (Impact):</label>
+    <textarea class="form-control" id="expected_results" name="expected_results" rows="4" required>{{ project.project_expected_results }}</textarea>
+</div>
 
-        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<div class="col-md-12">
+    <label for="note" class="note">หมายเหตุ: กรุณากรอกข้อมูลให้ครบถ้วนสมบูรณ์ เพื่อประกอบการพิจารณางบประมาณ</label>
+</div>
+
+<div class="form-group text-right">
+    <label for="teacher_id"><i class="fas fa-chalkboard-teacher"></i> ลงชื่อ:</label>
+    <p class="form-control">{{ teacher_info[0] }}</p>
+    
+    <label>ตำแหน่ง:</label>
+    <p class="form-control">อาจารย์ประจำสาขา{{ teacher_info[1] }}</p>
+    
+   
+
+<div class="text-center mt-4">
+    <button type="submit" class="btn btn-primary">บันทึกการแก้ไขโครงการ</button>
+    <a href="{{ url_for('teacher_projects') }}" class="btn btn-secondary">ยกเลิก</a>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
         <script>
@@ -556,7 +541,6 @@
                     
                     return true;
                 }
-                
                 // ฟังก์ชันเพื่อเรนเดอร์กิจกรรม
                 function renderActivities() {
                     const tbody = document.getElementById('activityTableBody');
@@ -586,7 +570,6 @@
                         addNewActivity();
                     }
                 }
-                
                 // เพิ่มกิจกรรมใหม่
                 function addNewActivity() {
                     const tbody = document.getElementById('activityTableBody');
@@ -633,7 +616,6 @@
                         // ถ้าไม่มีข้อมูลเดิม ให้สร้างรายการว่าง 1 รายการ
                         addItem(compensationItems, 'compensation');
                     }
-                    
                     // สร้างรายการค่าใช้สอย
                     if (Array.isArray(projectExpenses) && projectExpenses.length > 0) {
                         projectExpenses.forEach(item => {
@@ -678,7 +660,6 @@
                         calculateTotals();
                     });
                 }
-            
                 function calculateTotals() {
                     let compensationTotal = 0;
                     let expenseTotal = 0;

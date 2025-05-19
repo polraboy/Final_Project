@@ -631,42 +631,42 @@ function confirmCancelSubmission(projectId, projectName) {
       }
       
       function confirmCloseProject(projectId, projectName) {
-          Swal.fire({
-              title: 'ยืนยันการเสร็จสิ้นโครงการ',
-              text: `คุณต้องการปิดโครงการ "${projectName}" และย้ายไปยังประวัติโครงการใช่หรือไม่? เมื่อปิดแล้วจะไม่สามารถกลับมาแก้ไขสถานะได้`,
-              icon: 'warning',
-              showCancelButton: true,
-              confirmButtonColor: '#dc3545',
-              cancelButtonColor: '#6c757d',
-              confirmButtonText: 'ใช่, เสร็จสิ้นโครงการ',
-              cancelButtonText: 'ยกเลิก'
-          }).then((result) => {
-              if (result.isConfirmed) {
-                  // สร้าง form สำหรับส่งข้อมูลไปยัง route close_project
-                  const form = document.createElement('form');
-                  form.method = 'POST';
-                  form.action = '{{ url_for("close_project") }}';
-                  
-                  const projectIdInput = document.createElement('input');
-                  projectIdInput.type = 'hidden';
-                  projectIdInput.name = 'project_id';
-                  projectIdInput.value = projectId;
-                  
-                  form.appendChild(projectIdInput);
-                  document.body.appendChild(form);
-                  
-                  Swal.fire({
-                      title: 'กำลังดำเนินการ...',
-                      text: 'กรุณารอสักครู่',
-                      allowOutsideClick: false,
-                      didOpen: () => {
-                          Swal.showLoading();
-                          form.submit();
-                      }
-                  });
-              }
-          });
-      }
+        Swal.fire({
+            title: 'ยืนยันการเสร็จสิ้นโครงการ',
+            text: `คุณต้องการปิดโครงการ "${projectName}" และย้ายไปยังประวัติโครงการใช่หรือไม่? เมื่อปิดแล้วจะไม่สามารถกลับมาแก้ไขสถานะได้`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'ใช่, เสร็จสิ้นโครงการ',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // สร้าง form สำหรับส่งข้อมูลไปยัง route close_project
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/close_project/${projectId}`;  // เปลี่ยนเป็นเรียกโดยตรงแทน url_for
+                
+                const projectIdInput = document.createElement('input');
+                projectIdInput.type = 'hidden';
+                projectIdInput.name = 'project_id';
+                projectIdInput.value = projectId;
+                
+                form.appendChild(projectIdInput);
+                document.body.appendChild(form);
+                
+                Swal.fire({
+                    title: 'กำลังดำเนินการ...',
+                    text: 'กรุณารอสักครู่',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                        form.submit();
+                    }
+                });
+            }
+        });
+    }
     </script>
   </body>
 </html>

@@ -97,9 +97,6 @@
         </style>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-
-
-
 <body>
     
     <nav class="navbar navbar-expand-lg navbar-dark">
@@ -296,15 +293,15 @@
             </div>
             <div class="form-group">
                 <label for="cluster">Cluster:</label>
-                <input type="text" class="form-control" id="cluster" name="cluster">
+                <input type="text" class="form-control" id="cluster" name="cluster" value= "Cluster" readonly>
             </div>
             <div class="form-group">
                 <label for="commonality">Commonality:</label>
-                <input type="text" class="form-control" id="commonality" name="commonality">
+                <input type="text" class="form-control" id="commonality" name="commonality" value="commonality" readonly>
             </div>
             <div class="form-group">
                 <label for="physical_grouping">Physical grouping:</label>
-                <input type="text" class="form-control" id="physical_grouping" name="physical_grouping">
+                <input type="text" class="form-control" id="physical_grouping" name="physical_grouping" value="physical_grouping" readonly>
             </div>
             <div class="form-group">
                 <label for="rationale">หลักการและเหตุผล:</label>
@@ -330,56 +327,53 @@
                 <label for="project_activity">กิจกรรมดำเนินงาน:</label>
                 <textarea class="form-control" id="project_activity" name="project_activity" rows="3"></textarea>
             </div>
-
-                <div class="col-md-12 left-align">
-                    <label for="project_target">13. กลุ่มเป้าหมายผู้เข้าร่วมโครงการ (ให้ระบุกลุ่มเป้าหมาย และจำนวนให้ชัดเจน)</label>
-                    <textarea class="form-control" id="project_target" name="project_target" rows="3" required></textarea>
+            <div class="col-md-12 left-align">
+                <label for="project_target">13. กลุ่มเป้าหมายผู้เข้าร่วมโครงการ (ให้ระบุกลุ่มเป้าหมาย และจำนวนให้ชัดเจน)</label>
+                <textarea class="form-control" id="project_target" name="project_target" rows="3" required></textarea>
+            </div>
+    
+            <h3 class="mt-4">14. งบประมาณ</h3>
+            <div class="expense-form">
+                <div class="form-group">
+                    <label for="project_budget">งบประมาณโครงการ:</label>
+                    <input type="number" class="form-control" id="project_budget" name="project_budget" required placeholder="งบประมาณโครงการ">
                 </div>
-        
-                <h3 class="mt-4">14. งบประมาณ</h3>
-                <div class="expense-form">
-                    <div class="form-group">
-                        <label for="project_budget">งบประมาณโครงการ:</label>
-                        <input type="number" class="form-control" id="project_budget" name="project_budget" required placeholder="งบประมาณโครงการ">
-                    </div>
-                    
-                    <h4>14.1 ค่าตอบแทน</h4>
-                    <div id="compensation-items">
-                        <div class="expense-item">
-                            <input type="text" class="form-control expense-description" name="compensation_description[]" placeholder="รายการค่าตอบแทน">
-                            <input type="number" class="form-control expense-amount compensation" name="compensation_amount[]" placeholder="0">
-                            <span class="currency">บาท</span>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-compensation">เพิ่มรายการค่าตอบแทน</button>
-                    <div class="expense-subtotal">
-                        รวมค่าตอบแทน <span id="compensationSubtotal">0</span> <span class="currency">บาท</span>
-                    </div>
                 
-                    <h4>14.2 ค่าใช้สอย</h4>
-                    <div id="expense-items">
-                        <div class="expense-item">
-                            <input type="text" class="form-control expense-description" name="expense_description[]" placeholder="รายการค่าใช้สอย">
-                            <input type="number" class="form-control expense-amount expense" name="expense_amount[]" placeholder="0">
-                            <span class="currency">บาท</span>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-expense">เพิ่มรายการค่าใช้สอย</button>
-                    <div class="expense-subtotal">
-                        รวมค่าใช้สอย <span id="expenseSubtotal">0</span> <span class="currency">บาท</span>
-                    </div>
-                
-                    <div class="expense-grand-total">
-                        รวมค่าใช้จ่ายทั้งสิ้นจำนวน <span id="grandTotal">0</span> <span class="currency">บาท</span>
+                <h4>14.1 ค่าตอบแทน</h4>
+                <div id="compensation-items">
+                    <div class="expense-item">
+                        <input type="text" class="form-control expense-description" name="compensation_description[]" placeholder="รายการค่าตอบแทน">
+                        <input type="number" class="form-control expense-amount compensation" name="compensation_amount[]" placeholder="0">
+                        <span class="currency">บาท</span>
                     </div>
                 </div>
-                       
-                    
-                    <div class="text-center">
-                        <label for="note" class="note">หมายเหตุ: งบประมาณ ให้ระบุรายละเอียดการคำนวณรายการค่าใช้จ่ายที่ต้องการให้ชัดเจน ตามระเบียบ กระทรวงการคลัง และตามนโยบายมาตรการประหยัดของมหาวิทยาลัยฯ ทั้งนี้ให้ผู้รับผิดชอบโครงการ ประสานในส่วนนี้กับกองคลัง หรืองานคลังแต่ละวิทยาเขต ก่อนเสนอขออนุมัติโครงการ</label>
-                    
-                    
-                        <h3 class="mt-4">15. แผนปฏิบัติงาน (แผนงาน) แผนการใช้จ่ายงบประมาณ (แผนเงิน) และตัวชี้วัดเป้าหมายผลผลิต</h3>
+                <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-compensation">เพิ่มรายการค่าตอบแทน</button>
+                <div class="expense-subtotal">
+                    รวมค่าตอบแทน <span id="compensationSubtotal">0</span> <span class="currency">บาท</span>
+                </div>
+            
+                <h4>14.2 ค่าใช้สอย</h4>
+                <div id="expense-items">
+                    <div class="expense-item">
+                        <input type="text" class="form-control expense-description" name="expense_description[]" placeholder="รายการค่าใช้สอย">
+                        <input type="number" class="form-control expense-amount expense" name="expense_amount[]" placeholder="0">
+                        <span class="currency">บาท</span>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-expense">เพิ่มรายการค่าใช้สอย</button>
+                <div class="expense-subtotal">
+                    รวมค่าใช้สอย <span id="expenseSubtotal">0</span> <span class="currency">บาท</span>
+                </div>
+            
+                <div class="expense-grand-total">
+                    รวมค่าใช้จ่ายทั้งสิ้นจำนวน <span id="grandTotal">0</span> <span class="currency">บาท</span>
+                </div>
+            </div>
+                   
+                
+                <div class="text-center">
+                    <label for="note" class="note">หมายเหตุ: งบประมาณ ให้ระบุรายละเอียดการคำนวณรายการค่าใช้จ่ายที่ต้องการให้ชัดเจน ตามระเบียบ กระทรวงการคลัง และตามนโยบายมาตรการประหยัดของมหาวิทยาลัยฯ ทั้งนี้ให้ผู้รับผิดชอบโครงการ ประสานในส่วนนี้กับกองคลัง หรืองานคลังแต่ละวิทยาเขต ก่อนเสนอขออนุมัติโครงการ</label>
+                    <h3 class="mt-4">15. แผนปฏิบัติงาน (แผนงาน) แผนการใช้จ่ายงบประมาณ (แผนเงิน) และตัวชี้วัดเป้าหมายผลผลิต</h3>
 <div class="table-responsive">
     <table class="table table-bordered">
         <thead>
@@ -429,356 +423,315 @@
 <h4 class="mt-4">ตัวชี้วัดเป้าหมายผลผลิต</h4>
 <div class="form-group">
     <label>ตัวชี้วัดเชิงปริมาณ</label>
-    <input type="text" class="form-control" id="quantity_indicator" name="quantity_indicator">
+    <input type="text" class="form-control" id="quantity_indicator" name="quantity_indicator" readonly>
 </div>
 
 <div class="form-group">
     <label for="quality_indicator">ตัวชี้วัดเชิงคุณภาพ:</label>
-    <input type="text" class="form-control" id="quality_indicator" name="quality_indicator">
+    <input type="text" class="form-control" id="quality_indicator" name="quality_indicator" value="ผู้เข้าร่วมโครงการมีความพึงพอใจ ไม่ต่ำกว่าร้อยละ 75" readonly>
 </div>
 
 <div class="form-group">
     <label>เชิงเวลา:</label>
-    <input type="text" class="form-control" name="time_indicator" placeholder="ร้อยละของโครงการแล้วเสร็จตามระยะเวลาที่กำหนด ไม่ต่ำกว่าร้อยละ 75" required>
+    <input type="text" class="form-control" name="time_indicator" value="ร้อยละของโครงการแล้วเสร็จตามระยะเวลาที่กำหนด ไม่ต่ำกว่าร้อยละ 75" readonly>
 </div>
 
 <div class="form-group">
     <label>เชิงค่าใช้จ่าย:</label>
-    <input type="number" class="form-control" name="cost_indicator" placeholder="งบประมาณที่ใช้ในการดำเนินโครงการ (บาท)" required>
+    <input type="number" class="form-control" name="cost_indicator" readonly>
 </div>
                         
 <div class="form-group">
     <label>16. ผลที่คาดว่าจะเกิด (Impact):</label>
     <textarea class="form-control" id="expected_results" name="expected_results" rows="4" required></textarea>
+    <div class="form-group text-right">
+        <label for="teacher_id"><i class="fas fa-chalkboard-teacher"></i>
+            ลงชื่อ:</label>
+       
+            <p class="form-control">{{ teacher_info[0] }}</p>
+           
+        <label>ตำแหน่ง:</label>
+        <p class="form-control">อาจารย์ประจำสาขา{{ teacher_info[1] }}</p>
+    </div>
+      
+    <div class="text-center mt-4">
+        <button type="submit" class="btn btn-primary">บันทึกโครงการ</button>
+    </div>
+    </form>
+  </div>
 </div>
-                    <div class="col-md-12">
-                        <label for="note" class="note">หมายเหตุ: กรุณากรอกข้อมูลให้ครบถ้วนสมบูรณ์ เพื่อประกอบการพิจารณางบประมาณ</label>
-                    </div>
-                    <div class="form-group text-right">
-                        <label for="teacher_id"><i class="fas fa-chalkboard-teacher"></i>
-                            ลงชื่อ:</label>
-                       
-                            <p class="form-control">{{ teacher_info[0] }}</p>
-                           
-                            {% for teacher in teachers %}
-                            
-                            {% endfor %}
-                        <label>ตำแหน่ง:</label>
-                     <p class="form-control">อาจารย์ประจำสาขา{{ teacher_info[1] }}
-                       <br>  
-                      
-                       <div class="form-group">
-                        <label>เบอร์โทรศัพท์:</label>
-                        <input type="tel" class="form-control" name="phone" required>
-                    </div>
-                      <div class="text-center mt-4">
-                        <button type="submit" class="btn btn-primary">บันทึกโครงการ</button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-                </div>
-            </div>
-        </div>
-        
-                </div>
-
-            </div>
-            
-
-
-
-
-    
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentYear = new Date().getFullYear() + 543; // พ.ศ.
-            document.getElementById('currentYear').textContent = currentYear;
-            document.getElementById('prevYear').textContent = currentYear - 1;
-        
-            let activityCount = 1;
-            document.getElementById('add-activity').addEventListener('click', function() {
-                const tbody = document.getElementById('activityTableBody');
-                const newRow = tbody.insertRow();
-                newRow.innerHTML = `
-                    <td><input type="text" class="form-control" name="activity[]" required></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ต.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="พ.ย."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ธ.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ม.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ก.พ."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="มี.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="เม.ย."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="พ.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="มิ.ย."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ก.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ส.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ก.ย."></td>
-                `;
-                activityCount++;
-            });
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentYear = new Date().getFullYear() + 543; // พ.ศ.
-            document.getElementById('currentYear').textContent = currentYear;
-            document.getElementById('prevYear').textContent = currentYear - 1;
-        
-            let activityCount = 1;
-            document.getElementById('add-activity').addEventListener('click', function() {
-                const tbody = document.getElementById('activityTableBody');
-                const newRow = tbody.insertRow();
-                newRow.innerHTML = `
-                    <td><input type="text" class="form-control" name="activity[]" required></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ต.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="พ.ย."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ธ.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ม.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ก.พ."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="มี.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="เม.ย."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="พ.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="มิ.ย."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ก.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ส.ค."></td>
-                    <td><input type="checkbox" name="month[${activityCount}][]" value="ก.ย."></td>
-                `;
-                activityCount++;
-            });
-        });
-    </script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const addCompensation = document.getElementById('add-compensation');
-            const addExpense = document.getElementById('add-expense');
-            const compensationItems = document.getElementById('compensation-items');
-            const expenseItems = document.getElementById('expense-items');
-        
-            addCompensation.addEventListener('click', () => addItem(compensationItems, 'compensation'));
-            addExpense.addEventListener('click', () => addItem(expenseItems, 'expense'));
-        
-            document.addEventListener('input', function(e) {
-                if (e.target.classList.contains('expense-amount')) {
-                    calculateTotals();
-                }
-            });
-        
-            function addItem(container, type) {
-                const newItem = document.createElement('div');
-                newItem.className = 'expense-item';
-                newItem.innerHTML = `
-                    <input type="text" class="form-control expense-description" name="${type}_description[]" placeholder="รายการ${type === 'compensation' ? 'ค่าตอบแทน' : 'ค่าใช้สอย'}">
-                    <input type="number" class="form-control expense-amount ${type}" name="${type}_amount[]" placeholder="0">
-                    <span class="currency">บาท</span>
-                    <button type="button" class="btn btn-danger btn-sm remove-item">ลบ</button>
-                `;
-                container.appendChild(newItem);
-        
-                newItem.querySelector('.remove-item').addEventListener('click', function() {
-                    container.removeChild(newItem);
-                    calculateTotals();
-                });
-            }
-        
-            function calculateTotals() {
-                let compensationTotal = 0;
-                let expenseTotal = 0;
-        
-                document.querySelectorAll('.compensation').forEach(item => {
-                    compensationTotal += Number(item.value) || 0;
-                });
-        
-                document.querySelectorAll('.expense').forEach(item => {
-                    expenseTotal += Number(item.value) || 0;
-                });
-        
-                const grandTotal = compensationTotal + expenseTotal;
-        
-                document.getElementById('compensationSubtotal').textContent = compensationTotal.toLocaleString();
-                document.getElementById('expenseSubtotal').textContent = expenseTotal.toLocaleString();
-                document.getElementById('grandTotal').textContent = grandTotal.toLocaleString();
-                document.getElementById('project_budget').value = grandTotal;
-            }
-    
-            // คำนวณยอดรวมเมื่อโหลดหน้า
-            calculateTotals();
-        });
-    </script>
-    
-    <script>
-        // ฟังก์ชันสำหรับรับวันที่ปัจจุบันในรูปแบบ YYYY-MM-DD
-        function getCurrentDate() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-    
-        function setCurrentFiscalYear() {
-            const currentDate = new Date();
-            const currentMonth = currentDate.getMonth(); // 0-11 (มกราคม = 0, ธันวาคม = 11)
-            const currentYear = currentDate.getFullYear();
-    
-            // แปลงเป็น พ.ศ. โดยบวก 543
-            const currentThaiYear = currentYear + 543;
-    
-            // ถ้าเดือนปัจจุบันมากกว่าหรือเท่ากับกันยายน (8) ให้ใช้ปีถัดไป
-            const fiscalThaiYear = currentMonth >= 8 ? currentThaiYear + 1 : currentThaiYear;
-    
-            document.getElementById('project_year').value = fiscalThaiYear;
-        }
-    
-        // เมื่อหน้าเว็บโหลดเสร็จ
-        window.onload = function () {
-            // กำหนดค่าขั้นต่ำของวันที่เริ่มโครงการเป็นวันปัจจุบัน
-            const projectDoTime = document.getElementById('project_dotime');
-            projectDoTime.min = getCurrentDate();
-            projectDoTime.value = getCurrentDate();
-    
-            // กำหนดค่าขั้นต่ำของวันที่สิ้นสุดโครงการเป็นวันถัดไป
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            document.getElementById('project_endtime').min = tomorrow.toISOString().split('T')[0];
-    
-            // กำหนดปีงบประมาณ
-            setCurrentFiscalYear();
-        };
-    
-        // ตรวจสอบและปรับวันที่สิ้นสุดโครงการเมื่อมีการเปลี่ยนแปลงวันที่เริ่มโครงการ
-        document.getElementById('project_dotime').addEventListener('change', function () {
-            const startDate = new Date(this.value);
-            const endDateInput = document.getElementById('project_endtime');
-    
-            // ถ้าวันที่สิ้นสุดน้อยกว่าหรือเท่ากับวันที่เริ่ม ให้กำหนดเป็นวันถัดไปของวันที่เริ่ม
-            if (new Date(endDateInput.value) <= startDate) {
-                startDate.setDate(startDate.getDate() + 1);
-                endDateInput.value = startDate.toISOString().split('T')[0];
-            }
-    
-            // กำหนดค่าขั้นต่ำของวันที่สิ้นสุดเป็นวันถัดไปของวันที่เริ่ม
-            startDate.setDate(startDate.getDate() + 1);
-            endDateInput.min = startDate.toISOString().split('T')[0];
-        });
-    </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
+</div>
+</div>
+</div>
+</div>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
-        const projectNameInput = document.getElementById('project_name');
-        const projectStartInput = document.getElementById('project_dotime');
-        const projectEndInput = document.getElementById('project_endtime');
+        const currentYear = new Date().getFullYear() + 543; // พ.ศ.
+        document.getElementById('currentYear').textContent = currentYear;
+        document.getElementById('prevYear').textContent = currentYear - 1;
     
-        // ตรวจสอบชื่อโครงการ
-        projectNameInput.addEventListener('blur', function() {
-            checkProjectName(this.value);
+        let activityCount = 1;
+        document.getElementById('add-activity').addEventListener('click', function() {
+            const tbody = document.getElementById('activityTableBody');
+            const newRow = tbody.insertRow();
+            newRow.innerHTML = `
+                <td><input type="text" class="form-control" name="activity[]" required></td>
+                <td><input type="checkbox" name="month[${activityCount}][]" value="ต.ค."></td>
+                <td><input type="checkbox" name="month[${activityCount}][]" value="พ.ย."></td>
+                <td><input type="checkbox" name="month[${activityCount}][]" value="ธ.ค."></td>
+                <td><input type="checkbox" name="month[${activityCount}][]" value="ม.ค."></td>
+                <td><input type="checkbox" name="month[${activityCount}][]" value="ก.พ."></td>
+                <td><input type="checkbox" name="month[${activityCount}][]" value="มี.ค."></td>
+                <td><input type="checkbox" name="month[${activityCount}][]" value="เม.ย."></td>
+                <td><input type="checkbox" name="month[${activityCount}][]" value="พ.ค."></td>
+                <td><input type="checkbox" name="month[${activityCount}][]" value="มิ.ย."></td>
+                <td><input type="checkbox" name="month[${activityCount}][]" value="ก.ค."></td>
+                <td><input type="checkbox" name="month[${activityCount}][]" value="ส.ค."></td>
+                <td><input type="checkbox" name="month[${activityCount}][]" value="ก.ย."></td>
+            `;
+            activityCount++;
         });
+        
+        // ดึงค่าเป้าหมายมาใส่ตัวชี้วัดเชิงปริมาณอัตโนมัติ
+        document.getElementById('project_target').addEventListener('input', function() {
+            document.getElementById('quantity_indicator').value = this.value;
+        });
+        
+        // ดึงค่างบประมาณมาใส่เชิงค่าใช้จ่ายอัตโนมัติ
+        document.getElementById('project_budget').addEventListener('input', function() {
+            document.querySelector('input[name="cost_indicator"]').value = this.value;
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const addCompensation = document.getElementById('add-compensation');
+        const addExpense = document.getElementById('add-expense');
+        const compensationItems = document.getElementById('compensation-items');
+        const expenseItems = document.getElementById('expense-items');
     
-        // ตรวจสอบวันที่โครงการ
-        projectEndInput.addEventListener('change', function() {
-            if (projectStartInput.value && projectEndInput.value) {
-                checkProjectDates(projectStartInput.value, projectEndInput.value);
+        addCompensation.addEventListener('click', () => addItem(compensationItems, 'compensation'));
+        addExpense.addEventListener('click', () => addItem(expenseItems, 'expense'));
+    
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('expense-amount')) {
+                calculateTotals();
             }
         });
     
-        function checkProjectName(projectName) {
+        function addItem(container, type) {
+            const newItem = document.createElement('div');
+            newItem.className = 'expense-item';
+            newItem.innerHTML = `
+                <input type="text" class="form-control expense-description" name="${type}_description[]" placeholder="รายการ${type === 'compensation' ? 'ค่าตอบแทน' : 'ค่าใช้สอย'}">
+                <input type="number" class="form-control expense-amount ${type}" name="${type}_amount[]" placeholder="0">
+                <span class="currency">บาท</span>
+                <button type="button" class="btn btn-danger btn-sm remove-item">ลบ</button>
+            `;
+            container.appendChild(newItem);
+    
+            newItem.querySelector('.remove-item').addEventListener('click', function() {
+                container.removeChild(newItem);
+                calculateTotals();
+            });
+        }
+    
+        function calculateTotals() {
+            let compensationTotal = 0;
+            let expenseTotal = 0;
+    
+            document.querySelectorAll('.compensation').forEach(item => {
+                compensationTotal += Number(item.value) || 0;
+            });
+    
+            document.querySelectorAll('.expense').forEach(item => {
+                expenseTotal += Number(item.value) || 0;
+            });
+    
+            const grandTotal = compensationTotal + expenseTotal;
+    
+            document.getElementById('compensationSubtotal').textContent = compensationTotal.toLocaleString();
+            document.getElementById('expenseSubtotal').textContent = expenseTotal.toLocaleString();
+            document.getElementById('grandTotal').textContent = grandTotal.toLocaleString();
+            document.getElementById('project_budget').value = grandTotal;
+            document.querySelector('input[name="cost_indicator"]').value = grandTotal;
+        }
+
+        // คำนวณยอดรวมเมื่อโหลดหน้า
+        calculateTotals();
+    });
+</script>
+
+<script>
+    // ฟังก์ชันสำหรับรับวันที่ปัจจุบันในรูปแบบ YYYY-MM-DD
+    function getCurrentDate() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function setCurrentFiscalYear() {
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth(); // 0-11 (มกราคม = 0, ธันวาคม = 11)
+        const currentYear = currentDate.getFullYear();
+
+        // แปลงเป็น พ.ศ. โดยบวก 543
+        const currentThaiYear = currentYear + 543;
+
+        // ถ้าเดือนปัจจุบันมากกว่าหรือเท่ากับกันยายน (8) ให้ใช้ปีถัดไป
+        const fiscalThaiYear = currentMonth >= 8 ? currentThaiYear + 1 : currentThaiYear;
+
+        document.getElementById('project_year').value = fiscalThaiYear;
+    }
+
+    // เมื่อหน้าเว็บโหลดเสร็จ
+    window.onload = function () {
+        // กำหนดค่าขั้นต่ำของวันที่เริ่มโครงการเป็นวันปัจจุบัน
+        const projectDoTime = document.getElementById('project_dotime');
+        projectDoTime.min = getCurrentDate();
+        projectDoTime.value = getCurrentDate();
+
+        // กำหนดค่าขั้นต่ำของวันที่สิ้นสุดโครงการเป็นวันถัดไป
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('project_endtime').min = tomorrow.toISOString().split('T')[0];
+
+        // กำหนดปีงบประมาณ
+        setCurrentFiscalYear();
+    };
+
+    // ตรวจสอบและปรับวันที่สิ้นสุดโครงการเมื่อมีการเปลี่ยนแปลงวันที่เริ่มโครงการ
+    document.getElementById('project_dotime').addEventListener('change', function () {
+        const startDate = new Date(this.value);
+        const endDateInput = document.getElementById('project_endtime');
+
+        // ถ้าวันที่สิ้นสุดน้อยกว่าหรือเท่ากับวันที่เริ่ม ให้กำหนดเป็นวันถัดไปของวันที่เริ่ม
+        if (new Date(endDateInput.value) <= startDate) {
+            startDate.setDate(startDate.getDate() + 1);
+            endDateInput.value = startDate.toISOString().split('T')[0];
+        }
+
+        // กำหนดค่าขั้นต่ำของวันที่สิ้นสุดเป็นวันถัดไปของวันที่เริ่ม
+        startDate.setDate(startDate.getDate() + 1);
+        endDateInput.min = startDate.toISOString().split('T')[0];
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const projectNameInput = document.getElementById('project_name');
+    const projectStartInput = document.getElementById('project_dotime');
+    const projectEndInput = document.getElementById('project_endtime');
+
+    // ตรวจสอบชื่อโครงการ
+    projectNameInput.addEventListener('blur', function() {
+        checkProjectName(this.value);
+    });
+
+    // ตรวจสอบวันที่โครงการ
+    projectEndInput.addEventListener('change', function() {
+        if (projectStartInput.value && projectEndInput.value) {
+            checkProjectDates(projectStartInput.value, projectEndInput.value);
+        }
+    });
+
+    function checkProjectName(projectName) {
+        fetch('/check_project_name', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({project_name: projectName})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.exists) {
+                Swal.fire({
+                    title: 'ชื่อโครงการซ้ำ',
+                    text: 'ชื่อโครงการนี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น',
+                    icon: 'warning',
+                    confirmButtonText: 'เข้าใจแล้ว'
+                });
+                projectNameInput.classList.add('is-invalid');
+            } else {
+                projectNameInput.classList.remove('is-invalid');
+            }
+        });
+    }
+
+    function checkProjectDates(startDate, endDate) {
+        fetch('/check_project_dates', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({start_date: startDate, end_date: endDate})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.overlap) {
+                Swal.fire({
+                    title: 'วันที่ซ้ำซ้อน',
+                    text: 'คุณมีโครงการอื่นในช่วงเวลานี้แล้ว กรุณาเลือกวันที่อื่น',
+                    icon: 'warning',
+                    confirmButtonText: 'เข้าใจแล้ว'
+                });
+                projectStartInput.classList.add('is-invalid');
+                projectEndInput.classList.add('is-invalid');
+            } else {
+                projectStartInput.classList.remove('is-invalid');
+                projectEndInput.classList.remove('is-invalid');
+            }
+        });
+    }
+
+    // ตรวจสอบก่อนส่งฟอร์ม
+    document.querySelector('form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // ตรวจสอบชื่อโครงการและวันที่อีกครั้งก่อนส่ง
+        Promise.all([
             fetch('/check_project_name', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({project_name: projectName})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({project_name: projectNameInput.value})
+            }),
+            fetch('/check_project_dates', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({start_date: projectStartInput.value, end_date: projectEndInput.value})
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.exists) {
+        ])
+        .then(responses => Promise.all(responses.map(r => r.json())))
+        .then(([nameData, dateData]) => {
+            if (nameData.exists || dateData.overlap) {
+                if (nameData.exists) {
                     Swal.fire({
                         title: 'ชื่อโครงการซ้ำ',
                         text: 'ชื่อโครงการนี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น',
-                        icon: 'warning',
+                        icon: 'error',
                         confirmButtonText: 'เข้าใจแล้ว'
                     });
-                    projectNameInput.classList.add('is-invalid');
-                } else {
-                    projectNameInput.classList.remove('is-invalid');
                 }
-            });
-        }
-    
-        function checkProjectDates(startDate, endDate) {
-            fetch('/check_project_dates', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({start_date: startDate, end_date: endDate})
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.overlap) {
+                if (dateData.overlap) {
                     Swal.fire({
                         title: 'วันที่ซ้ำซ้อน',
                         text: 'คุณมีโครงการอื่นในช่วงเวลานี้แล้ว กรุณาเลือกวันที่อื่น',
-                        icon: 'warning',
+                        icon: 'error',
                         confirmButtonText: 'เข้าใจแล้ว'
                     });
-                    projectStartInput.classList.add('is-invalid');
-                    projectEndInput.classList.add('is-invalid');
-                } else {
-                    projectStartInput.classList.remove('is-invalid');
-                    projectEndInput.classList.remove('is-invalid');
                 }
-            });
-        }
-    
-        // ตรวจสอบก่อนส่งฟอร์ม
-        document.querySelector('form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // ตรวจสอบชื่อโครงการและวันที่อีกครั้งก่อนส่ง
-            Promise.all([
-                fetch('/check_project_name', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({project_name: projectNameInput.value})
-                }),
-                fetch('/check_project_dates', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({start_date: projectStartInput.value, end_date: projectEndInput.value})
-                })
-            ])
-            .then(responses => Promise.all(responses.map(r => r.json())))
-            .then(([nameData, dateData]) => {
-                if (nameData.exists || dateData.overlap) {
-                    if (nameData.exists) {
-                        Swal.fire({
-                            title: 'ชื่อโครงการซ้ำ',
-                            text: 'ชื่อโครงการนี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น',
-                            icon: 'error',
-                            confirmButtonText: 'เข้าใจแล้ว'
-                        });
-                    }
-                    if (dateData.overlap) {
-                        Swal.fire({
-                            title: 'วันที่ซ้ำซ้อน',
-                            text: 'คุณมีโครงการอื่นในช่วงเวลานี้แล้ว กรุณาเลือกวันที่อื่น',
-                            icon: 'error',
-                            confirmButtonText: 'เข้าใจแล้ว'
-                        });
-                    }
-                } else {
-                    // ถ้าไม่มีปัญหา ให้ส่งฟอร์ม
-                    this.submit();
-                }
-            });
+            } else {
+                // ถ้าไม่มีปัญหา ให้ส่งฟอร์ม
+                this.submit();
+            }
         });
     });
-    </script>
+});
+</script>
+</body>
+</html>

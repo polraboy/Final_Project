@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ประวัติการเข้าร่วมโครงการของนักศึกษา</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin-top: 30px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .card-header {
+            background-color: #ff8c00;
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+        }
+        .btn-primary {
+            background-color: #ff8c00;
+            border-color: #ff8c00;
+        }
+        .btn-primary:hover {
+            background-color: #e67e00;
+            border-color: #e67e00;
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .student-info {
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0"><i class="fas fa-history"></i> ประวัติการเข้าร่วมโครงการของนักศึกษา</h2>
+            </div>
+            <div class="card-body">
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" class="mb-4">
+                    <div class="form-row align-items-center">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                </div>
+                                <input type="text" class="form-control" id="student_id" name="student_id" 
+                                       placeholder="กรอกรหัสนักศึกษา" value="{{ student_id }}" required>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> ค้นหา
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                {% if search_done %}
+                    {% if student_info %}
+                        <div class="student-info">
+                            <h4><i class="fas fa-user-graduate"></i> ข้อมูลนักศึกษา</h4>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p><strong>รหัสนักศึกษา:</strong> {{ student_id }}</p>
+                                    <p><strong>ชื่อ-นามสกุล:</strong> {{ student_info[0] }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>อีเมล:</strong> {{ student_info[1] }}</p>
+                                    <p><strong>เบอร์โทรศัพท์:</strong> {{ student_info[2] }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>สาขา:</strong> {{ student_info[4] }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if projects %}
+                            <h4><i class="fas fa-clipboard-list"></i> ประวัติการเข้าร่วมโครงการ ({{ projects|length }} รายการ)</h4>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>ลำดับ</th>
+                                            <th>ชื่อโครงการ</th>
+                                            <th>วันที่จัดโครงการ</th>
+                                            <th>วันที่สมัคร</th>
+                                            <th>สถานะการอนุมัติ</th>
+                                            <th>สถานะโครงการ</th>
+                                            <th>การจัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for project in projects %}
+                                            <tr>
+                                                <td>{{ loop.index }}</td>
+                                                <td>{{ project[4] }}</td>
+                                                <td>{{ project[5].strftime('%d/%m/%Y') if project[5] else '-' }} ถึง {{ project[6].strftime('%d/%m/%Y') if project[6] else '-' }}</td>
+                                                <td>{{ project[2].strftime('%d/%m/%Y %H:%M') if project[2] else '-' }}</td>
+                                                <td>
+                                                    {% if project[1] == 0 %}
+                                                        <span class="badge badge-warning">รออนุมัติ</span>
+                                                    {% elif project[1] == 1 %}
+                                                        <span class="badge badge-success">อนุมัติแล้ว</span>
+                                                    {% else %}
+                                                        <span class="badge badge-danger">ไม่อนุมัติ</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if project[7] == 0 %}
+                                                        <span class="badge badge-secondary">ยังไม่เริ่ม</span>
+                                                    {% elif project[7] == 1 %}
+                                                        <span class="badge badge-primary">กำลังดำเนินการ</span>
+                                                    {% elif project[7] == 2 %}
+                                                        <span class="badge badge-success">เสร็จสิ้นแล้ว</span>
+                                                    {% else %}
+                                                        <span class="badge badge-dark">ไม่ทราบสถานะ</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{{ url_for('project_detail', project_id=project[3]) }}" class="btn btn-sm btn-info">
+                                                        <i class="fas fa-eye"></i> ดูรายละเอียด
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> ไม่พบประวัติการเข้าร่วมโครงการของนักศึกษารหัส {{ student_id }}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> ไม่พบข้อมูลนักศึกษารหัส {{ student_id }} กรุณาตรวจสอบรหัสนักศึกษาอีกครั้ง
+                        </div>
+                    {% endif %}
+                {% endif %}
+                
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('admin_home' if g.user.type == 'admin' else 'teacher_home') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> กลับไปหน้าหลัก
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

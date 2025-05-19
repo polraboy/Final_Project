@@ -213,37 +213,39 @@
                     <input type="text" class="form-control" id="teacher_username" name="teacher_username" value="{{ teacher[2] }}" required>
                 </div>
                 <div class="form-group">
-                    <label for="teacher_password">Password:</label>
-                    <div class="password-container">
-                        <input type="password" class="form-control" id="teacher_password" name="teacher_password" value="{{ teacher[3] }}" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$" required>
-                        <span class="password-toggle" id="password-toggle">
-                            <i class="fas fa-eye"></i>
-                        </span>
-                    </div>
-                    <div class="password-requirements">
-                      <small>รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร และประกอบด้วย:</small>
-                      <ul>
-                        <li><small>ตัวอักษรพิมพ์ใหญ่อย่างน้อย 1 ตัว</small></li>
-                        <li><small>ตัวอักษรพิมพ์เล็กอย่างน้อย 1 ตัว</small></li>
-                        <li><small>ตัวเลขอย่างน้อย 1 ตัว</small></li>
-                        <li><small>อักขระพิเศษอย่างน้อย 1 ตัว (@, $, !, %, *, ?, &)</small></li>
-                      </ul>
-                    </div>
-                    <div class="invalid-feedback" id="password-feedback">
-                      รหัสผ่านไม่ตรงตามเงื่อนไขที่กำหนด
-                    </div>
-                </div>
+                  <label for="teacher_password">Password (เว้นว่างหากไม่ต้องการเปลี่ยน):</label>
+                  <div class="password-container">
+                      <input type="password" class="form-control" id="teacher_password" name="teacher_password" 
+                             placeholder="ใส่รหัสผ่านใหม่เฉพาะเมื่อต้องการเปลี่ยน" 
+                             pattern="^$|^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                             autocomplete="new-password">
+                      <span class="password-toggle" id="password-toggle">
+                          <i class="fas fa-eye"></i>
+                      </span>
+                  </div>
+                  <div class="password-requirements">
+                    <small>รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร และประกอบด้วย:</small>
+                    <ul>
+                      <li><small>ตัวอักษรพิมพ์ใหญ่อย่างน้อย 1 ตัว</small></li>
+                      <li><small>ตัวอักษรพิมพ์เล็กอย่างน้อย 1 ตัว</small></li>
+                      <li><small>ตัวเลขอย่างน้อย 1 ตัว</small></li>
+                      <li><small>อักขระพิเศษอย่างน้อย 1 ตัว (@, $, !, %, *, ?, &)</small></li>
+                    </ul>
+                  </div>
+                  <div class="invalid-feedback" id="password-feedback">
+                    รหัสผ่านไม่ตรงตามเงื่อนไขที่กำหนด
+                  </div>
+              </div>  
                 <div class="form-group">
-                    <label for="teacher_confirm_password">ยืนยัน Password:</label>
-                    <div class="password-container">
-                        <input type="password" class="form-control" id="teacher_confirm_password" name="teacher_confirm_password" value="{{ teacher[3] }}" required>
-                        <span class="password-toggle" id="confirm-password-toggle">
-                            <i class="fas fa-eye"></i>
-                        </span>
-                    </div>
-                    <div class="invalid-feedback" id="confirm-password-feedback">
-                      รหัสผ่านไม่ตรงกัน
-                    </div>
+                  <label for="branch_id">สาขา:</label>
+                  <select class="form-control" id="branch_id" name="branch_id" required>
+                      <option value="">เลือกสาขา</option>
+                      {% for branch in branches %}
+                          <option value="{{ branch[0] }}" {% if branch[0] == teacher[7] %}selected{% endif %}>
+                              {{ branch[1] }}
+                          </option>
+                      {% endfor %}
+                  </select>
                 </div>
                 <div class="form-group">
                     <label for="teacher_phone">เบอร์โทร:</label>

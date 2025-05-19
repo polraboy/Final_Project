@@ -6,132 +6,225 @@
     <title>รายชื่อผู้เข้าร่วมโครงการ</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
     <style>
-        .badge-waiting { background-color: #ffc107; }
-        .badge-approved { background-color: #28a745; }
-        .badge-rejected { background-color: #dc3545; }
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            background-color: #ff8c00;
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+        }
+        .badge-waiting { 
+            background-color: #ffc107;
+            color: #000;
+        }
+        .badge-approved { 
+            background-color: #28a745;
+            color: #fff;
+        }
+        .badge-rejected { 
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .btn-primary {
+            background-color: #ff8c00;
+            border-color: #ff8c00;
+        }
+        .btn-primary:hover {
+            background-color: #e67e00;
+            border-color: #e67e00;
+        }
+        .project-info {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #ff8c00;
+        }
+        .capacity-badge {
+            font-size: 16px; 
+            padding: 5px 10px;
+        }
+        .registration-date {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <div class="card">
             <div class="card-header">
-                <h2 class="text-center mb-0"><i class="fas fa-users"></i> รายชื่อผู้เข้าร่วมโครงการ</h2>
-                {% if is_logged_in %}
-                <div class="text-right mt-2">
-                    <form action="{{ url_for('approve_all_participants', project_id=project_id) }}" method="POST" onsubmit="return confirm('คุณต้องการอนุมัติผู้เข้าร่วมทั้งหมดที่กำลังรออนุมัติใช่หรือไม่?');">
-                        <button type="submit" class="btn btn-success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0"><i class="fas fa-users"></i> รายชื่อผู้เข้าร่วมโครงการ</h2>
+                    {% if user_type == 'teacher' %}
+                    <form action="{{ url_for('approve_all_participants', project_id=project_id) }}" method="POST" onsubmit="return confirm('คุณต้องการอนุมัติผู้เข้าร่วมทั้งหมดที่รออนุมัติหรือไม่? (ไม่เกินจำนวนที่กำหนด)');">
+                        <button type="submit" class="btn btn-success" {% if available_slots <= 0 %}disabled{% endif %}>
                             <i class="fas fa-check-double"></i> อนุมัติทั้งหมด
                         </button>
                     </form>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="project-info mb-4">
+                    <h4>ข้อมูลโครงการ</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>ชื่อโครงการ:</strong> {{ project.project_name }}</p>
+                            <p><strong>รูปแบบโครงการ:</strong> {{ project.project_style }}</p>
+                            <p><strong>งบประมาณ:</strong> {{ project.project_budgettype }} ปี {{ project.project_year }}</p>
+                            {% if teacher %}
+                            <p><strong>ผู้รับผิดชอบ:</strong> {{ teacher.teacher_name }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>วันที่จัดโครงการ:</strong> 
+                            {% if project.project_dotime %}
+                                {{ project.project_dotime.strftime('%d/%m/%Y') }} ถึง {{ project.project_endtime.strftime('%d/%m/%Y') if project.project_endtime else '-' }}
+                            {% else %}
+                                ไม่มีข้อมูล
+                            {% endif %}
+                            </p>
+                            <p><strong>สถานะโครงการ:</strong> 
+                            {% if project.project_status == 0 %}
+                                <span class="badge badge-secondary">ยังไม่ยื่นอนุมัติ</span>
+                            {% elif project.project_status == 1 %}
+                                <span class="badge badge-warning">รออนุมัติ</span>
+                            {% elif project.project_status == 2 %}
+                                <span class="badge badge-success">อนุมัติแล้ว</span>
+                            {% elif project.project_status == 3 %}
+                                <span class="badge badge-danger">ไม่อนุมัติ</span>
+                            {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- เพิ่มข้อมูลจำนวนผู้เข้าร่วม -->
+                    <div class="mt-3 text-center">
+                        <h5>สถานะการรับสมัคร</h5>
+                        <div class="progress mb-3" style="height: 25px;">
+                            {% set percentage = (current_approved / project.project_target * 100) if project.project_target and project.project_target > 0 else 0 %}
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ percentage }}%;" 
+                                 aria-valuenow="{{ current_approved }}" aria-valuemin="0" aria-valuemax="{{ project.project_target }}">
+                                {{ current_approved }}/{{ project.project_target }}
+                            </div>
+                        </div>
+                        
+                        {% if available_slots <= 0 %}
+                            <span class="badge badge-danger capacity-badge">เต็มแล้ว</span>
+                        {% else %}
+                            <span class="badge badge-success capacity-badge">
+                                <i class="fas fa-user-plus"></i> เหลือที่นั่งอีก {{ available_slots }} คน
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <h4>รายชื่อผู้เข้าร่วม ({{ total_participants }} คน)</h4>
+                
+                {% if participants %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th width="4%">ลำดับ</th>
+                                <th width="15%">ชื่อ-นามสกุล</th>
+                                <th width="10%">รหัสนักศึกษา</th>
+                                <th width="12%">อีเมล</th>
+                                <th width="10%">เบอร์โทรศัพท์</th>
+                                <th width="10%">สาขา</th>
+                                <th width="7%">สถานะ</th>
+                                <th width="15%">วันเวลาที่ลงทะเบียน</th>
+                                {% if user_type == 'teacher' %}
+                                <th width="7%">การดำเนินการ</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in participants %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ p.join_name }}</td>
+                                <td>{{ p.join_student_id }}</td>
+                                <td>{{ p.join_email }}</td>
+                                <td>{{ p.join_telephone }}</td>
+                                <td>{{ p.branch_name }}</td>
+                                <td>
+                                    {% if p.join_status == 0 %}
+                                        <span class="badge badge-warning">รอการอนุมัติ</span>
+                                    {% elif p.join_status == 1 %}
+                                        <span class="badge badge-success">อนุมัติแล้ว</span>
+                                    {% elif p.join_status == 2 %}
+                                        <span class="badge badge-danger">ไม่อนุมัติ</span>
+                                    {% elif p.join_status == 3 %}
+                                        <span class="badge badge-info">รอการยืนยัน</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if p.join_timestamp %}
+                                        <span class="registration-date">{{ p.join_timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</span>
+                                    {% else %}
+                                        <span class="text-muted">ไม่ระบุ</span>
+                                    {% endif %}
+                                </td>
+                                {% if user_type == 'teacher' %}
+                                <td>
+                                    <form action="{{ url_for('update_join_status', join_id=p.join_id) }}" method="POST">
+                                        <select name="join_status" class="form-control form-control-sm" onchange="this.form.submit()">
+                                            <option value="0" {% if p.join_status == 0 %}selected{% endif %}>รอการอนุมัติ</option>
+                                            <option value="1" {% if p.join_status == 1 %}selected{% endif %} {% if available_slots <= 0 and p.join_status != 1 %}disabled{% endif %}>อนุมัติ</option>
+                                            <option value="2" {% if p.join_status == 2 %}selected{% endif %}>ไม่อนุมัติ</option>
+                                        </select>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> ยังไม่มีผู้เข้าร่วมโครงการนี้
                 </div>
                 {% endif %}
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <thead>
-                                <tr>
-                                  <th>ลำดับ</th>
-                                  <th>ชื่อ-นามสกุล</th>
-                                  <th>สถานะ</th><!-- เพิ่มคอลัมน์สถานะ -->
-                                  <th>อีเมล</th>
-                                  <th>เบอร์โทรศัพท์</th>
-                                  <th>สถานะการอนุมัติ</th>
-                                  {% if is_logged_in %}
-                                  <th>การดำเนินการ</th>
-                                  {% endif %}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {% for participant in participants %}
-                                <tr>
-                                  <td>{{ loop.index }}</td>
-                                  <td>{{ participant.join_name }}</td>
-                                  <td>
-                                    {% if participant.join_role == 'student' %}
-                                      <span class="badge badge-primary">นักศึกษา</span>
-                                    {% elif participant.join_role == 'external' %}
-                                      <span class="badge badge-secondary">บุคคลภายนอก</span>
-                                    {% else %}
-                                      <span class="badge badge-light">ไม่ระบุ</span>
-                                    {% endif %}
-                                  </td>
-                                  <td>{{ participant.join_email }}</td>
-                                  <td>{{ participant.join_telephone }}</td>
-                                  <td>
-                                    {% if participant.join_status == 0 %}
-                                      <span class="badge badge-waiting">รอการอนุมัติ</span>
-                                    {% elif participant.join_status == 1 %}
-                                      <span class="badge badge-approved">อนุมัติแล้ว</span>
-                                    {% elif participant.join_status == 2 %}
-                                      <span class="badge badge-rejected">ไม่อนุมัติ</span>
-                                    {% elif participant.join_status == 3 %}
-                                      <span class="badge badge-info">รอการยืนยันจากผู้สมัคร</span>
-                                    {% endif %}
-                                  </td>
-                                  {% if is_logged_in %}
-                                  <td>
-                                    <form action="{{ url_for('update_join_status', join_id=participant.join_id) }}" method="POST">
-                                      <select name="join_status" class="form-control form-control-sm" onchange="this.form.submit()">
-                                        <option value="0" {% if participant.join_status == 0 %}selected{% endif %}>รอการอนุมัติ</option>
-                                        <option value="1" {% if participant.join_status == 1 %}selected{% endif %}>อนุมัติ</option>
-                                        <option value="2" {% if participant.join_status == 2 %}selected{% endif %}>ไม่อนุมัติ</option>
-                                      </select>
-                                    </form>
-                                  </td>
-                                  {% endif %}
-                                </tr>
-                                {% endfor %}
-                              </tbody>
-                    </table>
-                </div>
-            </div>
             <div class="card-footer text-center">
-                <a href="{{ url_for('project_detail', project_id=project_id) }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> กลับไปหน้ารายละเอียดโครงการ</a>
+                <a href="{{ url_for('project_detail', project_id=project_id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> กลับไปหน้ารายละเอียดโครงการ
+                </a>
             </div>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-        // เมื่อหน้าโหลดเสร็จ
-        document.addEventListener('DOMContentLoaded', function() {
-            // ตรงนี้เราจะเพิ่ม timestamp ให้กับ URL ทุกครั้งที่รีเฟรช
-            
-            // เมื่อกดปุ่มอนุมัติทั้งหมด
-            const approveAllForm = document.querySelector('form[action*="approve_all"]');
-            if (approveAllForm) {
-                approveAllForm.addEventListener('submit', function(e) {
-                    // หลังจากส่งฟอร์ม รอเวลาสักครู่แล้วรีเฟรชหน้าด้วย timestamp ใหม่
-                    setTimeout(function() {
-                        const newUrl = window.location.href.split('?')[0] + '?t=' + new Date().getTime();
-                        window.location.href = newUrl;
-                    }, 5000); // รอ 5 วินาทีก่อนรีเฟรช
-                });
-            }
-            
-            // เมื่อเปลี่ยนสถานะแต่ละคน
-            const statusSelects = document.querySelectorAll('select[name="join_status"]');
-            statusSelects.forEach(function(select) {
-                select.addEventListener('change', function() {
-                    // บันทึกค่าที่เลือกไว้
-                    const selectedValue = this.value;
-                    const form = this.closest('form');
-                    
-                    // ส่งฟอร์ม
-                    form.submit();
-                    
-                    // ตั้งค่าเลือกกลับเป็นค่าเดิมจนกว่าจะโหลดหน้าใหม่
-                    setTimeout(function() {
-                        select.value = selectedValue;
-                    }, 100);
-                });
-            });
-        });
-        </script>
 </body>
 </html>

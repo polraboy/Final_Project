@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>แก้ไขข้อมูลอาจารย์</title>
+    <title>แก้ไขข้อมูลแอดมิน</title>
     <link
       href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
       rel="stylesheet"
@@ -181,13 +181,16 @@
                 <label for="admin_username">Username:</label>
                 <input type="text" class="form-control" id="admin_username" name="admin_username" value="{{ admin[2] }}" required>
             </div>
-            <div class="form-group">
-                <label for="admin_password">Password (ไม่ต้องกรอกหากไม่ต้องการเปลี่ยน):</label>
-                <input type="password" class="form-control" id="admin_password" name="admin_password">
-            </div>
+            <!-- เปลี่ยนส่วนของการกรอกรหัสผ่าน -->
+<div class="form-group">
+  <label for="admin_password">Password (ไม่ต้องกรอกหากไม่ต้องการเปลี่ยน):</label>
+  <input type="password" class="form-control" id="admin_password" name="admin_password" 
+         placeholder="ใส่รหัสผ่านใหม่เฉพาะเมื่อต้องการเปลี่ยน" autocomplete="new-password">
+  <small class="form-text text-muted">เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน</small>
+</div>
             <div class="form-group">
                 <label for="admin_email">อีเมล:</label>
-                <input type="email" class="form-control" id="admin_email" name="admin_email" value="{{ admin[5] }}" required>
+                <input type="email" class="form-control" id="admin_email" name="admin_email" value="{{ admin[4] }}" required>
             </div>
             <button type="submit" class="btn btn-primary">บันทึกการแก้ไข</button>
         </form>
