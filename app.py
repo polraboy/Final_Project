@@ -157,41 +157,156 @@ def home():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        login_type = request.form.get("login_type", "staff")  # ค่าเริ่มต้นเป็น staff
+        
+        if login_type == "staff":
+            # ล็อกอินสำหรับอาจารย์/แอดมิน
+            username = request.form["username"]
+            password = request.form["password"]
 
-        with get_db_cursor() as (db, cursor):
-            query_teacher = "SELECT * FROM teacher WHERE teacher_username = %s"
-            cursor.execute(query_teacher, (username,))
-            teacher = cursor.fetchone()
+            with get_db_cursor() as (db, cursor):
+                query_teacher = "SELECT * FROM teacher WHERE teacher_username = %s"
+                cursor.execute(query_teacher, (username,))
+                teacher = cursor.fetchone()
 
-            if teacher and check_password_hash(teacher[3], password):  # ตำแหน่งที่ 3 คือ teacher_password
-                session.clear()
-                session["teacher_id"] = teacher[0]
-                session["teacher_name"] = teacher[1]
-                session["teacher_email"] = teacher[5]
-                session["teacher_phone"] = teacher[4]
-                session["user_type"] = "teacher"
-                return redirect(url_for("teacher_home"))
-            else:
-                query_admin = "SELECT * FROM admin WHERE admin_username = %s"
-                cursor.execute(query_admin, (username,))
-                admin = cursor.fetchone()
-
-                if admin and check_password_hash(admin[3], password):  # ตำแหน่งที่ 3 คือ admin_password
+                if teacher and check_password_hash(teacher[3], password):  # ตำแหน่งที่ 3 คือ teacher_password
                     session.clear()
-                    session["admin_id"] = admin[0]
-                    session["admin_name"] = admin[1]
-                    session["admin_email"] = admin[4]
-                    session["user_type"] = "admin"
-                    return redirect(url_for("admin_home"))
+                    session["teacher_id"] = teacher[0]
+                    session["teacher_name"] = teacher[1]
+                    session["teacher_email"] = teacher[5]
+                    session["teacher_phone"] = teacher[4]
+                    session["user_type"] = "teacher"
+                    return redirect(url_for("teacher_home"))
                 else:
-                    flash(
-                        "Login failed. Please check your username and password.",
-                        "error",
-                    )
+                    query_admin = "SELECT * FROM admin WHERE admin_username = %s"
+                    cursor.execute(query_admin, (username,))
+                    admin = cursor.fetchone()
+
+                    if admin and check_password_hash(admin[3], password):  # ตำแหน่งที่ 3 คือ admin_password
+                        session.clear()
+                        session["admin_id"] = admin[0]
+                        session["admin_name"] = admin[1]
+                        session["admin_email"] = admin[4]
+                        session["user_type"] = "admin"
+                        return redirect(url_for("admin_home"))
+                    else:
+                        flash("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง", "danger")
+        
+        elif login_type == "student":
+            # ล็อกอินสำหรับนักศึกษา
+            student_id = request.form.get("student_id")
+            phone = request.form.get("phone")
+            
+            if not student_id or not phone:
+                flash("กรุณากรอกข้อมูลให้ครบถ้วน", "danger")
+                return render_template("login.html")
+            
+            with get_db_cursor() as (db, cursor):
+                # ตรวจสอบข้อมูลนักศึกษาที่ได้รับการอนุมัติแล้ว
+                query = """
+                SELECT j.join_id, j.join_name, j.join_email, j.join_telephone, j.branch_id, 
+                       b.branch_name, j.join_student_id, j.project_id
+                FROM `join` j
+                LEFT JOIN branch b ON j.branch_id = b.branch_id
+                WHERE j.join_student_id = %s AND j.join_telephone = %s AND j.join_status = 1
+                ORDER BY j.join_timestamp DESC
+                LIMIT 1
+                """
+                cursor.execute(query, (student_id, phone))
+                student = cursor.fetchone()
+                
+                if not student:
+                    flash("ไม่พบข้อมูลหรือยังไม่ได้รับการอนุมัติ กรุณาตรวจสอบรหัสนักศึกษาและเบอร์โทรศัพท์อีกครั้ง", "danger")
+                    return render_template("login.html")
+                
+                # เก็บข้อมูลใน session
+                session.clear()
+                session["student_id"] = student[6]  # join_student_id
+                session["student_name"] = student[1]  # join_name
+                session["student_email"] = student[2]  # join_email
+                session["student_phone"] = student[3]  # join_telephone
+                session["student_branch_id"] = student[4]  # branch_id
+                session["student_branch"] = student[5] if student[5] else "ไม่ระบุสาขา"  # branch_name
+                session["user_type"] = "student"  # ระบุประเภทผู้ใช้เป็นนักศึกษา
+                
+                flash(f"ยินดีต้อนรับ {student[1]}", "success")
+                return redirect(url_for("student_dashboard"))
 
     return render_template("login.html")
+@app.route("/student_dashboard")
+def student_dashboard():
+    if "student_id" not in session or session.get("user_type") != "student":
+        flash("กรุณาเข้าสู่ระบบก่อน", "danger")
+        return redirect(url_for("login"))
+    
+    student_id = session.get("student_id")
+    student_email = session.get("student_email")
+    
+    with get_db_cursor() as (db, cursor):
+        # ดึงโครงการที่นักศึกษาลงทะเบียนไว้แล้ว
+        query = """
+        SELECT j.join_id, j.join_status, p.project_id, p.project_name, p.project_dotime, 
+               p.project_endtime, p.project_statusStart, p.project_address, t.teacher_name,
+               (SELECT COUNT(*) FROM project_evaluation pe WHERE pe.join_id = j.join_id) as has_evaluated
+        FROM `join` j
+        JOIN project p ON j.project_id = p.project_id
+        JOIN teacher t ON p.teacher_id = t.teacher_id
+        WHERE j.join_student_id = %s
+        ORDER BY j.join_timestamp DESC
+        """
+        cursor.execute(query, (student_id,))
+        registered_projects = cursor.fetchall()
+        
+        # แปลงข้อมูลให้อยู่ในรูปแบบที่ใช้งานง่าย
+        projects = []
+        for p in registered_projects:
+            projects.append({
+                "join_id": p[0],
+                "join_status": p[1],
+                "project_id": p[2],
+                "project_name": p[3],
+                "project_dotime": p[4],
+                "project_endtime": p[5],
+                "project_statusStart": p[6],
+                "project_address": p[7],
+                "teacher_name": p[8],
+                "has_evaluated": p[9] > 0
+            })
+        
+        # ดึงโครงการที่เปิดรับสมัคร (อนุมัติแล้ว และยังไม่เสร็จสิ้น)
+        query = """
+        SELECT p.project_id, p.project_name, p.project_dotime, p.project_endtime, 
+               p.project_target, p.project_address, t.teacher_name,
+               (SELECT COUNT(*) FROM `join` WHERE project_id = p.project_id) as current_count,
+               (SELECT COUNT(*) FROM `join` WHERE project_id = p.project_id AND join_student_id = %s) as already_joined
+        FROM project p
+        JOIN teacher t ON p.teacher_id = t.teacher_id
+        WHERE p.project_status = 2 AND p.project_statusStart = 1
+        ORDER BY p.project_dotime ASC
+        """
+        cursor.execute(query, (student_id,))
+        available_projects = cursor.fetchall()
+        
+        # แปลงข้อมูล
+        active_projects = []
+        for p in available_projects:
+            active_projects.append({
+                "project_id": p[0],
+                "project_name": p[1],
+                "project_dotime": p[2],
+                "project_endtime": p[3],
+                "project_target": int(p[4]) if p[4] is not None else 0,
+                "project_address": p[5],
+                "teacher_name": p[6],
+                "current_count": int(p[7]) if p[7] is not None else 0,
+                "already_joined": p[8] > 0
+            })
+    
+    return render_template(
+        "student_dashboard.html", 
+        projects=projects,
+        active_projects=active_projects
+    )
 
 def generate_confirmation_token(join_id, email):
     # สร้างโทเค็นอย่างง่ายจาก join_id และ email
@@ -253,8 +368,24 @@ def dashboard():
 
 @app.route("/logout")
 def logout():
+    user_type = session.get("user_type", "")
+    
+    # ล้างข้อมูล session ทั้งหมด
     session.clear()
+    
+    # แสดงข้อความแจ้งเตือนตามประเภทผู้ใช้
+    if user_type == "teacher":
+        flash("อาจารย์ออกจากระบบเรียบร้อยแล้ว", "success")
+    elif user_type == "admin":
+        flash("ผู้ดูแลระบบออกจากระบบเรียบร้อยแล้ว", "success")
+    elif user_type == "student":
+        flash("นักศึกษาออกจากระบบเรียบร้อยแล้ว", "success")
+    else:
+        flash("ออกจากระบบเรียบร้อยแล้ว", "success")
+        
     return redirect(url_for("home"))
+
+
 
 def login_required(*allowed_roles):
     def decorator(f):
@@ -496,6 +627,54 @@ def get_status(status_code):
         return "อนุมัติแล้ว"
     else:
         return "ไม่มีข้อมูล"
+    # เพิ่มฟังก์ชันสำหรับแสดงประวัติของนักศึกษา (ใช้หน้าเดียวกับ student_history ที่มีอยู่)
+@app.route("/student_history/<student_id>")
+def student_history(student_id):
+    # ถ้าล็อกอินด้วยนักศึกษา ให้ใช้รหัสนักศึกษาจากเซสชัน
+    if session.get("user_type") == "student":
+        # ถ้าพยายามดูประวัติของนักศึกษาคนอื่น
+        if student_id != session.get("student_id"):
+            flash("คุณไม่มีสิทธิ์ดูข้อมูลของนักศึกษาคนอื่น", "danger")
+            return redirect(url_for("student_dashboard"))
+    
+    # ถ้าเป็นอาจารย์หรือแอดมิน ให้ใช้รหัสนักศึกษาที่ส่งมา
+    search_done = True  # ให้แสดงข้อมูลเลย ไม่ต้องกดค้นหา
+    
+    projects = []
+    student_info = None
+    
+    with get_db_cursor() as (db, cursor):
+        # ดึงข้อมูลนักศึกษา
+        cursor.execute("""
+            SELECT join_name, join_email, join_telephone, branch_id, 
+                   (SELECT branch_name FROM branch WHERE branch_id = j.branch_id) as branch_name
+            FROM `join` j
+            WHERE join_student_id = %s
+            LIMIT 1
+        """, (student_id,))
+        student_info = cursor.fetchone()
+        
+        # ดึงประวัติการเข้าร่วมโครงการ
+        cursor.execute("""
+            SELECT j.join_id, j.join_status, j.join_timestamp, 
+                   p.project_id, p.project_name, p.project_dotime, p.project_endtime,
+                   p.project_statusStart
+            FROM `join` j
+            JOIN project p ON j.project_id = p.project_id
+            WHERE j.join_student_id = %s
+            ORDER BY j.join_timestamp DESC
+        """, (student_id,))
+        projects = cursor.fetchall()
+    
+    return render_template(
+        "student_history.html",
+        student_id=student_id,
+        student_info=student_info,
+        projects=projects,
+        search_done=search_done
+    )
+    # เพิ่มฟังก์ชันเพื่อปรับปรุง project_evaluation ให้รองรับการประเมินจากนักศึกษาที่ล็อกอิน
+
 @app.route("/project/<int:project_id>/join", methods=["GET", "POST"])
 def join_project(project_id):
     try:
@@ -616,50 +795,9 @@ def join_project(project_id):
         print(f"Unexpected error: {str(e)}")
         flash(f"เกิดข้อผิดพลาด: {str(e)}", "error")
         return redirect(url_for("project_detail", project_id=project_id))
-@app.route("/student_history", methods=["GET", "POST"])
-@login_required("teacher", "admin")
-def student_history():
-    student_id = request.args.get('student_id', '')
-    search_done = False
     
-    if request.method == "POST":
-        student_id = request.form.get('student_id', '')
-        search_done = True
+
     
-    projects = []
-    student_info = None
-    
-    if student_id:
-        with get_db_cursor() as (db, cursor):
-            # ดึงข้อมูลนักศึกษา
-            cursor.execute("""
-                SELECT join_name, join_email, join_telephone, branch_id, 
-                       (SELECT branch_name FROM branch WHERE branch_id = j.branch_id) as branch_name
-                FROM `join` j
-                WHERE join_student_id = %s
-                LIMIT 1
-            """, (student_id,))
-            student_info = cursor.fetchone()
-            
-            # ดึงประวัติการเข้าร่วมโครงการ
-            cursor.execute("""
-                SELECT j.join_id, j.join_status, j.join_timestamp, 
-                       p.project_id, p.project_name, p.project_dotime, p.project_endtime,
-                       p.project_statusStart
-                FROM `join` j
-                JOIN project p ON j.project_id = p.project_id
-                WHERE j.join_student_id = %s
-                ORDER BY j.join_timestamp DESC
-            """, (student_id,))
-            projects = cursor.fetchall()
-    
-    return render_template(
-        "student_history.html",
-        student_id=student_id,
-        student_info=student_info,
-        projects=projects,
-        search_done=search_done
-    )
 @app.route('/check_student_id_column')
 def check_student_id_column():
     with get_db_cursor() as (db, cursor):
@@ -2409,167 +2547,7 @@ def teacher_evaluation_project(project_id):
         summary=summary_data,
         participants_count=participants_count  # เพิ่มข้อมูลจำนวนผู้เข้าร่วม
     )
-@app.route("/project/<int:project_id>/evaluation", methods=["GET", "POST"])
-def project_evaluation(project_id):
-    # สร้างการเชื่อมต่อฐานข้อมูล
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
 
-    try:
-        # ตรวจสอบโครงการและสถานะโครงการ
-        cursor.execute("""
-            SELECT project_name, project_endtime, project_statusStart 
-            FROM project 
-            WHERE project_id = %s
-        """, (project_id,))
-        project = cursor.fetchone()
-        
-        if not project:
-            flash("ไม่พบโครงการ", "error")
-            return redirect(url_for("active_projects"))
-
-        # เช็คว่าโครงการปิดแล้วหรือยัง
-        if project['project_statusStart'] != 2:
-            flash("ยังไม่สามารถประเมินโครงการได้ ณ ขณะนี้ เนื่องจากโครงการยังไม่เสร็จสิ้น", "warning")
-            return redirect(url_for("project_detail", project_id=project_id))
-
-        # รับข้อมูลชื่อและอีเมลจาก URL parameters (ถ้ามี)
-        join_name = request.args.get('name', '')
-        join_email = request.args.get('email', '')
-        
-        # ถ้ามีอีเมล ให้ตรวจสอบว่าเคยประเมินแล้วหรือไม่
-        if join_email:
-            cursor.execute("""
-                SELECT j.join_id, pe.evaluation_id
-                FROM `join` j
-                LEFT JOIN project_evaluation pe ON j.join_id = pe.join_id
-                WHERE j.project_id = %s AND j.join_email = %s
-            """, (project_id, join_email))
-            existing_user = cursor.fetchone()
-            
-            if existing_user and existing_user['evaluation_id']:
-                flash(f"คุณได้ทำการประเมินโครงการนี้ไปแล้ว ไม่สามารถประเมินซ้ำได้", "warning")
-                return redirect(url_for("project_detail", project_id=project_id))
-            
-            # ถ้ามีข้อมูลการลงทะเบียนแต่ยังไม่เคยประเมิน
-            join_id = existing_user['join_id'] if existing_user else None
-
-        if request.method == "POST":
-            # เก็บ log เพื่อตรวจสอบ
-            print("ได้รับการส่งฟอร์มประเมิน:")
-            print(f"Form data: {request.form}")
-            
-            # รับข้อมูลจาก form
-            evaluation_score = request.form.get('evaluation_score')
-            evaluation_comments = request.form.get('evaluation_comments', '')
-            
-            # ถ้าไม่มีชื่อและอีเมลใน URL parameters ให้ใช้จากฟอร์ม
-            if not join_name:
-                join_name = request.form.get('join_name', '')
-            if not join_email:
-                join_email = request.form.get('join_email', '')
-            join_telephone = request.form.get('join_telephone', '')
-            
-            print(f"evaluation_score: {evaluation_score}")
-            
-            # ตรวจสอบความครบถ้วนของข้อมูล
-            if not evaluation_score:
-                print("ไม่พบคะแนนการประเมิน")
-                flash('กรุณาให้คะแนนการประเมิน', 'error')
-                return render_template("project_evaluation.html", 
-                                     project_name=project['project_name'], 
-                                     project_id=project_id,
-                                     join_name=join_name,
-                                     join_email=join_email)
-
-            # แปลงค่าคะแนนเป็น float
-            try:
-                eval_score_float = float(evaluation_score)
-            except ValueError:
-                print(f"ไม่สามารถแปลงค่า evaluation_score: {evaluation_score} เป็น float ได้")
-                flash('คะแนนการประเมินไม่ถูกต้อง', 'error')
-                return render_template("project_evaluation.html", 
-                                     project_name=project['project_name'], 
-                                     project_id=project_id,
-                                     join_name=join_name,
-                                     join_email=join_email)
-            
-            try:
-                # ถ้ามีอีเมลและชื่อ
-                if join_email and join_name:
-                    # ตรวจสอบว่ามีข้อมูลในตาราง join หรือยัง
-                    cursor.execute("""
-                        SELECT join_id FROM `join` 
-                        WHERE project_id = %s AND join_email = %s
-                    """, (project_id, join_email))
-                    existing_join = cursor.fetchone()
-                    
-                    if existing_join:
-                        # มีข้อมูลแล้ว ใช้ join_id ที่มีอยู่
-                        join_id = existing_join['join_id']
-                    else:
-                        # ยังไม่มีข้อมูล สร้างใหม่
-                        telephone = join_telephone if join_telephone else "ไม่ระบุ"
-                        cursor.execute("""
-                            INSERT INTO `join` (project_id, join_name, join_email, join_telephone, join_status) 
-                            VALUES (%s, %s, %s, %s, %s)
-                        """, (project_id, join_name, join_email, telephone, 1))
-                        join_id = cursor.lastrowid
-                else:
-                    # ไม่มีข้อมูลชื่อและอีเมล สร้างเป็นผู้ประเมินไม่ระบุชื่อ
-                    anonymous_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-                    anonymous_name = f"ผู้ประเมินไม่ระบุชื่อ_{anonymous_timestamp}"
-                    anonymous_email = f"anonymous_{anonymous_timestamp}@example.com"
-                    anonymous_phone = f"000000{anonymous_timestamp[-4:]}"
-                    
-                    cursor.execute("""
-                        INSERT INTO `join` (project_id, join_name, join_email, join_telephone, join_status) 
-                        VALUES (%s, %s, %s, %s, %s)
-                    """, (project_id, anonymous_name, anonymous_email, anonymous_phone, 1))
-                    join_id = cursor.lastrowid
-                
-                # บันทึกการประเมิน
-                print(f"กำลังบันทึกการประเมิน: project_id={project_id}, join_id={join_id}, score={eval_score_float}")
-                cursor.execute("""
-                    INSERT INTO project_evaluation 
-                    (project_id, join_id, evaluation_score, evaluation_comments) 
-                    VALUES (%s, %s, %s, %s)
-                """, (
-                    project_id, 
-                    join_id, 
-                    eval_score_float, 
-                    evaluation_comments
-                ))
-                conn.commit()
-                print("บันทึกการประเมินสำเร็จ")
-                flash('บันทึกการประเมินสำเร็จ ขอบคุณสำหรับการประเมิน', 'success')
-                return redirect(url_for('project_detail', project_id=project_id))
-
-            except mysql.connector.Error as insert_err:
-                conn.rollback()
-                print(f"เกิดข้อผิดพลาดในการบันทึกการประเมิน: {insert_err}")
-                flash(f'เกิดข้อผิดพลาดในการบันทึกการประเมิน: {insert_err}', 'error')
-                return render_template("project_evaluation.html", 
-                                     project_name=project['project_name'], 
-                                     project_id=project_id,
-                                     join_name=join_name,
-                                     join_email=join_email)
-
-    except mysql.connector.Error as err:
-        print(f"เกิดข้อผิดพลาดในการเข้าถึงฐานข้อมูล: {err}")
-        flash(f'เกิดข้อผิดพลาด: {err}', 'error')
-        return redirect(url_for('active_projects'))
-    
-    finally:
-        cursor.close()
-        conn.close()
-
-    # แสดงฟอร์มประเมินพร้อมข้อมูลชื่อและอีเมลที่มาจาก URL parameters
-    return render_template("project_evaluation.html", 
-                         project_name=project['project_name'], 
-                         project_id=project_id,
-                         join_name=join_name,
-                         join_email=join_email)
 
 @app.route("/cancel_submission", methods=["POST"])
 @login_required("teacher")
@@ -3596,18 +3574,21 @@ def project_history():
         total_pages=total_pages,
         per_page=per_page,
     )
-@app.route("/evaluate_project/<int:project_id>")
+@app.route("/evaluate_project/<int:project_id>", methods=["GET", "POST"])
 def evaluate_project(project_id):
     # ตรวจสอบการล็อกอิน
-    if 'user_type' not in session or session['user_type'] != 'teacher':
-        flash('คุณต้องล็อกอินก่อน', 'error')
+    if 'user_type' not in session or session['user_type'] != 'student':
+        flash('คุณต้องล็อกอินด้วยบัญชีนักศึกษาก่อน', 'error')
         return redirect(url_for('login'))
+    
+    student_id = session.get('student_id')
+    student_name = session.get('student_name')
     
     # ตรวจสอบว่าเคยอนุมัติเข้าร่วมโครงการนี้แล้วหรือยัง
     with get_db_cursor() as (db, cursor):
-        # ดึงข้อมูลโครงการ
+        # ดึงข้อมูลโครงการ และตรวจสอบว่าเสร็จสิ้นแล้วหรือยัง
         cursor.execute("""
-            SELECT p.project_name 
+            SELECT p.project_name, p.project_statusStart 
             FROM project p 
             WHERE p.project_id = %s
         """, (project_id,))
@@ -3615,66 +3596,76 @@ def evaluate_project(project_id):
         
         if not project:
             flash('ไม่พบโครงการ', 'error')
-            return redirect(url_for('active_projects'))
+            return redirect(url_for('student_dashboard'))
         
-        # ตรวจสอบว่าเคยประเมินไปแล้วหรือยัง
+        project_name = project[0]
+        project_status = project[1]
+        
+        # ตรวจสอบว่าโครงการเสร็จสิ้นแล้วหรือยัง (status=2 คือเสร็จสิ้น)
+        if project_status != 2:
+            flash('โครงการยังไม่เสร็จสิ้น ไม่สามารถประเมินได้', 'warning')
+            return redirect(url_for('student_dashboard'))
+        
+        # ตรวจสอบว่านักศึกษาได้รับอนุมัติเข้าร่วมโครงการนี้หรือไม่
         cursor.execute("""
             SELECT j.join_id, j.join_name, j.join_email 
             FROM `join` j
             WHERE j.project_id = %s 
             AND j.join_status = 1 
-            AND j.join_email = %s
-        """, (project_id, session.get('teacher_email')))
+            AND j.join_student_id = %s
+        """, (project_id, student_id))
         participant = cursor.fetchone()
         
         if not participant:
-            flash('คุณไม่มีสิทธิ์ประเมินโครงการนี้', 'error')
-            return redirect(url_for('active_projects'))
+            flash('คุณไม่มีสิทธิ์ประเมินโครงการนี้ เนื่องจากไม่ได้ลงทะเบียนหรือยังไม่ได้รับการอนุมัติ', 'error')
+            return redirect(url_for('student_dashboard'))
+        
+        join_id = participant[0]
         
         # ตรวจสอบว่าเคยประเมินไปแล้วหรือยัง
         cursor.execute("""
             SELECT COUNT(*) 
             FROM project_evaluation 
             WHERE project_id = %s AND join_id = %s
-        """, (project_id, participant[0]))
+        """, (project_id, join_id))
         existing_evaluation = cursor.fetchone()[0]
         
         if existing_evaluation > 0:
             flash('คุณได้ประเมินโครงการนี้ไปแล้ว', 'warning')
-            return redirect(url_for('active_projects'))
+            return redirect(url_for('student_dashboard'))
         
-        project_name = project[0]
-        join_id = participant[0]
-        
-    if request.method == 'POST':
-        # รับข้อมูลการประเมิน
-        evaluation_score = request.form.get('evaluation_score')
-        evaluation_comments = request.form.get('evaluation_comments', '')
-        
-        # ตรวจสอบความถูกต้องของข้อมูล
-        try:
-            with get_db_cursor() as (db, cursor):
-                query = """
-                INSERT INTO project_evaluation 
-                (project_id, join_id, evaluation_score, evaluation_comments) 
-                VALUES (%s, %s, %s, %s)
-                """
-                cursor.execute(query, (
-                    project_id, join_id, 
-                    evaluation_score, 
-                    evaluation_comments
-                ))
+        if request.method == 'POST':
+            # รับข้อมูลการประเมิน
+            evaluation_score = request.form.get('evaluation_score')
+            evaluation_comments = request.form.get('evaluation_comments', '')
+            
+            # ตรวจสอบว่ามีการให้คะแนนหรือไม่
+            if not evaluation_score:
+                flash('กรุณาให้คะแนนประเมิน', 'error')
+                return render_template('project_evaluation.html', 
+                               project_id=project_id, 
+                               project_name=project_name)
+            
+            # ตรวจสอบความถูกต้องของข้อมูล
+            try:
+                cursor.execute("""
+                    INSERT INTO project_evaluation 
+                    (project_id, join_id, evaluation_score, evaluation_comments, evaluation_date) 
+                    VALUES (%s, %s, %s, %s, NOW())
+                """, (project_id, join_id, evaluation_score, evaluation_comments))
                 db.commit()
                 
-            flash('บันทึกการประเมินสำเร็จ', 'success')
-            return redirect(url_for('active_projects'))
+                flash('บันทึกการประเมินสำเร็จ ขอบคุณสำหรับการประเมิน', 'success')
+                return redirect(url_for('student_dashboard'))
+            
+            except mysql.connector.Error as err:
+                flash(f'เกิดข้อผิดพลาดในการบันทึกการประเมิน: {err}', 'error')
         
-        except mysql.connector.Error as err:
-            flash(f'เกิดข้อผิดพลาดในการบันทึกการประเมิน: {err}', 'error')
-    
-    return render_template('project_evaluation.html', 
-                           project_id=project_id, 
-                           project_name=project_name)
+        # แสดงฟอร์มประเมิน
+        return render_template('project_evaluation.html', 
+                               project_id=project_id, 
+                               project_name=project_name,
+                               student_name=student_name)
 def is_date_overlap_for_teacher(teacher_id, start_date, end_date, project_id=None):
     with get_db_cursor() as (db, cursor):
         if project_id:

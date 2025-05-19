@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แบบประเมินโครงการ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
     <style>
         body {
             background-color: #f0f8ff;
@@ -95,49 +97,81 @@
             font-weight: bold;
             color: #0056b3;
         }
+        .navbar {
+            background-color: #ff8c00 !important;
+            margin-bottom: 30px;
+        }
+
+        .navbar-brand span {
+            font-size: 1rem;
+            line-height: 1.2;
+            color: white;
+        }
+
+        .nav-link {
+            color: white !important;
+        }
+        
+        .footer {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 50px;
+        }
     </style>
 </head>
 <body>
-   
-    <div class="container mt-5">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="/static/image_2024-02-07_191338051.png" width="40" height="40" class="d-inline-block align-top" alt="Logo">
+                <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br>วิทยาเขตขอนแก่น</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('student_dashboard') }}"><i class="fas fa-tachometer-alt"></i> แดชบอร์ด</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        <!-- แสดง Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} mb-4">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
         <div class="card">
             <div class="card-header bg-primary text-white">
                 <h2 class="text-center mb-2">แบบประเมินโครงการ</h2>
                 <h4 class="text-center">{{ project_name }}</h4>
             </div>
             <div class="card-body">
-                <form method="POST" id="evaluationForm">
-                    <!-- ซ่อนฟิลด์จากพารามิเตอร์ URL -->
-                    {% if join_name %}
-                    <input type="hidden" id="join_name" name="join_name" value="{{ join_name }}">
-                    {% endif %}
-                    
-                    {% if join_email %}
-                    <input type="hidden" id="join_email" name="join_email" value="{{ join_email }}">
-                    {% endif %}
-                    
+                <form method="POST" id="evaluationForm" action="{{ url_for('evaluate_project', project_id=project_id) }}">
+                    <!-- ซ่อนฟิลด์จาก session -->
                     <input type="hidden" id="evaluation_score" name="evaluation_score" value="">
-    
-                    <!-- ถ้าไม่มีข้อมูลจาก URL ให้แสดงฟิลด์สำหรับกรอกข้อมูล -->
-                    {% if not join_name or not join_email %}
-                    <div class="question-block">
-                        <div class="question-title">ข้อมูลผู้ประเมิน</div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="join_name">ชื่อ-นามสกุล {% if not join_name %}<span class="required">*</span>{% endif %}</label>
-                                <input type="text" class="form-control" id="join_name" name="join_name" value="{{ join_name }}" {% if not join_name %}required{% endif %}>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="join_email">อีเมล {% if not join_email %}<span class="required">*</span>{% endif %}</label>
-                                <input type="email" class="form-control" id="join_email" name="join_email" value="{{ join_email }}" {% if not join_email %}required{% endif %}>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="join_telephone">เบอร์โทรศัพท์</label>
-                                <input type="text" class="form-control" id="join_telephone" name="join_telephone">
-                            </div>
-                        </div>
+                    
+                    <!-- แสดงข้อมูลผู้ประเมิน -->
+                    <div class="alert alert-info mb-4">
+                        <strong><i class="fas fa-user"></i> ผู้ประเมิน:</strong> {{ join_name }}
                     </div>
-                    {% endif %}
                     
                     <!-- ส่วนที่ 1: ด้านเนื้อหาและประโยชน์ของโครงการ -->
                     <div class="section-header">1. ด้านเนื้อหาและประโยชน์ของโครงการ</div>
@@ -500,6 +534,7 @@
     
                     <div class="text-center mt-4">
                         <button type="submit" class="btn btn-primary btn-submit">ส่งแบบประเมิน</button>
+                        <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary btn-submit ms-3">ยกเลิก</a>
                     </div>
     
                     <div class="thank-you mt-4">
@@ -509,6 +544,7 @@
             </div>
         </div>
     </div>
+
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
