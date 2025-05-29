@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>แก้ไขข้อมูลแอดมิน</title>
+    <title>แก้ไขข้อมูลเจ้าหน้าที่</title>
     <link
       href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
       rel="stylesheet"
@@ -171,7 +171,7 @@
         </div>
       </div>
       <div class="container mt-5">
-        <h2 class="mb-4">แก้ไขข้อมูล Admin</h2>
+        <h2 class="mb-4">แก้ไขข้อมูล เจ้าหน้าที่</h2>
         <form method="POST">
             <div class="form-group">
                 <label for="admin_name">ชื่อ-สกุล:</label>
@@ -187,6 +187,13 @@
   <input type="password" class="form-control" id="admin_password" name="admin_password" 
          placeholder="ใส่รหัสผ่านใหม่เฉพาะเมื่อต้องการเปลี่ยน" autocomplete="new-password">
   <small class="form-text text-muted">เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน</small>
+</div>
+<div class="form-group">
+  <label for="teacher_phone">เบอร์โทร:</label>
+  <input type="tel" class="form-control" id="admin_phone" name="admin_phone" value="{{ admin[5] }}" required>
+  <div class="invalid-feedback" id="phone-feedback">
+    เบอร์โทรไม่ถูกต้อง (ต้องขึ้นต้นด้วย 0 และมีความยาว 10 หลัก)
+  </div>
 </div>
             <div class="form-group">
                 <label for="admin_email">อีเมล:</label>

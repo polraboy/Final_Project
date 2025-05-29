@@ -79,8 +79,7 @@
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            margin-top: 30px;
-            margin-bottom: 50px;
+            margin-bottom: 30px;
         }
 
         .btn-primary {
@@ -95,33 +94,10 @@
             transform: translateY(-2px);
         }
 
-        .edit-mode-button {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            font-size: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            position: fixed;
-            bottom: 100px;
-            right: 30px;
-            transition: all 0.3s ease;
-        }
-
-        .edit-mode-button:hover {
-            transform: scale(1.1) rotate(90deg);
-            background-color: darken(var(--primary-color), 10%);
-            border-color: darken(var(--primary-color), 10%);
-        }
-
         .card {
             transition: all 0.3s ease;
             overflow: hidden;
+            margin-bottom: 20px;
         }
 
         .card:hover {
@@ -139,72 +115,67 @@
             transform: scale(1.1);
         }
 
-        .delete-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: rgba(255, 0, 0, 0.7);
+        .section-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 14px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .delete-btn:hover {
-            background-color: red;
-            transform: scale(1.1);
-        }
-
-        .mb-4 {
-            text-align: center;
-            color: var(--primary-color);
-            font-weight: bold;
-            margin-bottom: 30px !important;
-        }
-
-        .edit-mode-button {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            font-size: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            position: fixed;
-            bottom: 120px;
-            /* ปรับตำแหน่งให้อยู่เหนือ footer */
-            right: 30px;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            /* ให้แน่ใจว่าปุ่มอยู่ด้านหน้าสุด */
-        }
-
-        .edit-mode-button:hover {
-            transform: scale(1.1) rotate(90deg);
-            background-color: darken(var(--primary-color), 10%);
-            border-color: darken(var(--primary-color), 10%);
-        }
-        
-        
-        .constant-item {
+            padding: 15px 20px;
+            border-radius: 10px;
             margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            text-align: center;
         }
-        
+
+        .section-header h3 {
+            margin: 0;
+            font-weight: bold;
+        }
+
+        .project-card {
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .project-card:hover {
+            border-left-color: var(--secondary-color);
+            transform: translateX(5px);
+        }
+
+        .project-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-running {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-finished {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
         .pagination {
             margin-top: 20px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .no-data i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
         }
     </style>
   </head>
@@ -246,15 +217,14 @@
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('project_history') }}"><i class="fas fa-history"></i> ประวัติโครงการ</a>
           </li>
-        </li>
-   
-        <a class="nav-link" href="{{ url_for('project_reports') }}">
-            <i class="fas fa-chart-bar"></i> รายงาน
-        </a>
-      </li>
+          <li class="nav-item">   
+            <a class="nav-link" href="{{ url_for('project_reports') }}">
+                <i class="fas fa-chart-bar"></i> รายงาน
+            </a>
+          </li>
           {% if g.user %}
           <li class="nav-item">
-            <a class="nav-link" href="#" data-toggle="modal" data-target="#userInfoModal">
+            <a class="nav-link" href="{{ url_for('teacher_profile') }}">
               <i class="fas fa-user"></i> {{ g.user.name }}
             </a>
           </li>
@@ -265,71 +235,113 @@
         </ul>
       </div>
     </nav>
-    
-    {% if g.user %}
-    <div class="modal fade" id="userInfoModal" tabindex="-1" role="dialog" aria-labelledby="userInfoModalLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="userInfoModalLabel">ข้อมูลผู้ใช้</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p><strong>ชื่อ:</strong> {{ g.user.name }}</p>
-            <p><strong>อีเมล:</strong> {{ g.user.email or 'ไม่มีข้อมูล' }}</p>
-            {% if g.user.type == 'teacher' %}
-              <p><strong>เบอร์โทรศัพท์:</strong> {{ g.user.phone or 'ไม่มีข้อมูล' }}</p>
+
+    <div class="container mt-4">
+      <div class="row">
+        <!-- ส่วนซ้าย: ข้อมูลข่าวสาร -->
+        <div class="col-lg-6">
+          <div class="content-box">
+            <div class="section-header">
+              <h3><i class="fas fa-newspaper"></i> ข้อมูลข่าวสาร</h3>
+            </div>
+            
+            {% if constants|length > 0 %}
+              {% for constant in constants %}
+              <div class="card mb-3">
+                <img src="data:image/jpeg;base64,{{ constant[2] }}" class="card-img-top" alt="{{ constant[0] }}">
+                <div class="card-body">
+                  <h5 class="card-title">{{ constant[0] }}</h5>
+                  <p class="card-text">{{ constant[1] }}</p>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="no-data">
+                <i class="fas fa-newspaper"></i>
+                <p>ไม่มีข้อมูลข่าวสาร</p>
+              </div>
+            {% endif %}
+            
+            {% if total_pages > 1 %}
+            <nav aria-label="Page navigation">
+              <ul class="pagination justify-content-center">
+                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('teacher_home', page=page-1) }}" {% if page == 1 %}tabindex="-1" aria-disabled="true"{% endif %}>ก่อนหน้า</a>
+                </li>
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">หน้า {{ page }} จาก {{ total_pages }}</span>
+                </li>
+                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('teacher_home', page=page+1) }}" {% if page == total_pages %}tabindex="-1" aria-disabled="true"{% endif %}>ถัดไป</a>
+                </li>
+              </ul>
+            </nav>
             {% endif %}
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+        </div>
+
+        <!-- ส่วนขวา: โครงการที่กำลังจัด -->
+        <div class="col-lg-6">
+          <div class="content-box">
+            <div class="section-header">
+              <h3><i class="fas fa-project-diagram"></i> โครงการที่กำลังจัด</h3>
+            </div>
+            
+            {% if active_projects|length > 0 %}
+              {% for project in active_projects %}
+              <div class="card project-card mb-3">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <h5 class="card-title">{{ project.project_name }}</h5>
+                    <span class="project-status status-running">กำลังดำเนินการ</span>
+                  </div>
+                  
+                  <p class="card-text">
+                    <small class="text-muted">
+                      <i class="far fa-calendar-alt"></i> 
+                      {{ project.project_dotime.strftime('%d/%m/%Y') if project.project_dotime else '-' }} - 
+                      {{ project.project_endtime.strftime('%d/%m/%Y') if project.project_endtime else '-' }}
+                    </small>
+                  </p>
+                  
+                  <p class="card-text">
+                    <i class="fas fa-map-marker-alt"></i> {{ project.project_address }}
+                  </p>
+                  
+                  <p class="card-text">
+                    <i class="fas fa-user-tie"></i> <strong>อาจารย์:</strong> {{ project.teacher_name }}
+                  </p>
+                  
+                  <p class="card-text">
+                    <i class="fas fa-users"></i> <strong>ผู้เข้าร่วม:</strong> {{ project.participant_count }}/{{ project.project_target }} คน
+                  </p>
+                  
+                  <div class="mt-3">
+                    <a href="{{ url_for('project_detail', project_id=project.project_id) }}" class="btn btn-primary btn-sm">
+                      <i class="fas fa-eye"></i> ดูรายละเอียด
+                    </a>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              
+              <div class="text-center mt-3">
+                <a href="{{ url_for('active_projects') }}" class="btn btn-outline-primary">
+                  <i class="fas fa-list"></i> ดูโครงการทั้งหมด
+                </a>
+              </div>
+            {% else %}
+              <div class="no-data">
+                <i class="fas fa-project-diagram"></i>
+                <p>ไม่มีโครงการที่กำลังจัดในขณะนี้</p>
+                <a href="{{ url_for('active_projects') }}" class="btn btn-primary">
+                  <i class="fas fa-eye"></i> ดูโครงการทั้งหมด
+                </a>
+              </div>
+            {% endif %}
           </div>
         </div>
       </div>
-    </div>
-    {% endif %}
-
-    <div class="container mt-5 content-box">
-      <h2 class="mb-4">ข้อมูลข่าวสาร</h2>
-      <div class="row">
-          {% if constants|length > 0 %}
-              {% for constant in constants %}
-              <div class="col-md-4 mb-4">
-                  <div class="card h-100">
-                      <img src="data:image/jpeg;base64,{{ constant[2] }}" class="card-img-top"
-                          alt="{{ constant[0] }}">
-                      <div class="card-body">
-                          <h5 class="card-title">{{ constant[0] }}</h5>
-                          <p class="card-text">{{ constant[1] }}</p>
-                      </div>
-                  </div>
-              </div>
-              {% endfor %}
-          {% else %}
-              <div class="col-12 text-center">
-                  <p class="text-muted">ไม่มีเรียง</p>
-              </div>
-          {% endif %}
-      </div>
-      {% if total_pages > 1 %}
-      <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center">
-          <li class="page-item {% if page == 1 %}disabled{% endif %}">
-              <a class="page-link" href="{{ url_for('teacher_home', page=page-1, ) }}" {% if page == 1 %}tabindex="-1" aria-disabled="true"{% endif %}>ก่อนหน้า</a>
-          </li>
-          <li class="page-item active" aria-current="page">
-              <span class="page-link">
-                  หน้า {{ page }} จาก {{ total_pages }}
-              </span>
-          </li>
-          <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-              <a class="page-link" href="{{ url_for('teacher_home', page=page+1, ) }}" {% if page == total_pages %}tabindex="-1" aria-disabled="true"{% endif %}>ถัดไป</a>
-          </li>
-        </ul>
-      </nav>
-      {% endif %}
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

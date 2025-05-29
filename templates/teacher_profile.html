@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>แก้ไขข้อมูลส่วนตัว</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --primary-color: #FF8C00;
+            --secondary-color: #007bff;
+            --background-color: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: 'Kanit', sans-serif;
+            padding-bottom: 100px;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+        }
+
+        .navbar-brand img {
+            margin-right: 10px;
+        }
+
+        .navbar-brand span {
+            font-size: 1rem;
+            line-height: 1.2;
+            color: white;
+        }
+
+        .nav-link {
+            color: white !important;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+        }
+
+        .content-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: darken(var(--primary-color), 10%);
+            border-color: darken(var(--primary-color), 10%);
+            transform: translateY(-2px);
+        }
+
+        .form-control:disabled {
+            background-color: #f8f9fa;
+            opacity: 0.7;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-right: 20px;
+        }
+
+        .editable-field {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        .readonly-field {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+        }
+
+        .field-label {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .alert-info {
+            border-left: 4px solid var(--secondary-color);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="#">
+            <img src="/static/image_2024-02-07_191338051.png" width="40" height="40" class="d-inline-block align-top" alt="Logo" />
+            <span>มหาวิทยาลัยเทคโนโลยีราจมงคลอีสาน<br />วิทยาเขตขอนแก่น</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('teacher_home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('add_project') }}"><i class="fas fa-plus"></i> เพิ่มโครงการ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('teacher_projects') }}"><i class="fas fa-tasks"></i> จัดการโครงการ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('project_history') }}"><i class="fas fa-history"></i> ประวัติโครงการ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('project_reports') }}"><i class="fas fa-chart-bar"></i> รายงาน</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('teacher_profile') }}"><i class="fas fa-user"></i> {{ g.user.name }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="content-box">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="d-flex align-items-center">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">{{ teacher.teacher_name }}</h3>
+                        <p class="mb-0"><i class="fas fa-graduation-cap"></i> {{ teacher.branch_name }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 
+                <strong>หมายเหตุ:</strong> คุณสามารถแก้ไขได้เฉพาะรหัสผ่านและเบอร์โทรศัพท์เท่านั้น ข้อมูลอื่นๆ ติดต่อผู้ดูแลระบบเพื่อแก้ไข
+            </div>
+
+            <form method="POST" action="{{ url_for('teacher_profile') }}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="field-label"><i class="fas fa-id-badge"></i> รหัสอาจารย์</label>
+                            <input type="text" class="form-control readonly-field" value="{{ teacher.teacher_id }}" disabled>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="field-label"><i class="fas fa-user"></i> ชื่อ-สกุล</label>
+                            <input type="text" class="form-control readonly-field" value="{{ teacher.teacher_name }}" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="field-label"><i class="fas fa-user-circle"></i> Username</label>
+                            <input type="text" class="form-control readonly-field" value="{{ teacher.teacher_username }}" disabled>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="field-label"><i class="fas fa-envelope"></i> อีเมล</label>
+                            <input type="email" class="form-control readonly-field" value="{{ teacher.teacher_email }}" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="field-label"><i class="fas fa-graduation-cap"></i> สาขา</label>
+                            <input type="text" class="form-control readonly-field" value="{{ teacher.branch_name }}" disabled>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="field-label"><i class="fas fa-phone"></i> เบอร์โทรศัพท์ <span class="text-warning">(แก้ไขได้)</span></label>
+                            <input type="tel" class="form-control editable-field" name="teacher_phone" value="{{ teacher.teacher_phone }}" required>
+                            <small class="form-text text-muted">สามารถแก้ไขได้</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="field-label"><i class="fas fa-lock"></i> รหัสผ่านใหม่ <span class="text-warning">(แก้ไขได้)</span></label>
+                            <input type="password" class="form-control editable-field" name="new_password" placeholder="ใส่รหัสผ่านใหม่ หรือเว้นว่างหากไม่ต้องการเปลี่ยน">
+                            <small class="form-text text-muted">เว้นว่างหากไม่ต้องการเปลี่ยนรหัสผ่าน</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="field-label"><i class="fas fa-lock"></i> ยืนยันรหัสผ่านใหม่</label>
+                            <input type="password" class="form-control editable-field" name="confirm_password" placeholder="ยืนยันรหัสผ่านใหม่">
+                            <small class="form-text text-muted">ยืนยันรหัสผ่านใหม่</small>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="form-group">
+                    <label class="field-label"><i class="fas fa-key"></i> รหัสผ่านปัจจุบัน <span class="text-danger">*</span></label>
+                    <input type="password" class="form-control" name="current_password" placeholder="กรอกรหัสผ่านปัจจุบันเพื่อยืนยันการเปลี่ยนแปลง" required>
+                    <small class="form-text text-danger">จำเป็นต้องกรอกรหัสผ่านปัจจุบันเพื่อยืนยันการเปลี่ยนแปลง</small>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('teacher_home') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> ยกเลิก
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> บันทึกการเปลี่ยนแปลง
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
+        // ตรวจสอบรหัสผ่านตรงกันหรือไม่
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const newPassword = document.querySelector('input[name="new_password"]').value;
+            const confirmPassword = document.querySelector('input[name="confirm_password"]').value;
+            
+            if (newPassword && newPassword !== confirmPassword) {
+                e.preventDefault();
+                alert('รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน');
+                return false;
+            }
+            
+            if (newPassword && newPassword.length < 4) {
+                e.preventDefault();
+                alert('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

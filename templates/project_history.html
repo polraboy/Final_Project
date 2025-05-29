@@ -378,17 +378,21 @@
     <script>
       function confirmDownload(projectId, projectName) {
         Swal.fire({
-          title: 'ยืนยันการดาวน์โหลด',
-          text: `คุณต้องการดาวน์โหลด PDF ของโครงการ "${projectName}" ใช่หรือไม่?`,
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonColor: '#3085d6',
-          cancelButtonColor: '#d33',
-          confirmButtonText: 'ใช่, ดาวน์โหลด',
-          cancelButtonText: 'ยกเลิก'
+            title: 'ยืนยันการดาวน์โหลด',
+            text: `คุณต้องการดาวน์โหลด PDF ของโครงการ "${projectName}" ใช่หรือไม่?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'ใช่, ดาวน์โหลด',
+            cancelButtonText: 'ยกเลิก'
         }).then((result) => {
-          if (result.isConfirmed) {
-            Swal.fire({
-              title: 'กำลังดาวน์โหลด...',
-              text: 'กรุณารอสักครู่',
-              allowOutsideClick:
+            if (result.isConfirmed) {
+                // เปลี่ยนเส้นทางไปยัง URL การดาวน์โหลด
+                window.location.href = `/download_summary_pdf/${projectId}`;
+            }
+        });
+    }
+    </script>
+  </body>
+</html>

@@ -454,8 +454,6 @@
               </div>
             </div>
             
-           
-            
             <div class="col-md-4 mb-4">
               <div class="card info-card success">
                 <div class="card-header">
@@ -478,124 +476,188 @@
             </div>
           </div>
         </div>
-
-        
-            
-           
-          
-        <!-- ผลประเมินความพึงพอใจ -->
-        <div class="mb-5">
-          <h3 class="section-title"><i class="fas fa-smile mr-2"></i>ผลการประเมินความพึงพอใจ</h3>
-          
+<!-- ส่วนแสดงผลการประเมินตามหมวดหมู่ -->
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+      <h5>ผลการประเมินโดยละเอียด</h5>
+  </div>
+  <div class="card-body">
+      {% if project_success and project_success.section_scores %}
           <div class="row">
-            <div class="col-md-6 mb-4">
-              <div class="card h-100">
-                <div class="card-header bg-warning text-dark">
-                  <i class="fas fa-star mr-2"></i>สรุปคะแนนความพึงพอใจ
-                </div>
-                <div class="card-body">
-                  <div class="text-center mb-4">
-                    <div class="progress-circle">
-                      <div class="progress-circle-bg"></div>
-                      <div class="progress-circle-fill" id="satisfactionProgress"></div>
-                      <div class="progress-circle-value">{{ "{:.1f}".format(evaluation.average_score) }}/5</div>
-                    </div>
-                    <h5>ผู้ประเมิน {{ evaluation.total_evaluations }} คน</h5>
-                  </div>
-                  
-                  <div class="row">
-                    <div class="col-6">
-                      <div class="text-center">
-                        <h6>คะแนนต่ำสุด</h6>
-                        <div class="display-4">{{ "{:.1f}".format(evaluation.min_score) }}</div>
-                      </div>
-                    </div>
-                    <div class="col-6">
-                      <div class="text-center">
-                        <h6>คะแนนสูงสุด</h6>
-                        <div class="display-4">{{ "{:.1f}".format(evaluation.max_score) }}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div class="col-md-8">
+                  <h6>คะแนนเฉลี่ยแต่ละด้าน</h6>
+                  <table class="table table-bordered table-hover">
+                      <thead class="thead-light">
+                          <tr>
+                              <th>ด้าน</th>
+                              <th>คะแนนเฉลี่ย (เต็ม 5)</th>
+                              <th>ร้อยละ</th>
+                              <th>ผลประเมิน</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <tr>
+                              <td>ด้านเนื้อหาและประโยชน์</td>
+                              <td>
+                                  {% if project_success.section_scores.content is defined and project_success.section_scores.content is not none %}
+                                      {{ "%.2f"|format(project_success.section_scores.content) }}
+                                  {% else %}
+                                      0.00
+                                  {% endif %}
+                              </td>
+                              <td>
+                                  {% if project_success.section_scores.content is defined and project_success.section_scores.content is not none %}
+                                      {{ "%.2f"|format(project_success.section_scores.content * 20) }}%
+                                  {% else %}
+                                      0.00%
+                                  {% endif %}
+                              </td>
+                              <td>
+                                  {% if project_success.section_scores.content is defined and project_success.section_scores.content is not none and project_success.section_scores.content >= 3.75 %}
+                                      <span class="text-success">ผ่านเกณฑ์</span>
+                                  {% else %}
+                                      <span class="text-danger">ไม่ผ่านเกณฑ์</span>
+                                  {% endif %}
+                              </td>
+                          </tr>
+                          <tr>
+                              <td>ด้านวิทยากร/ผู้สอน</td>
+                              <td>
+                                  {% if project_success.section_scores.speaker is defined and project_success.section_scores.speaker is not none %}
+                                      {{ "%.2f"|format(project_success.section_scores.speaker) }}
+                                  {% else %}
+                                      0.00
+                                  {% endif %}
+                              </td>
+                              <td>
+                                  {% if project_success.section_scores.speaker is defined and project_success.section_scores.speaker is not none %}
+                                      {{ "%.2f"|format(project_success.section_scores.speaker * 20) }}%
+                                  {% else %}
+                                      0.00%
+                                  {% endif %}
+                              </td>
+                              <td>
+                                  {% if project_success.section_scores.speaker is defined and project_success.section_scores.speaker is not none and project_success.section_scores.speaker >= 3.75 %}
+                                      <span class="text-success">ผ่านเกณฑ์</span>
+                                  {% else %}
+                                      <span class="text-danger">ไม่ผ่านเกณฑ์</span>
+                                  {% endif %}
+                              </td>
+                          </tr>
+                          <tr>
+                              <td>ด้านการจัดการและสถานที่</td>
+                              <td>
+                                  {% if project_success.section_scores.management is defined and project_success.section_scores.management is not none %}
+                                      {{ "%.2f"|format(project_success.section_scores.management) }}
+                                  {% else %}
+                                      0.00
+                                  {% endif %}
+                              </td>
+                              <td>
+                                  {% if project_success.section_scores.management is defined and project_success.section_scores.management is not none %}
+                                      {{ "%.2f"|format(project_success.section_scores.management * 20) }}%
+                                  {% else %}
+                                      0.00%
+                                  {% endif %}
+                              </td>
+                              <td>
+                                  {% if project_success.section_scores.management is defined and project_success.section_scores.management is not none and project_success.section_scores.management >= 3.75 %}
+                                      <span class="text-success">ผ่านเกณฑ์</span>
+                                  {% else %}
+                                      <span class="text-danger">ไม่ผ่านเกณฑ์</span>
+                                  {% endif %}
+                              </td>
+                          </tr>
+                          <tr>
+                              <td>ความพึงพอใจโดยรวม</td>
+                              <td>
+                                  {% if project_success.section_scores.satisfaction is defined and project_success.section_scores.satisfaction is not none %}
+                                      {{ "%.2f"|format(project_success.section_scores.satisfaction) }}
+                                  {% else %}
+                                      0.00
+                                  {% endif %}
+                              </td>
+                              <td>
+                                  {% if project_success.section_scores.satisfaction is defined and project_success.section_scores.satisfaction is not none %}
+                                      {{ "%.2f"|format(project_success.section_scores.satisfaction * 20) }}%
+                                  {% else %}
+                                      0.00%
+                                  {% endif %}
+                              </td>
+                              <td>
+                                  {% if project_success.section_scores.satisfaction is defined and project_success.section_scores.satisfaction is not none and project_success.section_scores.satisfaction >= 3.75 %}
+                                      <span class="text-success">ผ่านเกณฑ์</span>
+                                  {% else %}
+                                      <span class="text-danger">ไม่ผ่านเกณฑ์</span>
+                                  {% endif %}
+                              </td>
+                          </tr>
+                          <tr class="table-primary">
+                              <th>คะแนนเฉลี่ยรวม</th>
+                              <th>
+                                  {% if evaluation and evaluation.average_score is defined and evaluation.average_score is not none %}
+                                      {{ "%.2f"|format(evaluation.average_score) }}
+                                  {% else %}
+                                      0.00
+                                  {% endif %}
+                              </th>
+                              <th>
+                                  {% if project_success.score is defined and project_success.score is not none %}
+                                      {{ "%.2f"|format(project_success.score) }}%
+                                  {% else %}
+                                      0.00%
+                                  {% endif %}
+                              </th>
+                              <th>
+                                  {% if project_success.score is defined and project_success.score is not none and project_success.score >= 75 %}
+                                      <span class="text-success">ผ่านเกณฑ์</span>
+                                  {% else %}
+                                      <span class="text-danger">ไม่ผ่านเกณฑ์</span>
+                                  {% endif %}
+                              </th>
+                          </tr>
+                      </tbody>
+                  </table>
               </div>
-            </div>
-            
-            <div class="col-md-6 mb-4">
-              <div class="card h-100">
-                <div class="card-header bg-info text-white">
-                  <i class="fas fa-comment mr-2"></i>ความคิดเห็นจากผู้เข้าร่วม
-                </div>
-                <div class="card-body">
-                  {% if evaluation_comments %}
-                    {% for comment in evaluation_comments %}
-                      <div class="feedback-card">
-                        <i class="fas fa-quote-left mr-2"></i>{{ comment }}
-                      </div>
-                    {% endfor %}
-                  {% else %}
-                    <div class="text-center mt-3">
-                      <p>ไม่มีความคิดเห็นจากผู้เข้าร่วม</p>
-                    </div>
-                  {% endif %}
-                </div>
+              
+              <div class="col-md-4">
+                  <h6>สรุปผลการประเมิน</h6>
+                  <div class="alert {% if project_success.score >= 75 %}alert-success{% else %}alert-danger{% endif %}">
+                      <p class="mb-1"><strong>คะแนนเฉลี่ย:</strong> 
+                          {% if evaluation.average_score is defined and evaluation.average_score is not none %}
+                              {{ "%.2f"|format(evaluation.average_score) }}
+                          {% else %}
+                              0.00
+                          {% endif %}
+                          (
+                          {% if project_success.score is defined and project_success.score is not none %}
+                              {{ "%.2f"|format(project_success.score) }}
+                          {% else %}
+                              0.00
+                          {% endif %}
+                          %)
+                      </p>
+                      <p class="mb-1"><strong>ระดับคุณภาพ:</strong> {{ project_success.level|default('ไม่สามารถประเมินได้') }}</p>
+                      <p class="mb-0"><strong>เกณฑ์การประเมิน:</strong> 
+                          {% if project_success.score is defined and project_success.score is not none and project_success.score >= 75 %}
+                              <span class="text-success">ผ่านเกณฑ์ร้อยละ 75</span>
+                          {% else %}
+                              <span class="text-danger">ไม่ผ่านเกณฑ์ร้อยละ 75</span>
+                          {% endif %}
+                      </p>
+                  </div>
               </div>
-            </div>
           </div>
-        </div>
-        
-        <!-- สรุปผล -->
-        <div class="mb-3">
-          <h3 class="section-title"><i class="fas fa-check-circle mr-2"></i>สรุปผลการดำเนินโครงการ</h3>
-          
-          <div class="card">
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <h5>ผลการดำเนินงาน</h5>
-                  <p>จำนวนผู้เข้าร่วม: {{ participant_count }} คน ({{ "{:.1f}".format(participant_count / project.project_target * 100) if project.project_target > 0 else 0 }}% ของเป้าหมาย)</p>
-                  <p>ความพึงพอใจเฉลี่ย: {{ "{:.2f}".format(evaluation.average_score) }}/5 คะแนน</p>
-                  
-                </div>
-                <div class="col-md-6">
-                  <h5>ประสิทธิผลโครงการ</h5>
-                  <p>ประสิทธิผลรวม: {{ project_success.score }}% ({{ project_success.level }})</p>
-                  <p>
-                    การดำเนินโครงการครั้งนี้บรรลุวัตถุประสงค์
-                    {% if project_success.score >= 80 %}
-                      อยู่ในระดับดีมาก ประสบความสำเร็จตามเป้าหมายที่ตั้งไว้
-                    {% elif project_success.score >= 70 %}
-                      อยู่ในระดับดี ส่วนใหญ่บรรลุตามเป้าหมายที่ตั้งไว้
-                    {% elif project_success.score >= 60 %}
-                      อยู่ในระดับค่อนข้างดี บรรลุตามเป้าหมายหลักที่สำคัญ
-                    {% elif project_success.score >= 50 %}
-                      อยู่ในระดับพอใช้ บรรลุตามเป้าหมายได้บางส่วน
-                    {% else %}
-                      อยู่ในระดับที่ควรปรับปรุง ยังไม่บรรลุตามเป้าหมายที่ตั้งไว้
-                    {% endif %}
-                  </p>
-                </div>
-              </div>
-              {% if project.summary_text %}
-              <div class="row mt-4">
-                <div class="col-12">
-                  <h5>ข้อความสรุปผลการดำเนินโครงการ</h5>
-                  <div class="p-3 bg-light rounded">
-                    <p>{{ project.summary_text|nl2br }}</p>
-                  </div>
-                </div>
-              </div>
-              {% endif %}
-            </div>
+      {% else %}
+          <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle"></i> ยังไม่มีข้อมูลการประเมินสำหรับโครงการนี้
           </div>
+      {% endif %}
+  </div>
+</div>
+            </div>
         </div>
-      </div>
-    </div>
-    
-    <div class="print-btn no-print" onclick="window.print()">
-      <i class="fas fa-print"></i>
-    </div>
-
+      
     <!-- Modal สำหรับบันทึกสรุปรายงาน -->
     <div class="modal fade" id="saveReportModal" tabindex="-1" role="dialog" aria-labelledby="saveReportModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg" role="document">
@@ -608,10 +670,19 @@
           </div>
           <form action="{{ url_for('save_project_summary', project_id=project.project_id) }}" method="post">
             <div class="modal-body">
-              <div class="form-group">
-                <label for="summaryTextarea">ข้อความสรุปผลการดำเนินโครงการ</label>
-                <textarea class="form-control" id="summaryTextarea" name="summary_text" rows="8">{{ project.summary_text or '' }}</textarea>
-                <small class="form-text text-muted">กรุณาระบุสรุปผลการดำเนินโครงการ ปัญหาอุปสรรค และข้อเสนอแนะอื่นๆ</small>
+              
+              <!-- เพิ่มช่องปัญหา -->
+              <div class="form-group mt-3">
+                <label for="problemTextarea">ปัญหา</label>
+                <textarea class="form-control" id="problemTextarea" name="project_problems" rows="4">{{ project.project_problems or '' }}</textarea>
+                <small class="form-text text-muted">กรุณาระบุปัญหาที่พบในการดำเนินโครงการ</small>
+              </div>
+              
+              <!-- เพิ่มช่องแนวทางแก้ไข -->
+              <div class="form-group mt-3">
+                <label for="solutionTextarea">แนวทางแก้ไข</label>
+                <textarea class="form-control" id="solutionTextarea" name="project_solutions" rows="4">{{ project.project_solutions or '' }}</textarea>
+                <small class="form-text text-muted">กรุณาระบุแนวทางการแก้ไขปัญหาหรือข้อเสนอแนะสำหรับโครงการในอนาคต</small>
               </div>
             </div>
             <div class="modal-footer">
@@ -622,113 +693,73 @@
         </div>
       </div>
     </div>
-
     <!-- User Info Modal -->
-    {% if g.user %}
-    <div
-      class="modal fade"
-      id="userInfoModal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="userInfoModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="userInfoModalLabel">ข้อมูลผู้ใช้</h5>
-            <button
-              type="button"
-              class="close"
-              data-dismiss="modal"
-              aria-label="Close"
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p><strong>ชื่อ:</strong> {{ g.user.name }}</p>
-            <p><strong>อีเมล:</strong> {{ g.user.email or 'ไม่มีข้อมูล' }}</p>
-            {% if g.user.type == 'teacher' %}
-            <p>
-              <strong>เบอร์โทรศัพท์:</strong> {{ g.user.phone or 'ไม่มีข้อมูล'
-              }}
-            </p>
-            {% endif %}
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-dismiss="modal"
-            >
-              ปิด
-            </button>
-          </div>
-        </div>
+{% if g.user %}
+<div
+  class="modal fade"
+  id="userInfoModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="userInfoModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="userInfoModalLabel">ข้อมูลผู้ใช้</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p><strong>ชื่อ:</strong> {{ g.user.name }}</p>
+        <p><strong>อีเมล:</strong> {{ g.user.email or 'ไม่มีข้อมูล' }}</p>
+        {% if g.user.type == 'teacher' %}
+        <p>
+          <strong>เบอร์โทรศัพท์:</strong> {{ g.user.phone or 'ไม่มีข้อมูล'
+          }}
+        </p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-dismiss="modal"
+        >
+          ปิด
+        </button>
       </div>
     </div>
-    {% endif %}
+  </div>
+</div>
+{% endif %}
 
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
-    <script>
-      $(document).ready(function() {
-        // ตั้งค่า Progress Circle
-        const satisfactionScore = {{ evaluation.average_score }};
-        const satisfactionPercent = (satisfactionScore / 5) * 100;
-        const progressCircle = document.getElementById('satisfactionProgress');
-        
-        if (satisfactionPercent <= 50) {
-          progressCircle.style.clipPath = `polygon(50% 50%, 50% 0%, ${satisfactionPercent}% 0%)`;
-        } else {
-          progressCircle.style.clipPath = 'polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 0%)';
-          progressCircle.style.clip = 'auto';
-        }
-        progressCircle.style.transform = `rotate(${satisfactionPercent * 3.6}deg)`;
-        
-        // Test Score Chart
-        const testScoreChart = new Chart(
-          document.getElementById('testScoreChart'),
-          {
-            type: 'bar',
-            data: {
-              labels: ['คะแนนก่อนเข้าร่วม', 'คะแนนหลังเข้าร่วม'],
-              datasets: [{
-                label: 'คะแนนเฉลี่ย',
-                data: [{{ test.avg_pre_score }}, {{ test.avg_post_score }}],
-                backgroundColor: [
-                  'rgba(255, 159, 64, 0.8)',
-                  'rgba(54, 162, 235, 0.8)'
-                ],
-                borderColor: [
-                  'rgba(255, 159, 64, 1)',
-                  'rgba(54, 162, 235, 1)'
-                ],
-                borderWidth: 1
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  max: 100
-                }
-              },
-              plugins: {
-                title: {
-                  display: true,
-                  text: 'เปรียบเทียบคะแนนเฉลี่ยก่อนและหลังเข้าร่วมโครงการ'
-                }
-              }
-            }
-          }
-        );
-      });
-    </script>
-  </body>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script><script>
+  $(document).ready(function() {
+    // ตั้งค่า Progress Circle
+    const satisfactionScore = {% if evaluation is defined and evaluation.average_score is defined and evaluation.average_score is not none %}{{ evaluation.average_score }}{% else %}0{% endif %};
+    const satisfactionPercent = (satisfactionScore / 5) * 100;
+    const progressCircle = document.getElementById('satisfactionProgress');
+    
+    if (progressCircle) {  // ตรวจสอบว่า element มีอยู่จริง
+      if (satisfactionPercent <= 50) {
+        progressCircle.style.clipPath = `polygon(50% 50%, 50% 0%, ${satisfactionPercent}% 0%)`;
+      } else {
+        progressCircle.style.clipPath = 'polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 0%)';
+        progressCircle.style.clip = 'auto';
+      }
+      progressCircle.style.transform = `rotate(${satisfactionPercent * 3.6}deg)`;
+    }
+  });
+</script>
+</body>
 </html>

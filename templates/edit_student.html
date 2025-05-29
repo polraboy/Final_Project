@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>แก้ไขข้อมูลนักศึกษา</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --primary-color: #ff8c00;
+            --secondary-color: #007bff;
+            --background-color: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: "Kanit", sans-serif;
+            padding-bottom: 60px;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+        }
+
+        .navbar-brand img {
+            margin-right: 10px;
+        }
+
+        .navbar-brand span {
+            font-size: 1rem;
+            line-height: 1.2;
+            color: white;
+        }
+
+        .nav-link {
+            color: white !important;
+        }
+
+        .content-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: darken(var(--primary-color), 10%);
+            border-color: darken(var(--primary-color), 10%);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="#">
+            <img src="/static/image_2024-02-07_191338051.png" width="40" height="40" class="d-inline-block align-top" alt="Logo" />
+            <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br />วิทยาเขตขอนแก่น</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('active_projects') }}"><i class="fas fa-project-diagram"></i> โครงการ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('approve_project') }}"><i class="fas fa-check-circle"></i> อนุมัติคำขอโครงการ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('edit_basic_info') }}"><i class="fas fa-cog"></i> ข้อมูลพื้นฐาน</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('manage_students') }}"><i class="fas fa-user-graduate"></i> จัดการนักศึกษา</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('project_reports') }}">
+                        <i class="fas fa-chart-bar"></i> รายงาน
+                    </a>
+                </li>
+                {% if g.user %}
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-toggle="modal" data-target="#userInfoModal">
+                        <i class="fas fa-user"></i> {{ g.user.name }}
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="container mt-3">
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="container">
+        <div class="content-box">
+            <h2 class="mb-4"><i class="fas fa-user-edit"></i> แก้ไขข้อมูลนักศึกษา</h2>
+            
+            <form action="{{ url_for('edit_student', student_id=student.student_id) }}" method="post">
+                <div class="form-group">
+                    <label for="student_id"><i class="fas fa-id-card"></i> รหัสนักศึกษา</label>
+                    <input type="text" class="form-control" id="student_id" name="student_id" value="{{ student.student_id }}" readonly>
+                    <small class="form-text text-muted">ไม่สามารถแก้ไขรหัสนักศึกษาได้</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="student_name"><i class="fas fa-user"></i> ชื่อ-นามสกุล</label>
+                    <input type="text" class="form-control" id="student_name" name="student_name" value="{{ student.name }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="student_email"><i class="fas fa-envelope"></i> อีเมล</label>
+                    <input type="email" class="form-control" id="student_email" name="student_email" value="{{ student.email }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="student_phone"><i class="fas fa-phone"></i> เบอร์โทรศัพท์</label>
+                    <input type="text" class="form-control" id="student_phone" name="student_phone" value="{{ student.phone }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="branch_id"><i class="fas fa-graduation-cap"></i> สาขา</label>
+                    <select class="form-control" id="branch_id" name="branch_id">
+                        <option value="">-- เลือกสาขา --</option>
+                        {% for branch in branches %}
+                        <option value="{{ branch[0] }}" {% if student.branch_id == branch[0] %}selected{% endif %}>{{ branch[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> บันทึกข้อมูล
+                    </button>
+                    <a href="{{ url_for('manage_students') }}" class="btn btn-secondary ml-2">
+                        <i class="fas fa-times"></i> ยกเลิก
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

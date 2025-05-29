@@ -31,6 +31,7 @@
 
       .navbar {
         background-color: var(--primary-color) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
       }
 
       .navbar-brand img {
@@ -45,6 +46,11 @@
 
       .nav-link {
         color: white !important;
+        transition: all 0.3s ease;
+      }
+
+      .nav-link:hover {
+        transform: translateY(-2px);
       }
 
       .content-box {
@@ -56,55 +62,259 @@
         margin-bottom: 50px;
       }
 
+      .section-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .section-header h3 {
+        margin: 0;
+        font-weight: bold;
+      }
+
       .btn-primary {
-        background-color: var(--secondary-color);
-        border-color: var(--secondary-color);
+        background: linear-gradient(135deg, var(--primary-color), #ffb347);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: bold;
+        transition: all 0.3s ease;
       }
 
       .btn-primary:hover {
-        background-color: darken(var(--secondary-color), 10%);
-        border-color: darken(var(--secondary-color), 10%);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
       }
 
-      .footer {
-        background-color: var(--secondary-color);
-        color: white;
-        text-align: center;
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-      }
-
-      .footer img {
-        max-width: 100px;
-        margin-bottom: 10px;
-      }
-      
       .student-info-box {
-        background-color: #f8f9fa;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
         border-left: 5px solid var(--primary-color);
-        padding: 15px;
-        margin-bottom: 20px;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       }
       
-      .project-card {
-        margin-bottom: 20px;
-        transition: transform 0.3s;
+      /* Record List Styles */
+      .record-list {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
       }
-      
-      .project-card:hover {
-        transform: translateY(-5px);
+
+      .record-item {
+        border-bottom: 1px solid #e9ecef;
+        padding: 20px;
+        transition: all 0.3s ease;
+        position: relative;
       }
-      
-      .card-header {
-        background-color: #007bff;
-        color: white;
+
+      .record-item:last-child {
+        border-bottom: none;
+      }
+
+      .record-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .record-header {
+        display: flex;
+        justify-content: between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+      }
+
+      .record-title {
+        font-size: 1.2rem;
         font-weight: bold;
+        color: var(--primary-color);
+        margin-bottom: 5px;
+        flex-grow: 1;
       }
-      
+
+      .record-status {
+        margin-left: 15px;
+        flex-shrink: 0;
+      }
+
+      .record-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+      }
+
+      .record-field {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+      }
+
+      .record-field i {
+        width: 20px;
+        color: var(--secondary-color);
+        margin-right: 10px;
+      }
+
+      .record-field strong {
+        margin-right: 8px;
+        min-width: 80px;
+        color: #495057;
+      }
+
+      .record-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e9ecef;
+      }
+
       .badge-status {
         font-size: 0.9rem;
-        padding: 5px 10px;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+      }
+
+      .status-approved {
+        background-color: #28a745;
+        color: white;
+      }
+
+      .status-pending {
+        background-color: #ffc107;
+        color: #212529;
+      }
+
+      .status-rejected {
+        background-color: #dc3545;
+        color: white;
+      }
+
+      .status-completed {
+        background: linear-gradient(135deg, var(--primary-color), #ffb347);
+        color: white;
+      }
+
+      .status-ongoing {
+        background-color: #17a2b8;
+        color: white;
+      }
+
+      .status-not-started {
+        background-color: #6c757d;
+        color: white;
+      }
+
+      .btn-sm {
+        border-radius: 15px;
+        padding: 5px 15px;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+      }
+
+      .btn-sm:hover {
+        transform: translateY(-2px);
+      }
+
+      .record-number {
+        position: absolute;
+        top: 20px;
+        left: -10px;
+        background: linear-gradient(135deg, var(--primary-color), #ffb347);
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8rem;
+        box-shadow: 0 2px 8px rgba(255, 140, 0, 0.4);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+      }
+
+      .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+      }
+
+      .tab-content {
+        margin-top: 0;
+      }
+
+      .nav-tabs .nav-link {
+        color: var(--secondary-color);
+        border: none;
+        border-radius: 25px 25px 0 0;
+        margin-right: 5px;
+        transition: all 0.3s ease;
+      }
+
+      .nav-tabs .nav-link:hover {
+        border: none;
+        background-color: #f8f9fa;
+      }
+
+      .nav-tabs .nav-link.active {
+        background: linear-gradient(135deg, var(--primary-color), #ffb347);
+        color: white;
+        border: none;
+      }
+
+      .evaluation-alert {
+        background: linear-gradient(135deg, #17a2b8, #20c997);
+        color: white;
+        border: none;
+        border-radius: 10px;
+      }
+
+      .project-meta {
+        background: #f8f9fa;
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+        font-size: 0.9rem;
+      }
+
+      .progress-indicator {
+        width: 4px;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        border-radius: 0 4px 4px 0;
+      }
+
+      .progress-approved {
+        background: linear-gradient(to bottom, #28a745, #20c997);
+      }
+
+      .progress-pending {
+        background: linear-gradient(to bottom, #ffc107, #ffed4e);
+      }
+
+      .progress-rejected {
+        background: linear-gradient(to bottom, #dc3545, #ff6b6b);
+      }
+
+      .progress-completed {
+        background: linear-gradient(to bottom, var(--primary-color), #ffb347);
       }
     </style>
   </head>
@@ -135,29 +345,28 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ml-auto">
-          <li class="nav-item">
-            <a class="nav-link" href="/"
-              ><i class="fas fa-home"></i> หน้าหลัก</a
-            >
-          </li>
-          
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('active_projects') }}"
-              ><i class="fas fa-project-diagram"></i> โครงการ</a
-            >
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('student_history', student_id=session.get('student_id')) }}"
-              ><i class="fas fa-history"></i> ประวัติของฉัน</a
-            >
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('logout') }}"
-              ><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a
-            >
-          </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('student_dashboard') }}">
+                    <i class="fas fa-home"></i> หน้าหลัก
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('active_projects') }}">
+                    <i class="fas fa-project-diagram"></i> โครงการ
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('student_profile') }}">
+                    <i class="fas fa-user"></i> ข้อมูลส่วนตัว
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                </a>
+            </li>
         </ul>
-      </div>
+    </div>
     </nav>
 
     <div class="container">
@@ -171,15 +380,15 @@
       {% endwith %}
       
       <div class="content-box">
-        <h2 class="mb-4">
-          <i class="fas fa-user-graduate"></i> ระบบนักศึกษา
-        </h2>
+        <div class="section-header">
+          <h3><i class="fas fa-user-graduate"></i> ระบบนักศึกษา</h3>
+        </div>
         
         <!-- ข้อมูลนักศึกษา -->
         <div class="student-info-box">
           <div class="row">
             <div class="col-md-6">
-              <h4>ข้อมูลนักศึกษา</h4>
+              <h4><i class="fas fa-user-circle"></i> ข้อมูลนักศึกษา</h4>
               <p><strong><i class="fas fa-id-card"></i> รหัสนักศึกษา:</strong> {{ session.get('student_id') }}</p>
               <p><strong><i class="fas fa-user"></i> ชื่อ-นามสกุล:</strong> {{ session.get('student_name') }}</p>
             </div>
@@ -209,59 +418,109 @@
           <!-- โครงการที่ลงทะเบียนแล้ว -->
           <div class="tab-pane fade show active" id="registered" role="tabpanel">
             {% if projects %}
-              <div class="row">
+              <div class="record-list">
                 {% for project in projects %}
-                  <div class="col-md-6">
-                    <div class="card project-card shadow-sm">
-                      <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>{{ project.project_name }}</span>
+                  <div class="record-item">
+                    <!-- Progress Indicator -->
+                    {% if project.join_status == 1 %}
+                      <div class="progress-indicator progress-approved"></div>
+                    {% elif project.join_status == 0 %}
+                      <div class="progress-indicator progress-pending"></div>
+                    {% elif project.join_status == 2 %}
+                      <div class="progress-indicator progress-rejected"></div>
+                    {% endif %}
+
+                    <!-- Record Number -->
+                    <div class="record-number">{{ loop.index }}</div>
+                    
+                    <!-- Record Header -->
+                    <div class="record-header">
+                      <div class="record-title">{{ project.project_name }}</div>
+                      <div class="record-status">
                         {% if project.join_status == 0 %}
-                          <span class="badge badge-warning badge-status">รอการอนุมัติ</span>
+                          <span class="badge badge-status status-pending">รอการอนุมัติ</span>
                         {% elif project.join_status == 1 %}
-                          <span class="badge badge-success badge-status">อนุมัติแล้ว</span>
+                          <span class="badge badge-status status-approved">อนุมัติแล้ว</span>
                         {% elif project.join_status == 2 %}
-                          <span class="badge badge-danger badge-status">ไม่อนุมัติ</span>
+                          <span class="badge badge-status status-rejected">ไม่อนุมัติ</span>
                         {% endif %}
                       </div>
-                      <div class="card-body">
-                        <p><i class="far fa-calendar-alt"></i> <strong>วันที่จัด:</strong> 
-                          {{ project.project_dotime.strftime('%d/%m/%Y') if project.project_dotime else '-' }} - 
-                          {{ project.project_endtime.strftime('%d/%m/%Y') if project.project_endtime else '-' }}
-                        </p>
-                        <p><i class="fas fa-map-marker-alt"></i> <strong>สถานที่:</strong> {{ project.project_address }}</p>
-                        <p><i class="fas fa-user-tie"></i> <strong>อาจารย์ผู้รับผิดชอบ:</strong> {{ project.teacher_name }}</p>
-                        
+                    </div>
+                    
+                    <!-- Record Details -->
+                    <div class="record-details">
+                      <div class="record-field">
+                        <i class="far fa-calendar-alt"></i>
+                        <strong>วันที่จัด:</strong>
+                        {{ project.project_dotime.strftime('%d/%m/%Y') if project.project_dotime else '-' }} - 
+                        {{ project.project_endtime.strftime('%d/%m/%Y') if project.project_endtime else '-' }}
+                      </div>
+                      
+                      <div class="record-field">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <strong>สถานที่:</strong>
+                        {{ project.project_address }}
+                      </div>
+                      
+                      <div class="record-field">
+                        <i class="fas fa-user-tie"></i>
+                        <strong>อาจารย์:</strong>
+                        {{ project.teacher_name }}
+                      </div>
+                      
+                      <div class="record-field">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>สถานะโครงการ:</strong>
                         {% if project.project_statusStart == 2 %}
-                          <p><i class="fas fa-check-circle text-success"></i> <strong>สถานะโครงการ:</strong> เสร็จสิ้นแล้ว</p>
-                          
-                          {% if project.join_status == 1 %}
-                            {% if project.has_evaluated %}
-                              <div class="alert alert-info">
-                                <i class="fas fa-star"></i> คุณได้ประเมินโครงการนี้แล้ว
-                              </div>
-                            {% else %}
-                            <a href="{{ url_for('evaluate_project', project_id=project.project_id) }}?name={{ session.get('student_name') }}&email={{ session.get('student_email') }}" class="btn btn-primary btn-block">
-                                <i class="fas fa-star"></i> ประเมินโครงการ
-                              </a>
-                            {% endif %}
-                          {% endif %}
+                          <span class="badge status-completed">เสร็จสิ้นแล้ว</span>
                         {% elif project.project_statusStart == 1 %}
-                          <p><i class="fas fa-hourglass-half text-warning"></i> <strong>สถานะโครงการ:</strong> กำลังดำเนินการ</p>
-                        {% elif project.project_statusStart == 0 or project.project_statusStart is none %}
-                          <p><i class="fas fa-clock text-secondary"></i> <strong>สถานะโครงการ:</strong> ยังไม่เริ่มโครงการ</p>
+                          <span class="badge status-ongoing">กำลังดำเนินการ</span>
+                        {% else %}
+                          <span class="badge status-not-started">ยังไม่เริ่มโครงการ</span>
                         {% endif %}
-                        
-                        <a href="{{ url_for('project_detail', project_id=project.project_id) }}" class="btn btn-info btn-block mt-2">
-                          <i class="fas fa-info-circle"></i> ดูรายละเอียด
-                        </a>
                       </div>
+                    </div>
+
+                    <!-- Project Meta Info -->
+                    {% if project.project_statusStart == 2 and project.join_status == 1 %}
+                      <div class="project-meta">
+                        {% if project.has_evaluated %}
+                          <i class="fas fa-star text-warning"></i> <strong>ประเมินแล้ว:</strong> คุณได้ประเมินโครงการนี้เรียบร้อยแล้ว
+                        {% else %}
+                          <i class="fas fa-exclamation-triangle text-warning"></i> <strong>รอประเมิน:</strong> กรุณาประเมินโครงการที่เสร็จสิ้นแล้ว
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                    
+                    <!-- Record Actions -->
+                    <div class="record-actions">
+                      <a href="{{ url_for('project_detail', project_id=project.project_id) }}" class="btn btn-info btn-sm">
+                        <i class="fas fa-info-circle"></i> ดูรายละเอียด
+                      </a>
+                      
+                      {% if project.project_statusStart == 2 and project.join_status == 1 %}
+                        {% if project.has_evaluated %}
+                          <button class="btn btn-success btn-sm" disabled>
+                            <i class="fas fa-star"></i> ประเมินแล้ว
+                          </button>
+                        {% else %}
+                          <a href="{{ url_for('evaluate_project', project_id=project.project_id) }}?name={{ session.get('student_name') }}&email={{ session.get('student_email') }}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-star"></i> ประเมินโครงการ
+                          </a>
+                        {% endif %}
+                      {% endif %}
                     </div>
                   </div>
                 {% endfor %}
               </div>
             {% else %}
-              <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> คุณยังไม่ได้ลงทะเบียนเข้าร่วมโครงการใด
+              <div class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <h4>ยังไม่ได้ลงทะเบียนโครงการใด</h4>
+                <p>คุณยังไม่ได้ลงทะเบียนเข้าร่วมโครงการใด ลองดูโครงการที่เปิดรับสมัครในแท็บถัดไป</p>
+                <a href="#available" class="btn btn-primary" data-toggle="tab">
+                  <i class="fas fa-search"></i> ดูโครงการที่เปิดรับสมัคร
+                </a>
               </div>
             {% endif %}
           </div>
@@ -269,54 +528,90 @@
           <!-- โครงการที่เปิดรับสมัคร -->
           <div class="tab-pane fade" id="available" role="tabpanel">
             {% if active_projects %}
-              <div class="row">
+              <div class="record-list">
                 {% for project in active_projects %}
-                  <div class="col-md-6">
-                    <div class="card project-card shadow-sm">
-                      <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>{{ project.project_name }}</span>
+                  <div class="record-item">
+                    <!-- Progress Indicator -->
+                    {% if project.current_count >= project.project_target %}
+                      <div class="progress-indicator progress-rejected"></div>
+                    {% else %}
+                      <div class="progress-indicator progress-approved"></div>
+                    {% endif %}
+
+                    <!-- Record Number -->
+                    <div class="record-number">{{ loop.index }}</div>
+                    
+                    <!-- Record Header -->
+                    <div class="record-header">
+                      <div class="record-title">{{ project.project_name }}</div>
+                      <div class="record-status">
                         {% if project.current_count >= project.project_target %}
-                          <span class="badge badge-warning badge-status">เต็มแล้ว</span>
+                          <span class="badge badge-status status-rejected">เต็มแล้ว</span>
                         {% else %}
-                          <span class="badge badge-success badge-status">เปิดรับสมัคร</span>
+                          <span class="badge badge-status status-approved">เปิดรับสมัคร</span>
                         {% endif %}
                       </div>
-                      <div class="card-body">
-                        <p><i class="far fa-calendar-alt"></i> <strong>วันที่จัด:</strong> 
-                          {{ project.project_dotime.strftime('%d/%m/%Y') if project.project_dotime else '-' }} - 
-                          {{ project.project_endtime.strftime('%d/%m/%Y') if project.project_endtime else '-' }}
-                        </p>
-                        <p><i class="fas fa-map-marker-alt"></i> <strong>สถานที่:</strong> {{ project.project_address }}</p>
-                        <p><i class="fas fa-user-tie"></i> <strong>อาจารย์ผู้รับผิดชอบ:</strong> {{ project.teacher_name }}</p>
-                        <p><i class="fas fa-users"></i> <strong>จำนวนที่รับ:</strong> {{ project.current_count }}/{{ project.project_target }}</p>
-                        
-                        <div class="mt-3">
-                          <a href="{{ url_for('project_detail', project_id=project.project_id) }}" class="btn btn-info mr-2">
-                            <i class="fas fa-info-circle"></i> รายละเอียด
-                          </a>
-                          
-                          {% if project.already_joined %}
-                            <button class="btn btn-secondary" disabled>
-                              <i class="fas fa-check"></i> ลงทะเบียนแล้ว
-                            </button>
-                          {% elif project.current_count < project.project_target %}
-                            <a href="{{ url_for('join_project', project_id=project.project_id) }}" class="btn btn-success">
-                              <i class="fas fa-user-plus"></i> ลงทะเบียน
-                            </a>
-                          {% else %}
-                            <button class="btn btn-secondary" disabled>
-                              <i class="fas fa-times"></i> เต็มแล้ว
-                            </button>
-                          {% endif %}
-                        </div>
+                    </div>
+                    
+                    <!-- Record Details -->
+                    <div class="record-details">
+                      <div class="record-field">
+                        <i class="far fa-calendar-alt"></i>
+                        <strong>วันที่จัด:</strong>
+                        {{ project.project_dotime.strftime('%d/%m/%Y') if project.project_dotime else '-' }} - 
+                        {{ project.project_endtime.strftime('%d/%m/%Y') if project.project_endtime else '-' }}
                       </div>
+                      
+                      <div class="record-field">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <strong>สถานที่:</strong>
+                        {{ project.project_address }}
+                      </div>
+                      
+                      <div class="record-field">
+                        <i class="fas fa-user-tie"></i>
+                        <strong>อาจารย์:</strong>
+                        {{ project.teacher_name }}
+                      </div>
+                      
+                      <div class="record-field">
+                        <i class="fas fa-users"></i>
+                        <strong>จำนวนที่รับ:</strong>
+                        {{ project.current_count }}/{{ project.project_target }} คน
+                      </div>
+                    </div>
+                    
+                    <!-- Record Actions -->
+                    <div class="record-actions">
+                      <a href="{{ url_for('project_detail', project_id=project.project_id) }}" class="btn btn-info btn-sm">
+                        <i class="fas fa-info-circle"></i> รายละเอียด
+                      </a>
+                      
+                      {% if project.already_joined %}
+                        <button class="btn btn-secondary btn-sm" disabled>
+                          <i class="fas fa-check"></i> ลงทะเบียนแล้ว
+                        </button>
+                      {% elif project.current_count < project.project_target %}
+                        <a href="{{ url_for('join_project', project_id=project.project_id) }}" class="btn btn-success btn-sm">
+                          <i class="fas fa-user-plus"></i> ลงทะเบียน
+                        </a>
+                      {% else %}
+                        <button class="btn btn-secondary btn-sm" disabled>
+                          <i class="fas fa-times"></i> เต็มแล้ว
+                        </button>
+                      {% endif %}
                     </div>
                   </div>
                 {% endfor %}
               </div>
             {% else %}
-              <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> ไม่มีโครงการที่เปิดรับสมัครในขณะนี้
+              <div class="empty-state">
+                <i class="fas fa-project-diagram"></i>
+                <h4>ไม่มีโครงการที่เปิดรับสมัคร</h4>
+                <p>ไม่มีโครงการที่เปิดรับสมัครในขณะนี้ กรุณาติดตามข่าวสารเพิ่มเติม</p>
+                <a href="{{ url_for('active_projects') }}" class="btn btn-primary">
+                  <i class="fas fa-eye"></i> ดูโครงการทั้งหมด
+                </a>
               </div>
             {% endif %}
           </div>
@@ -324,11 +619,27 @@
       </div>
     </div>
 
-    <!-- Footer -->
-   
-
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
+      // เอฟเฟกต์ loading สำหรับ record items
+      $(document).ready(function() {
+        $('.record-item').each(function(index) {
+          $(this).delay(index * 100).fadeIn(500);
+        });
+      });
+
+      // เพิ่มเอฟเฟกต์ hover สำหรับ record items
+      $('.record-item').hover(
+        function() {
+          $(this).find('.record-number').addClass('fa-spin');
+        },
+        function() {
+          $(this).find('.record-number').removeClass('fa-spin');
+        }
+      );
+    </script>
   </body>
 </html>

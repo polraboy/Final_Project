@@ -150,6 +150,10 @@
                     <a class="nav-link" href="{{ url_for('edit_basic_info') }}"><i class="fas fa-cog"></i> ข้อมูลพื้นฐาน</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('manage_students') }}"><i class="fas fa-user-graduate"></i> จัดการนักศึกษา</a>
+                </li>
+                    <li class="nav-item">   
+                <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('project_reports') }}">
                         <i class="fas fa-chart-bar"></i> รายงาน
                     </a>
@@ -439,6 +443,91 @@
         }
 
         document.getElementById("data_type").addEventListener("change", filterData);
+        filterData();
+    </script>
+    <script>
+        function filterData() {
+            var selectedValue = document.getElementById("data_type").value;
+            var teacherSection = document.getElementById("teacher-section");
+            var branchSection = document.getElementById("branch-section");
+            var adminSection = document.getElementById("admin-section");
+
+            if (selectedValue === "teacher") {
+                teacherSection.style.display = "block";
+                branchSection.style.display = "none";
+                adminSection.style.display = "none";
+            } else if (selectedValue === "branch") {
+                teacherSection.style.display = "none";
+                branchSection.style.display = "block";
+                adminSection.style.display = "none";
+            } else if (selectedValue === "admin") {
+                teacherSection.style.display = "none";
+                branchSection.style.display = "none";
+                adminSection.style.display = "block";
+            }
+        }
+
+        // ตรวจสอบสิทธิ์และซ่อน/แสดงปุ่ม
+        function checkPermissions() {
+            // รับข้อมูลผู้ใช้ปัจจุบัน
+            const currentUsername = '{{ session.get("admin_username", "") }}' || '{{ g.user.name if g.user else "" }}';
+            const currentAdminId = {{ session.get('admin_id', 0) }};
+            const isSuperAdmin = currentUsername === 'admin00';
+            
+            console.log('Current Username:', currentUsername);
+            console.log('Is Super Admin:', isSuperAdmin);
+            
+            // ถ้าไม่ใช่ Super Admin ให้ซ่อนปุ่มจัดการแอดมินคนอื่น
+            if (!isSuperAdmin) {
+                // ซ่อนปุ่มแก้ไข/ลบแอดมินคนอื่น
+                const adminRows = document.querySelectorAll('.admin-row');
+                adminRows.forEach(function(row) {
+                    const adminId = parseInt(row.querySelector('td:first-child').textContent);
+                    const adminUsername = row.querySelector('td:nth-child(3)').textContent;
+                    
+                    // ถ้าไม่ใช่ตัวเอง และไม่ใช่ Super Admin ให้ซ่อนปุ่ม
+                    if (adminId !== currentAdminId) {
+                        const editButton = row.querySelector('a.btn-primary');
+                        const deleteButton = row.querySelector('button.btn-danger');
+                        
+                        if (editButton) {
+                            editButton.style.display = 'none';
+                        }
+                        if (deleteButton) {
+                            deleteButton.style.display = 'none';
+                        }
+                        
+                        // เพิ่มข้อความแจ้งเตือน
+                        const actionCell = row.querySelector('td:last-child');
+                        if (actionCell && !actionCell.querySelector('.no-permission-text')) {
+                            const noPermissionText = document.createElement('span');
+                            noPermissionText.className = 'text-muted small no-permission-text';
+                            noPermissionText.textContent = 'ไม่มีสิทธิ์';
+                            actionCell.appendChild(noPermissionText);
+                        }
+                    }
+                });
+                
+                // ซ่อนปุ่มเพิ่มแอดมินใหม่สำหรับเจ้าหน้าที่ทั่วไป
+                const addAdminButton = document.querySelector('a[href*="add_admin"]');
+                if (addAdminButton) {
+                    addAdminButton.style.display = 'none';
+                }
+            }
+        }
+        
+        // เรียกใช้ฟังก์ชันเมื่อโหลดหน้าเสร็จ
+        document.addEventListener('DOMContentLoaded', function() {
+            checkPermissions();
+        });
+
+        document.getElementById("data_type").addEventListener("change", function() {
+            filterData();
+            // เรียกใช้การตรวจสอบสิทธิ์อีกครั้งหลังจากเปลี่ยนแท็บ
+            setTimeout(checkPermissions, 100);
+        });
+        
+        // เรียกใช้ครั้งแรก
         filterData();
     </script>
 </body>

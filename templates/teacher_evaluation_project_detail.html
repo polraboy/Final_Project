@@ -26,8 +26,8 @@
                                             {{ "%.2f"|format(summary.average_score) }}/5
                                         </h2>
                                         <p>จำนวนผู้ประเมิน: {{ summary.total_evaluations }} คน</p>
-                                        <!-- เพิ่มแสดงจำนวนผู้สมัคร -->
-                                        <p>จำนวนผู้สมัคร: {{ participants_count }} คน</p>
+                                        <p>จำนวนผู้เข้าร่วมทั้งหมด: {{ participants_count }} คน</p>
+                                        <p>คิดเป็นร้อยละ: {{ "%.2f"|format(summary.average_score * 20) }}%</p>
                                     </div>
                                 </div>
                             </div>
@@ -44,54 +44,137 @@
                                         </tr>
                                     </tbody>
                                 </table>
-                                
-                                <!-- กราฟแท่งคะแนน -->
-                                <canvas id="scoreChart" class="mt-3"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                
-                        <!-- ปุ่มดูความคิดเห็นทั้งหมด -->
-                        <div class="text-center mt-4 mb-4">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#allCommentsModal">
-                                ดูความคิดเห็นทั้งหมด
-                            </button>
-                        </div>
+                <!-- กราฟแยกตามหัวข้อ -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h3>กราฟแสดงผลการประเมินแยกตามหัวข้อ</h3>
                         
-                        <!-- Modal สำหรับแสดงความคิดเห็นทั้งหมด -->
-                        <div class="modal fade" id="allCommentsModal" tabindex="-1" aria-labelledby="allCommentsModalLabel" aria-hidden="true">
-                            <div class="modal-dialog modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="allCommentsModalLabel">ความคิดเห็นทั้งหมดจากผู้ประเมิน</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        {% set has_comments = false %}
-                                        {% for eval in evaluations %}
-                                            {% if eval.evaluation_comments %}
-                                                {% set has_comments = true %}
-                                                <div class="card mb-3">
-                                                    <div class="card-body">
-                                                        <p class="card-text">{{ eval.evaluation_comments }}</p>
-                                                        <p class="card-text text-muted text-end">ประเมินเมื่อ: {{ eval.evaluation_date.strftime('%Y-%m-%d %H:%M') }}</p>
-                                                    </div>
-                                                </div>
-                                            {% endif %}
-                                        {% endfor %}
-                                        
-                                        {% if not has_comments %}
-                                            <div class="alert alert-info">
-                                                ไม่มีความคิดเห็นจากผู้ประเมิน
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                        <!-- แท็บสำหรับเลือกดูกราฟแต่ละหัวข้อ -->
+                        <ul class="nav nav-tabs" id="myTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="overall-tab" data-bs-toggle="tab" data-bs-target="#overall" type="button" role="tab" aria-controls="overall" aria-selected="true">คะแนนรวม</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="content-tab" data-bs-toggle="tab" data-bs-target="#content" type="button" role="tab" aria-controls="content" aria-selected="false">ด้านเนื้อหา</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="speaker-tab" data-bs-toggle="tab" data-bs-target="#speaker" type="button" role="tab" aria-controls="speaker" aria-selected="false">ด้านวิทยากร</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="management-tab" data-bs-toggle="tab" data-bs-target="#management" type="button" role="tab" aria-controls="management" aria-selected="false">ด้านการจัดการ</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="satisfaction-tab" data-bs-toggle="tab" data-bs-target="#satisfaction" type="button" role="tab" aria-controls="satisfaction" aria-selected="false">ความพึงพอใจ</button>
+                            </li>
+                        </ul>
+                        
+                        <!-- เนื้อหาของแต่ละแท็บ -->
+                        <div class="tab-content pt-3" id="myTabContent">
+                            <!-- กราฟคะแนนรวม -->
+                            <div class="tab-pane fade show active" id="overall" role="tabpanel" aria-labelledby="overall-tab">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">คะแนนรวมทั้งหมด</h5>
+                                        <div style="height: 400px;">
+                                            <canvas id="overallChart"></canvas>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <!-- กราฟด้านเนื้อหา -->
+                            <div class="tab-pane fade" id="content" role="tabpanel" aria-labelledby="content-tab">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">ด้านเนื้อหาและประโยชน์ของโครงการ</h5>
+                                        <div style="height: 400px;">
+                                            <canvas id="contentChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- กราฟด้านวิทยากร -->
+                            <div class="tab-pane fade" id="speaker" role="tabpanel" aria-labelledby="speaker-tab">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">ด้านวิทยากร/ผู้สอน</h5>
+                                        <div style="height: 400px;">
+                                            <canvas id="speakerChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- กราฟด้านการจัดการ -->
+                            <div class="tab-pane fade" id="management" role="tabpanel" aria-labelledby="management-tab">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">ด้านการจัดการและสถานที่</h5>
+                                        <div style="height: 400px;">
+                                            <canvas id="managementChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- กราฟความพึงพอใจ -->
+                            <div class="tab-pane fade" id="satisfaction" role="tabpanel" aria-labelledby="satisfaction-tab">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">ความพึงพอใจโดยรวม</h5>
+                                        <div style="height: 400px;">
+                                            <canvas id="satisfactionChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ปุ่มดูความคิดเห็นทั้งหมด -->
+                <div class="text-center mt-4 mb-4">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#allCommentsModal">
+                        ดูความคิดเห็นทั้งหมด
+                    </button>
+                </div>
+                
+                <!-- Modal สำหรับแสดงความคิดเห็นทั้งหมด -->
+                <div class="modal fade" id="allCommentsModal" tabindex="-1" aria-labelledby="allCommentsModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="allCommentsModalLabel">ความคิดเห็นทั้งหมดจากผู้ประเมิน</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                {% set has_comments = false %}
+                                {% for eval in evaluations %}
+                                    {% if eval.evaluation_comments %}
+                                        {% set has_comments = true %}
+                                        <div class="card mb-3">
+                                            <div class="card-body">
+                                                <p class="card-text">{{ eval.evaluation_comments }}</p>
+                                                <p class="card-text text-muted text-end">ประเมินเมื่อ: {{ eval.evaluation_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if not has_comments %}
+                                    <div class="alert alert-info">
+                                        ไม่มีความคิดเห็นจากผู้ประเมิน
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
                             </div>
                         </div>
                     </div>
@@ -103,65 +186,198 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // สร้างกราฟแท่งคะแนน
-            const ctx = document.getElementById('scoreChart').getContext('2d');
+            // ข้อมูลการประเมิน
             const evaluations = {{ evaluations|tojson }};
             
-            // คำนวณจำนวนคะแนนแต่ละระดับ
-            const scoreCounts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
-            evaluations.forEach(eval => {
-                scoreCounts[eval.evaluation_score]++;
-            });
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['1 คะแนน', '2 คะแนน', '3 คะแนน', '4 คะแนน', '5 คะแนน'],
-                    datasets: [{
-                        label: 'จำนวนคนที่ให้คะแนน',
-                        data: [
-                            scoreCounts[1], 
-                            scoreCounts[2], 
-                            scoreCounts[3], 
-                            scoreCounts[4], 
-                            scoreCounts[5]
-                        ],
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.6)',
-                            'rgba(255, 159, 64, 0.6)',
-                            'rgba(255, 205, 86, 0.6)',
-                            'rgba(75, 192, 192, 0.6)',
-                            'rgba(54, 162, 235, 0.6)'
-                        ],
-                        borderColor: [
-                            'rgb(255, 99, 132)',
-                            'rgb(255, 159, 64)',
-                            'rgb(255, 205, 86)',
-                            'rgb(75, 192, 192)',
-                            'rgb(54, 162, 235)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
+            // ฟังก์ชันสร้างกราฟแท่งแนวตั้งที่มีสีแตกต่างกันตามคะแนน
+            function createColorBarChart(elementId, title, data) {
+                const ctx = document.getElementById(elementId).getContext('2d');
+                
+                return new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['1 คะแนน', '2 คะแนน', '3 คะแนน', '4 คะแนน', '5 คะแนน'],
+                        datasets: [{
+                            label: 'จำนวนผู้ประเมิน',
+                            data: data,
+                            // กำหนดสีที่แตกต่างกันสำหรับแต่ละคะแนน (คล้ายกับรูปตัวอย่างที่ 2)
+                            backgroundColor: [
+                                'rgba(255, 50, 50, 0.8)',   // สีแดงสำหรับ 1 คะแนน
+                                'rgba(255, 180, 50, 0.8)',  // สีส้ม/เหลืองสำหรับ 2 คะแนน
+                                'rgba(150, 200, 50, 0.8)',  // สีเขียวอ่อนสำหรับ 3 คะแนน
+                                'rgba(50, 150, 220, 0.8)',  // สีฟ้า/น้ำเงินสำหรับ 4 คะแนน
+                                'rgba(130, 80, 200, 0.8)'   // สีม่วงสำหรับ 5 คะแนน
+                            ],
+                            borderColor: [
+                                'rgb(255, 30, 30)',
+                                'rgb(235, 160, 30)',
+                                'rgb(130, 180, 30)',
+                                'rgb(30, 130, 200)',
+                                'rgb(110, 60, 180)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    // ปรับแต่งข้อความที่แสดงเมื่อชี้เมาส์ที่แท่งกราฟ
+                                    label: function(context) {
+                                        return `จำนวนผู้ประเมิน: ${context.parsed.y} คน`;
+                                    }
+                                }
+                            },
                             title: {
                                 display: true,
-                                text: 'จำนวนผู้ประเมิน'
+                                text: title
+                            },
+                            legend: {
+                                display: false // ซ่อน legend เนื่องจากใช้สีแตกต่างกันอยู่แล้ว
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'จำนวนผู้ประเมิน'
+                                },
+                                // ปรับสเกลแกน Y ให้เหมาะสมอัตโนมัติ
+                                suggestedMax: function(context) {
+                                    const values = context.chart.data.datasets[0].data;
+                                    const max = Math.max(...values);
+                                    return max + Math.max(1, Math.ceil(max * 0.2)); // เพิ่มพื้นที่ว่างด้านบน
+                                },
+                                ticks: {
+                                    // ปรับให้แสดงเฉพาะจำนวนเต็ม
+                                    precision: 0
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'คะแนนประเมิน'
+                                }
                             }
                         }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'การกระจายของคะแนนประเมิน (จากทั้งหมด {{ participants_count }} คน)'
+                    }
+                });
+            }
+            
+            // คำนวณจำนวนคะแนนแต่ละระดับสำหรับคะแนนรวม
+            const overallScoreCounts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+            
+            // คำนวณจำนวนคะแนนแต่ละระดับสำหรับแต่ละหมวด
+            const contentScoreCounts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+            const speakerScoreCounts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+            const managementScoreCounts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+            const satisfactionScoreCounts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+            
+            evaluations.forEach(eval => {
+                // บันทึกคะแนนรวม
+                const overallScore = Math.round(eval.evaluation_score);
+                if (overallScore >= 1 && overallScore <= 5) {
+                    overallScoreCounts[overallScore]++;
+                }
+                
+                // วิเคราะห์ข้อมูลแยกตามหมวดจาก evaluation_data ถ้ามี
+                if (eval.evaluation_data) {
+                    try {
+                        const evalData = JSON.parse(eval.evaluation_data);
+                        
+                        // วิเคราะห์คะแนนเฉลี่ยแต่ละหมวดจากข้อมูล
+                        let contentScores = [];
+                        let speakerScores = [];
+                        let managementScores = [];
+                        let satisfactionScores = [];
+                        
+                        // ค้นหาข้อมูลตามคีย์ pattern
+                        for (const key in evalData) {
+                            const value = evalData[key];
+                            if (typeof value === 'number' && value >= 1 && value <= 5) {
+                                if (key.startsWith('content_')) {
+                                    contentScores.push(value);
+                                } else if (key.startsWith('speaker_')) {
+                                    speakerScores.push(value);
+                                } else if (key.startsWith('management_')) {
+                                    managementScores.push(value);
+                                } else if (key.startsWith('satisfaction_')) {
+                                    satisfactionScores.push(value);
+                                }
+                                
+                                // สำหรับแบบประเมินที่ใช้ q1_score, q2_score, ...
+                                if (key === 'q1_score' || key === 'q2_score' || key === 'q3_score') {
+                                    contentScores.push(value);
+                                } else if (key === 'q4_score' || key === 'q5_score' || key === 'q6_score') {
+                                    speakerScores.push(value);
+                                } else if (key === 'q7_score' || key === 'q8_score' || key === 'q9_score' || key === 'q10_score') {
+                                    managementScores.push(value);
+                                } else if (key === 'q11_score') {
+                                    satisfactionScores.push(value);
+                                }
+                            }
                         }
+                        
+                        // คำนวณคะแนนเฉลี่ยของแต่ละหมวด
+                        if (contentScores.length > 0) {
+                            const avgContentScore = Math.round(contentScores.reduce((a, b) => a + b, 0) / contentScores.length);
+                            contentScoreCounts[avgContentScore]++;
+                        }
+                        
+                        if (speakerScores.length > 0) {
+                            const avgSpeakerScore = Math.round(speakerScores.reduce((a, b) => a + b, 0) / speakerScores.length);
+                            speakerScoreCounts[avgSpeakerScore]++;
+                        }
+                        
+                        if (managementScores.length > 0) {
+                            const avgManagementScore = Math.round(managementScores.reduce((a, b) => a + b, 0) / managementScores.length);
+                            managementScoreCounts[avgManagementScore]++;
+                        }
+                        
+                        if (satisfactionScores.length > 0) {
+                            const avgSatisfactionScore = Math.round(satisfactionScores.reduce((a, b) => a + b, 0) / satisfactionScores.length);
+                            satisfactionScoreCounts[avgSatisfactionScore]++;
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error parsing evaluation data:', error);
                     }
                 }
             });
+            
+            // สร้างกราฟแท่งแนวตั้งแสดงผลแต่ละหมวด แต่ละคะแนนมีสีแตกต่างกัน
+            createColorBarChart(
+                'overallChart', 
+                'การกระจายของคะแนนประเมินรวม (จากทั้งหมด {{ summary.total_evaluations }} คน)', 
+                [overallScoreCounts[1], overallScoreCounts[2], overallScoreCounts[3], overallScoreCounts[4], overallScoreCounts[5]]
+            );
+            
+            createColorBarChart(
+                'contentChart', 
+                'การกระจายคะแนนด้านเนื้อหาและประโยชน์ของโครงการ', 
+                [contentScoreCounts[1], contentScoreCounts[2], contentScoreCounts[3], contentScoreCounts[4], contentScoreCounts[5]]
+            );
+            
+            createColorBarChart(
+                'speakerChart', 
+                'การกระจายคะแนนด้านวิทยากร/ผู้สอน', 
+                [speakerScoreCounts[1], speakerScoreCounts[2], speakerScoreCounts[3], speakerScoreCounts[4], speakerScoreCounts[5]]
+            );
+            
+            createColorBarChart(
+                'managementChart', 
+                'การกระจายคะแนนด้านการจัดการและสถานที่', 
+                [managementScoreCounts[1], managementScoreCounts[2], managementScoreCounts[3], managementScoreCounts[4], managementScoreCounts[5]]
+            );
+            
+            createColorBarChart(
+                'satisfactionChart', 
+                'การกระจายคะแนนความพึงพอใจโดยรวม', 
+                [satisfactionScoreCounts[1], satisfactionScoreCounts[2], satisfactionScoreCounts[3], satisfactionScoreCounts[4], satisfactionScoreCounts[5]]
+            );
         });
     </script>
 </body>

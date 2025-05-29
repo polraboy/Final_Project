@@ -12,11 +12,18 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
       rel="stylesheet"
     />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Kanit&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
         --primary-color: #ff8c00;
         --secondary-color: #007bff;
         --background-color: #f8f9fa;
+        --success-color: #28a745;
+        --danger-color: #dc3545;
+        --warning-color: #ffc107;
       }
 
       body {
@@ -27,6 +34,7 @@
 
       .navbar {
         background-color: var(--primary-color) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
       }
 
       .navbar-brand img {
@@ -41,176 +49,662 @@
 
       .nav-link {
         color: white !important;
+        transition: all 0.3s ease;
+      }
+
+      .nav-link:hover {
+        transform: translateY(-2px);
       }
 
       .content-box {
         background-color: white;
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        padding: 0;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         margin-top: 30px;
         margin-bottom: 50px;
+        overflow: hidden;
       }
 
-      .btn-secondary {
+      .project-header {
+        background: linear-gradient(135deg, var(--primary-color), #ffb347);
+        color: white;
+        padding: 40px 30px;
+        text-align: center;
+        position: relative;
+      }
+
+      .project-header h1 {
+        font-size: 2.2rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .project-header .subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0;
+      }
+
+      .project-status {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+      }
+
+      .status-running {
+        background-color: var(--success-color);
+        color: white;
+        animation: pulse 2s infinite;
+      }
+
+      .status-completed {
+        background-color: var(--danger-color);
+        color: white;
+      }
+
+      .status-pending {
+        background-color: var(--warning-color);
+        color: #856404;
+      }
+
+      @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+      }
+
+      .project-body {
+        padding: 40px;
+      }
+
+      .info-card {
+        background-color: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        border-left: 5px solid var(--primary-color);
+        transition: all 0.3s ease;
+      }
+
+      .info-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .info-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+
+      .info-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .info-icon {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+        margin-right: 15px;
+        margin-top: 2px;
+        width: 20px;
+        text-align: center;
+      }
+
+      .info-content {
+        flex: 1;
+      }
+
+      .info-label {
+        font-weight: bold;
+        color: var(--primary-color);
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      .info-value {
+        color: #495057;
+        line-height: 1.5;
+      }
+
+      .training-dates {
+        background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        border: 2px solid var(--primary-color);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .training-dates::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), #ffb347);
+      }
+
+      .dates-heading {
+        color: var(--primary-color);
+        font-weight: bold;
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .date-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        background-color: white;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+
+      .date-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .date-icon {
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        margin-right: 12px;
+        width: 20px;
+        text-align: center;
+      }
+
+      .participants-info {
+        background: linear-gradient(135deg, #fff3e0, #fce4ec);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        text-align: center;
+        border: 2px solid #ffb347;
+      }
+
+      .participants-count {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        display: block;
+      }
+
+      .participants-label {
+        color: #666;
+        font-size: 1.1rem;
+        margin-top: 5px;
+      }
+
+      .progress-bar-container {
+        margin-top: 15px;
+        background-color: #e9ecef;
+        border-radius: 10px;
+        height: 15px;
+        overflow: hidden;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), #ffb347);
+        border-radius: 10px;
+        transition: width 0.3s ease;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), #ffb347);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(255, 140, 0, 0.4);
+      }
+
+      .btn-info {
         background-color: var(--secondary-color);
         border-color: var(--secondary-color);
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: bold;
+        transition: all 0.3s ease;
       }
 
-      .btn-secondary:hover {
-        background-color: darken(var(--secondary-color), 10%);
-        border-color: darken(var(--secondary-color), 10%);
+      .btn-info:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3);
+      }
+
+      .btn-danger {
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .btn-danger:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+      }
+
+      .management-section {
+        background-color: #f8f9fa;
+        border-radius: 15px;
+        padding: 30px;
+        margin-top: 30px;
+        border: 2px solid #dee2e6;
+      }
+
+      .management-title {
+        color: var(--primary-color);
+        font-weight: bold;
+        font-size: 1.4rem;
+        margin-bottom: 25px;
+        text-align: center;
+      }
+
+      .form-check {
+        padding: 15px;
+        background-color: white;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+      }
+
+      .form-check:hover {
+        border-color: var(--primary-color);
+      }
+
+      .form-check-input:checked ~ .form-check-label {
+        color: var(--primary-color);
+        font-weight: bold;
+      }
+
+      .form-check-label {
+        font-size: 1.1rem;
+        margin-left: 10px;
+      }
+
+      .alert {
+        border-radius: 15px;
+        padding: 20px;
+        border: none;
+        font-weight: 500;
+      }
+
+      .alert-warning {
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        color: #856404;
+      }
+
+      .alert-danger {
+        background: linear-gradient(135deg, #f8d7da, #fab1a0);
+        color: #721c24;
       }
 
       .footer {
-        background-color: var(--secondary-color);
+        background: linear-gradient(135deg, var(--secondary-color), #6c5ce7);
         color: white;
         text-align: center;
         position: fixed;
         bottom: 0;
         width: 100%;
-        height: 5%; 
+        padding: 15px 0;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
       }
 
-      .footer img {
-        max-width: 100px;
-        margin-bottom: 10px;
+      .btn-back {
+        background-color: rgba(255, 255, 255, 0.2);
+        border: 2px solid white;
+        color: white;
+        border-radius: 25px;
+        padding: 8px 20px;
+        font-weight: bold;
+        transition: all 0.3s ease;
       }
 
-      .form-check-input {
-        margin-top: 0.3rem;
+      .btn-back:hover {
+        background-color: white;
+        color: var(--secondary-color);
+        transform: translateY(-2px);
       }
-      
-      /* เพิ่มสไตล์สำหรับแสดงสถานะโครงการ */
-      .project-status {
-        display: inline-block;
-        padding: 5px 10px;
-        border-radius: 5px;
-        font-weight: bold;
-        margin-bottom: 15px;
+
+      .action-buttons {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 30px;
       }
-      
-      .status-active {
-        background-color: #28a745;
-        color: white;
-      }
-      
-      .status-completed {
-        background-color: #dc3545;
-        color: white;
-      }
-      
-      /* เพิ่มสไตล์สำหรับเน้นวันที่จัดอบรม */
-      .training-dates {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 5px solid #ff8c00;
-        margin-bottom: 20px;
-      }
-      
-      .dates-heading {
-        color: #ff8c00;
-        font-weight: bold;
-        margin-bottom: 10px;
+
+      @media (max-width: 768px) {
+        .project-header {
+          padding: 30px 20px;
+        }
+
+        .project-header h1 {
+          font-size: 1.8rem;
+        }
+
+        .project-status {
+          position: static;
+          margin: 15px auto 0;
+          display: inline-flex;
+        }
+
+        .project-body {
+          padding: 25px;
+        }
+
+        .action-buttons {
+          flex-direction: column;
+        }
+
+        .action-buttons .btn {
+          width: 100%;
+        }
       }
     </style>
   </head>
 
   <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <a class="navbar-brand" href="#">
+        <img
+          src="/static/image_2024-02-07_191338051.png"
+          width="40"
+          height="40"
+          class="d-inline-block align-top"
+          alt="Logo"
+        />
+        <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br />วิทยาเขตขอนแก่น</span>
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('active_projects') }}">
+              <i class="fas fa-project-diagram"></i> โครงการ
+            </a>
+          </li>
+          {% if is_logged_in %}
+            {% if user_type == 'teacher' %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('teacher_home') }}">
+                  <i class="fas fa-home"></i> หน้าหลัก
+                </a>
+              </li>
+            {% elif user_type == 'admin' %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_home') }}">
+                  <i class="fas fa-home"></i> หน้าหลัก
+                </a>
+              </li>
+            {% elif user_type == 'student' %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('student_dashboard') }}">
+                  <i class="fas fa-home"></i> หน้าหลัก
+                </a>
+              </li>
+            {% endif %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+              </a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('home') }}">
+                <i class="fas fa-home"></i> หน้าหลัก
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('login') }}">
+                <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+
     <div class="container">
-        <div class="content-box">
-            <h2 class="text-center mb-4">รายละเอียดโครงการ</h2>
-            
-            <!-- เพิ่มการแสดงสถานะโครงการ -->
-            {% if project.project_statusStart == 1 %}
-                <div class="project-status status-active mb-3 text-center">
-                    <i class="fas fa-spinner fa-spin mr-2"></i> กำลังดำเนินการ
-                </div>
-            {% elif project.project_statusStart == 2 %}
-                <div class="project-status status-completed mb-3 text-center">
-                    <i class="fas fa-check-circle mr-2"></i> โครงการเสร็จสิ้นแล้ว
-                </div>
-            {% endif %}
-            
-            <p><strong>ชื่อโครงการ:</strong> {{ project.project_name }}</p>
-            <p><strong>ปี:</strong> {{ project.project_year }}</p>
-            <p><strong>รูปแบบโครงการ:</strong> {{ project.project_style }}</p>
-            <p><strong>ที่อยู่โครงการ:</strong> {{ project.project_address }}</p>
-            
-            <!-- เพิ่มส่วนแสดงวันที่จัดอบรมแบบเด่นชัด -->
-            <div class="training-dates">
-                <h5 class="dates-heading"><i class="far fa-calendar-alt mr-2"></i> วันที่จัดอบรม</h5>
-                <p><strong>เริ่มวันที่:</strong> {{ project.project_dotime }}</p>
-                <p><strong>สิ้นสุดวันที่:</strong> {{ project.project_endtime }}</p>
+      <div class="content-box">
+        <!-- Project Header -->
+        <div class="project-header">
+          <h1>{{ project.project_name }}</h1>
+          <p class="subtitle">{{ project.project_style }} • ปีงบประมาณ {{ project.project_year }}</p>
+          
+          <!-- Project Status Badge -->
+          {% if project.project_statusStart == 1 %}
+            <div class="project-status status-running">
+              <i class="fas fa-spinner fa-spin mr-2"></i> กำลังดำเนินการ
             </div>
-            
-            <p><strong>เป้าหมายโครงการ:</strong> {{ project.project_target }}</p>
-            <p><strong>รายละเอียดโครงการ:</strong> {{ project.project_detail }}</p>
-            <p><strong>ผู้รับผิดชอบโครงการ:</strong> {{ project.teacher_name }}</p>
-    
-            <p>จำนวนผู้เข้าร่วมปัจจุบัน: {{ current_count }} / {{ project.project_target|default(0) }}</p>
-    
-            {% if project.project_statusStart == 1 and current_count < (project.project_target|int if project.project_target else 0) %}
-                <a href="{{ url_for('join_project', project_id=project.project_id) }}" class="btn btn-primary">สมัครเข้าร่วมโครงการ</a>
-            {% elif project.project_statusStart == 2 %}
-                <p class="text-warning">โครงการนี้เสร็จสิ้นแล้ว ไม่สามารถรับสมัครเพิ่มได้</p>
-             
-            {% else %}
-                <p class="text-danger">ขออภัย โครงการนี้มีผู้เข้าร่วมเต็มแล้ว</p>
-            {% endif %}
-    
-            <a href="{{ url_for('project_participants', project_id=project.project_id) }}" class="btn btn-info mt-2">ดูรายชื่อผู้เข้าร่วมโครงการ</a>
-    
-            {% if is_logged_in and user_type == 'teacher' %}
-                {% if project.project_status == 2 %}  <!-- ตรวจสอบว่าโครงการได้รับการอนุมัติแล้ว -->
-                    <hr class="my-4">
-                    <h5>จัดการสถานะโครงการ</h5>
-                    <form id="projectStatusForm" action="{{ url_for('update_project_statusStart') }}" method="POST">
-                        <input type="hidden" name="project_id" value="{{ project.project_id }}">
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="radio" id="openProject" name="projectStatus" value="1" {% if project.project_statusStart == 1 %}checked{% endif %}>
-                            <label class="form-check-label" for="openProject">เริ่มดำเนินโครงการ</label>
-                        </div>
-                        
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="radio" id="closeProject" name="projectStatus" value="0" {% if project.project_statusStart == 0 %}checked{% endif %}>
-                            <label class="form-check-label" for="closeProject">ปิดโครงการ</label>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary">บันทึก</button>
-                    </form>
-                    
-                    <!-- แยกฟอร์มสำหรับปุ่มปิดโครงการเพื่อให้แสดงผลอย่างชัดเจน -->
-                    {% if project.project_statusStart == 1 %}
-                    <div class="mt-3">
-                        <form action="{{ url_for('close_project', project_id=project.project_id) }}" method="POST" onsubmit="return confirm('คุณแน่ใจหรือว่าต้องการปิดโครงการ?');">
-                            <input type="hidden" name="project_id" value="{{ project.project_id }}">
-                            <button type="submit" class="btn btn-danger">ปิดโครงการ</button>
-                        </form>
-                    </div>
-                    {% endif %}
-                {% else %}
-                    <p class="text-warning">โครงการยังไม่ได้รับการอนุมัติ ไม่สามารถเริ่มดำเนินการได้</p>
-                {% endif %}
-            {% endif %}
+          {% elif project.project_statusStart == 2 %}
+            <div class="project-status status-completed">
+              <i class="fas fa-check-circle mr-2"></i> เสร็จสิ้นแล้ว
+            </div>
+          {% else %}
+            <div class="project-status status-pending">
+              <i class="fas fa-clock mr-2"></i> อนุมัติแล้ว
+            </div>
+          {% endif %}
         </div>
+
+        <div class="project-body">
+          <!-- Training Dates Section -->
+          <div class="training-dates">
+            <h5 class="dates-heading">
+              <i class="far fa-calendar-alt mr-2"></i> ระยะเวลาจัดโครงการ
+            </h5>
+            <div class="date-item">
+              <i class="fas fa-play-circle date-icon"></i>
+              <div>
+                <strong>เริ่มโครงการ:</strong> {{ project.project_dotime }}
+              </div>
+            </div>
+            <div class="date-item">
+              <i class="fas fa-stop-circle date-icon"></i>
+              <div>
+                <strong>สิ้นสุดโครงการ:</strong> {{ project.project_endtime }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Participants Info -->
+          <div class="participants-info">
+            <span class="participants-count">{{ current_count }}</span>
+            <div class="participants-label">จาก {{ project.project_target|default(0) }} คน</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" style="width: {{ (current_count / (project.project_target|int if project.project_target else 1)) * 100 }}%"></div>
+            </div>
+          </div>
+
+          <!-- Project Information -->
+          <div class="info-card">
+            <div class="info-item">
+              <i class="fas fa-map-marker-alt info-icon"></i>
+              <div class="info-content">
+                <span class="info-label">สถานที่จัดโครงการ</span>
+                <div class="info-value">{{ project.project_address }}</div>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <i class="fas fa-user-tie info-icon"></i>
+              <div class="info-content">
+                <span class="info-label">ผู้รับผิดชอบโครงการ</span>
+                <div class="info-value">{{ project.teacher_name }}</div>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <i class="fas fa-users info-icon"></i>
+              <div class="info-content">
+                <span class="info-label">จำนวนเป้าหมาย</span>
+                <div class="info-value">{{ project.project_target }} คน</div>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <i class="fas fa-info-circle info-icon"></i>
+              <div class="info-content">
+                <span class="info-label">รายละเอียดโครงการ</span>
+                <div class="info-value">{{ project.project_detail }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            {% if project.project_statusStart == 1 %}
+              <!-- เปลี่ยนเงื่อนไข - ให้สมัครได้เสมอ -->
+              <a href="{{ url_for('join_project', project_id=project.project_id) }}" class="btn btn-primary">
+                <i class="fas fa-user-plus mr-2"></i> สมัครเข้าร่วมโครงการ
+              </a>
+              {% if current_count >= (project.project_target|int if project.project_target else 0) %}
+                <div class="alert alert-warning text-center mt-2">
+                  <i class="fas fa-exclamation-triangle mr-2"></i>
+                  โครงการนี้มีผู้สมัครครบตามเป้าหมายแล้ว แต่ยังสามารถสมัครเพิ่มได้ (รออาจารย์พิจารณา)
+                </div>
+              {% endif %}
+            {% elif project.project_statusStart == 2 %}
+              <div class="alert alert-warning text-center">
+                <i class="fas fa-check-circle mr-2"></i>
+                โครงการนี้เสร็จสิ้นแล้ว ไม่สามารถรับสมัครเพิ่มได้
+              </div>
+            {% else %}
+              <div class="alert alert-info text-center">
+                <i class="fas fa-clock mr-2"></i>
+                โครงการยังไม่เปิดรับสมัคร กรุณารอการแจ้งให้ทราบ
+              </div>
+            {% endif %}
+          
+            <a href="{{ url_for('project_participants', project_id=project.project_id) }}" class="btn btn-info">
+              <i class="fas fa-users mr-2"></i> ดูรายชื่อผู้เข้าร่วม
+            </a>
+          </div>
+
+          <!-- Teacher Management Section -->
+          {% if is_logged_in and user_type == 'teacher' %}
+            {% if project.project_status == 2 %}
+              <div class="management-section">
+                <h5 class="management-title">
+                  <i class="fas fa-cogs mr-2"></i> จัดการสถานะโครงการ
+                </h5>
+                
+                <form id="projectStatusForm" action="{{ url_for('update_project_statusStart') }}" method="POST">
+                  <input type="hidden" name="project_id" value="{{ project.project_id }}">
+                  
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" id="openProject" name="projectStatus" value="1" {% if project.project_statusStart == 1 %}checked{% endif %}>
+                    <label class="form-check-label" for="openProject">
+                      <i class="fas fa-play mr-2"></i> เริ่มดำเนินโครงการ
+                    </label>
+                  </div>
+                  
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" id="pendingProject" name="projectStatus" value="0" {% if project.project_statusStart == 0 %}checked{% endif %}>
+                    <label class="form-check-label" for="pendingProject">
+                      <i class="fas fa-pause mr-2"></i> หยุดชั่วคราว
+                    </label>
+                  </div>
+                  
+                  <div class="text-center mt-3">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fas fa-save mr-2"></i> บันทึกการเปลี่ยนแปลง
+                    </button>
+                  </div>
+                </form>
+                
+                {% if project.project_statusStart == 1 %}
+                <div class="text-center mt-3">
+                  <form action="{{ url_for('close_project', project_id=project.project_id) }}" method="POST" onsubmit="return confirm('คุณแน่ใจหรือว่าต้องการปิดโครงการ? การดำเนินการนี้ไม่สามารถย้อนกลับได้');">
+                    <input type="hidden" name="project_id" value="{{ project.project_id }}">
+                    <button type="submit" class="btn btn-danger">
+                      <i class="fas fa-stop mr-2"></i> ปิดโครงการ
+                    </button>
+                  </form>
+                </div>
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                โครงการยังไม่ได้รับการอนุมัติ ไม่สามารถเริ่มดำเนินการได้
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
     </div>
 
+    <!-- Footer -->
     <footer class="footer">
-        <div class="container py-2">
-            <p class="mb-0">
-                <button onclick="goBack()" class="btn btn-light btn-sm">
-                    <i class="fas fa-arrow-left"></i> ย้อนกลับ
-                </button>
-            </p>
-        </div>
+      <div class="container">
+        <button onclick="goBack()" class="btn btn-back">
+          <i class="fas fa-arrow-left mr-2"></i> ย้อนกลับ
+        </button>
+      </div>
     </footer>
 
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
     <script>
-        function goBack() {
-            window.history.back();
+      function goBack() {
+        window.history.back();
+      }
+
+      // Add smooth scroll behavior
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth'
+          });
+        });
+      });
+
+      // Add form validation
+      document.getElementById('projectStatusForm')?.addEventListener('submit', function(e) {
+        const selectedOption = document.querySelector('input[name="projectStatus"]:checked');
+        if (!selectedOption) {
+          e.preventDefault();
+          alert('กรุณาเลือกสถานะโครงการ');
         }
+      });
     </script>
   </body>
 </html>

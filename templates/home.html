@@ -18,20 +18,20 @@
     />
     <style>
       :root {
-        --primary-color: #ff8c00;
+        --primary-color: #FF8C00;
         --secondary-color: #007bff;
         --background-color: #f8f9fa;
       }
 
       body {
         background-color: var(--background-color);
-        font-family: "Kanit", sans-serif;
+        font-family: 'Kanit', sans-serif;
         padding-bottom: 100px;
       }
 
       .navbar {
         background-color: var(--primary-color) !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
       }
 
       .navbar-brand img {
@@ -83,14 +83,13 @@
         padding: 30px;
         border-radius: 15px;
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        margin-top: 30px;
-        margin-bottom: 50px;
+        margin-bottom: 30px;
       }
 
       .card {
         transition: all 0.3s ease;
         overflow: hidden;
-        height: 100%;
+        margin-bottom: 20px;
       }
 
       .card:hover {
@@ -108,48 +107,105 @@
         transform: scale(1.1);
       }
 
-      .mb-4 {
+      .section-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
         text-align: center;
-        color: var(--primary-color);
-        font-weight: bold;
-        margin-bottom: 30px !important;
       }
 
-      .login-button,
-      .active-projects-button {
-        background-color: white;
-        color: var(--primary-color);
-        border: 2px solid var(--primary-color);
-        border-radius: 5px;
-        padding: 5px 10px;
+      .section-header h3 {
+        margin: 0;
+        font-weight: bold;
+      }
+
+      .project-card {
+        border-left: 4px solid var(--primary-color);
         transition: all 0.3s ease;
       }
 
-      .login-button:hover,
-      .active-projects-button:hover {
-        background-color: var(--primary-color);
+      .project-card:hover {
+        border-left-color: var(--secondary-color);
+        transform: translateX(5px);
+      }
+
+      .project-status {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+      }
+
+      .status-running {
+        background-color: #28a745;
+        color: white;
+        animation: pulse 2s infinite;
+      }
+
+      .status-completed {
+        background-color: #dc3545;
         color: white;
       }
 
-      .active-projects-button {
-        display: block;
-        width: 200px;
-        margin: 30px auto;
-        text-align: center;
-        text-decoration: none;
-        padding: 10px;
-        font-size: 1.1em;
+      .status-approved {
+        background-color: #17a2b8;
+        color: white;
       }
-      .constant-item {
-        margin-bottom: 20px;
-        padding: 15px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-    }
-    
-    .pagination {
+
+      @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+      }
+
+      .login-button {
+        background-color: white;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+        border-radius: 25px;
+        padding: 8px 20px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+      }
+
+      .login-button:hover {
+        background-color: var(--primary-color);
+        color: white;
+        text-decoration: none;
+      }
+
+      .pagination {
         margin-top: 20px;
-    }
+      }
+
+      .no-data {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+      }
+
+      .no-data i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), #ffb347);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+      }
     </style>
   </head>
 
@@ -159,12 +215,12 @@
       <a class="navbar-brand" href="#">
         <img
           src="/static/image_2024-02-07_191338051.png"
-          width="30"
-          height="30"
+          width="40"
+          height="40"
           class="d-inline-block align-top"
-          alt="Your Logo"
+          alt="Logo"
         />
-        <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br />วิทยาเขต ขอนแก่น</span>
+        <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br />วิทยาเขตขอนแก่น</span>
       </a>
       <button
         class="navbar-toggler"
@@ -180,70 +236,138 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ml-auto">
           <li class="nav-item active">
-            <a class="nav-link" href="/"
-              ><i class="fas fa-home"></i> หน้าหลัก</a
-            >
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="active_projects"
-              ><i class="fas fa-project-diagram"></i> โครงการ</a
-            >
+            <a class="nav-link" href="/">
+              <i class="fas fa-home"></i> หน้าหลัก
+            </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link login-button" href="/login"
-              ><i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ</a
-            >
+            <a class="nav-link" href="active_projects">
+              <i class="fas fa-project-diagram"></i> โครงการ
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link login-button" href="/login">
+              <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
+            </a>
           </li>
         </ul>
       </div>
     </nav>
 
     <!-- Content -->
-    <div class="container mt-5">
-        <div class="content-box">
-            <h2 class="mb-4">ข้อมูลข่าวสาร</h2>
-            <div class="row">
-                {% for constant in constants %}
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100">
-                        <img src="data:image/jpeg;base64,{{ constant[2] }}" class="card-img-top" alt="{{ constant[0] }}">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ constant[0] }}</h5>
-                            <p class="card-text">{{ constant[1] }}</p>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+    <div class="container mt-4">
+      <div class="row">
+        <!-- ส่วนซ้าย: ข้อมูลข่าวสาร -->
+        <div class="col-lg-6">
+          <div class="content-box">
+            <div class="section-header">
+              <h3><i class="fas fa-newspaper"></i> ข้อมูลข่าวสาร</h3>
             </div>
             
+            {% if constants|length > 0 %}
+              {% for constant in constants %}
+              <div class="card mb-3">
+                <img src="data:image/jpeg;base64,{{ constant[2] }}" class="card-img-top" alt="{{ constant[0] }}">
+                <div class="card-body">
+                  <h5 class="card-title">{{ constant[0] }}</h5>
+                  <p class="card-text">{{ constant[1] }}</p>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="no-data">
+                <i class="fas fa-newspaper"></i>
+                <p>ไม่มีข้อมูลข่าวสาร</p>
+              </div>
+            {% endif %}
+            
             {% if total_pages > 1 %}
-<nav aria-label="Page navigation">
-    <ul class="pagination justify-content-center">
-        <li class="page-item {% if page == 1 %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('home', page=page-1) }}" {% if page == 1 %}tabindex="-1" aria-disabled="true"{% endif %}>ก่อนหน้า</a>
-        </li>
-        
-        <li class="page-item active" aria-current="page">
-            <span class="page-link">
-                หน้า {{ page }} จาก {{ total_pages }}
-            </span>
-        </li>
-        
-        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('home', page=page+1) }}" {% if page == total_pages %}tabindex="-1" aria-disabled="true"{% endif %}>ถัดไป</a>
-        </li>
-    </ul>
-</nav>
-{% endif %}
+            <nav aria-label="Page navigation">
+              <ul class="pagination justify-content-center">
+                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                  <a class="page-link" href="{{ url_for('home', page=page-1) }}" {% if page == 1 %}tabindex="-1" aria-disabled="true"{% endif %}>ก่อนหน้า</a>
+                </li>
+                <li class="page-item active" aria-current="page">
+                  <span class="page-link">หน้า {{ page }} จาก {{ total_pages }}</span>
+                </li>
+                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                  <a class="page-link" href="{{ url_for('home', page=page+1) }}" {% if page == total_pages %}tabindex="-1" aria-disabled="true"{% endif %}>ถัดไป</a>
+                </li>
+              </ul>
+            </nav>
+            {% endif %}
+          </div>
+        </div>
 
-      <a href="{{ url_for('active_projects') }}" class="active-projects-button">
-        <i class="fas fa-project-diagram"></i> โครงการที่กำลังเริ่ม
-      </a>
+        <!-- ส่วนขวา: โครงการที่กำลังจัด -->
+        <div class="col-lg-6">
+          <div class="content-box">
+            <div class="section-header">
+              <h3><i class="fas fa-project-diagram"></i> โครงการที่กำลังจัด</h3>
+            </div>
+            
+            {% if active_projects|length > 0 %}
+              {% for project in active_projects %}
+              <div class="card project-card mb-3">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <h5 class="card-title">{{ project.project_name }}</h5>
+                    {% if project.project_statusStart == 1 %}
+                      <span class="project-status status-running">กำลังดำเนินการ</span>
+                    {% elif project.project_statusStart == 2 %}
+                      <span class="project-status status-completed">เสร็จสิ้น</span>
+                    {% else %}
+                      <span class="project-status status-approved">อนุมัติแล้ว</span>
+                    {% endif %}
+                  </div>
+                  
+                  <p class="card-text">
+                    <small class="text-muted">
+                      <i class="far fa-calendar-alt"></i> 
+                      {{ project.project_dotime.strftime('%d/%m/%Y') if project.project_dotime else '-' }} - 
+                      {{ project.project_endtime.strftime('%d/%m/%Y') if project.project_endtime else '-' }}
+                    </small>
+                  </p>
+                  
+                  <p class="card-text">
+                    <i class="fas fa-map-marker-alt"></i> {{ project.project_address }}
+                  </p>
+                  
+                  <p class="card-text">
+                    <i class="fas fa-user-tie"></i> <strong>อาจารย์:</strong> {{ project.teacher_name }}
+                  </p>
+                  
+                  <p class="card-text">
+                    <i class="fas fa-users"></i> <strong>ผู้เข้าร่วม:</strong> {{ project.participant_count }}/{{ project.project_target }} คน
+                  </p>
+                  
+                  <div class="mt-3">
+                    <a href="{{ url_for('project_detail', project_id=project.project_id) }}" class="btn btn-primary btn-sm">
+                      <i class="fas fa-eye"></i> ดูรายละเอียด
+                    </a>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              
+              <div class="text-center mt-3">
+                <a href="{{ url_for('active_projects') }}" class="btn btn-outline-primary">
+                  <i class="fas fa-list"></i> ดูโครงการทั้งหมด
+                </a>
+              </div>
+            {% else %}
+              <div class="no-data">
+                <i class="fas fa-project-diagram"></i>
+                <p>ไม่มีโครงการที่กำลังจัดในขณะนี้</p>
+                <a href="{{ url_for('active_projects') }}" class="btn btn-primary">
+                  <i class="fas fa-eye"></i> ดูโครงการทั้งหมด
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
     </div>
-
-    <!-- Footer -->
-    
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>

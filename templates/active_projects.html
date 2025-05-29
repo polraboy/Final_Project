@@ -4,174 +4,358 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>โครงการที่เปิดให้เข้าร่วม</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
     <style>
+        :root {
+            --primary-color: #FF8C00;
+            --secondary-color: #007bff;
+            --background-color: #f8f9fa;
+        }
+
         body {
-            background-color: #fff5e6;
+            background-color: var(--background-color);
+            font-family: 'Kanit', sans-serif;
+            padding-bottom: 100px;
         }
+
         .navbar {
-            background-color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            background-color: var(--primary-color) !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
         }
-        .navbar-brand {
-            color: #ff8c00 !important;
+
+        .navbar-brand img {
+            margin-right: 10px;
+        }
+
+        .navbar-brand span {
+            font-size: 1rem;
+            line-height: 1.2;
+            color: white;
+        }
+
+        .nav-link {
+            color: white !important;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+        }
+
+        .content-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .page-header h2 {
+            margin: 0;
+            font-weight: bold;
+            font-size: 2rem;
+        }
+
+        .page-header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+
+        .project-card {
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), #ffb347);
+            color: white;
+            border: none;
+            padding: 20px;
+            position: relative;
+        }
+
+        .project-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .project-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
             font-weight: bold;
         }
-        .nav-link {
-            color: #ff8c00 !important;
-        }
-        .nav-link:hover {
-            color: #e67300 !important;
-        }
-        .content-box {
-            background-color: #ffffff;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .card {
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border: none;
-            transition: transform 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        .card-title {
-            color: #ff8c00;
-        }
-        .btn-primary {
-            background-color: #ff8c00;
-            border-color: #ff8c00;
-        }
-        .btn-primary:hover {
-            background-color: #e67300;
-            border-color: #e67300;
-        }
-        .btn-secondary {
-            background-color: #ffa333;
-            border-color: #ffa333;
-        }
-        .btn-secondary:hover {
-            background-color: #ff8c00;
-            border-color: #ff8c00;
-        }
-        h2 {
-            color: #ff8c00;
-        }
-        /* เพิ่มสไตล์สำหรับ badge สถานะโครงการ */
-        .badge-active {
+
+        .status-running {
             background-color: #28a745;
             color: white;
-            font-size: 0.85rem;
-            padding: 5px 8px;
+            animation: pulse 2s infinite;
         }
-        .badge-completed {
+
+        .status-completed {
             background-color: #dc3545;
             color: white;
-            font-size: 0.85rem;
-            padding: 5px 8px;
         }
-        /* เพิ่มสไตล์สำหรับแสดงวันที่ */
-        .date-container {
+
+        .status-approved {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        .teacher-info {
             background-color: #f8f9fa;
-            padding: 8px;
-            border-radius: 5px;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .teacher-name {
+            color: var(--primary-color);
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .date-container {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .date-row {
+            display: flex;
+            align-items: center;
             margin-bottom: 10px;
         }
-        .date-icon {
-            color: #ff8c00;
-            margin-right: 5px;
+
+        .date-row:last-child {
+            margin-bottom: 0;
         }
-        /* เพิ่มสไตล์สำหรับแสดงชื่อผู้รับผิดชอบโครงการ */
-        .teacher-name {
-            font-size: 0.9rem;
+
+        .date-icon {
+            color: var(--primary-color);
+            margin-right: 10px;
+            width: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), #ffb347);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background-color: darken(var(--secondary-color), 10%);
+            border-color: darken(var(--secondary-color), 10%);
+            transform: translateY(-2px);
+        }
+
+        .no-projects {
+            text-align: center;
+            padding: 60px 20px;
             color: #6c757d;
-            margin-top: 5px;
+        }
+
+        .no-projects i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .no-projects h4 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+
+        .stats-bar {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0 30px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: block;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .footer img {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .project-status {
+                position: static;
+                display: inline-block;
+                margin-top: 10px;
+            }
+
+            .project-title {
+                font-size: 1.1rem;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+            }
+
+            .stat-item {
+                padding: 10px 0;
+            }
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light">
-        <a class="navbar-brand" href="#">
-            <img src="/static/image_2024-02-07_191338051.png" width="30" height="30" class="d-inline-block align-top" alt="Logo">
-            มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขต ขอนแก่น
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('active_projects') }}">โครงการ</a>
-                </li>
-                {% if is_logged_in %}
-                    {% if user_type == 'teacher' %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('teacher_home') }}">หน้าหลัก</a>
-                        </li>
-                    {% elif user_type == 'admin' %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin_home') }}">หน้าหลัก</a>
-                        </li>
-                    {% endif %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('logout') }}">ออกจากระบบ</a>
-                    </li>
-                {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('home') }}">หน้าหลัก</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('login') }}">เข้าสู่ระบบ</a>
-                    </li>
-                {% endif %}
-            </ul>
-        </div>
-    </nav>
+   
 
-    <div class="container mt-5">
+    <div class="container">
         <div class="content-box">
-            <h2 class="text-center mb-4">โครงการที่เปิดให้เข้าร่วม</h2>
+            <!-- Page Header -->
+            <div class="page-header">
+                <h2><i class="fas fa-project-diagram"></i> โครงการที่เปิดให้เข้าร่วม</h2>
+                <p>ค้นหาและเข้าร่วมโครงการที่น่าสนใจสำหรับคุณ</p>
+            </div>
 
             {% if projects %}
+                <!-- Stats Bar -->
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <span class="stat-number">{{ projects|length }}</span>
+                        <span class="stat-label">โครงการทั้งหมด</span>
+                    </div>
+                </div>
+
+                <!-- Projects Grid -->
                 <div class="row">
                     {% for project in projects %}
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <!-- เพิ่มการแสดงสถานะโครงการ -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="card project-card">
+                                <div class="card-header">
+                                    <h5 class="project-title">{{ project[1] }}</h5>
                                     {% if project[4] == 1 %}
-                                        <span class="badge badge-active float-right">
+                                        <span class="project-status status-running">
                                             <i class="fas fa-spinner fa-spin"></i> กำลังดำเนินการ
                                         </span>
                                     {% elif project[4] == 2 %}
-                                        <span class="badge badge-completed float-right">
+                                        <span class="project-status status-completed">
                                             <i class="fas fa-check-circle"></i> เสร็จสิ้นแล้ว
                                         </span>
+                                    {% else %}
+                                        <span class="project-status status-approved">
+                                            <i class="fas fa-clock"></i> อนุมัติแล้ว
+                                        </span>
                                     {% endif %}
-                                    
-                                    <h5 class="card-title">{{ project[1] }}</h5>
-                                    
-                                    <!-- เพิ่มชื่อผู้รับผิดชอบโครงการ -->
-                                    <p class="teacher-name">
-                                        <i class="fas fa-user-tie"></i> {{ project[5] }}
-                                    </p>
-                                    
-                                    <!-- ปรับการแสดงวันที่ให้น่าสนใจขึ้น -->
-                                    <div class="date-container">
-                                        <p class="card-text mb-1">
-                                            <i class="fas fa-calendar-alt date-icon"></i> <strong>เริ่ม:</strong> {{ project[2].strftime('%d/%m/%Y') }}
-                                        </p>
-                                        <p class="card-text mb-0">
-                                            <i class="fas fa-calendar-check date-icon"></i> <strong>สิ้นสุด:</strong> {{ project[3].strftime('%d/%m/%Y') }}
+                                </div>
+                                
+                                <div class="card-body">
+                                    <!-- Teacher Info -->
+                                    <div class="teacher-info">
+                                        <p class="teacher-name">
+                                            <i class="fas fa-user-tie"></i> {{ project[5] }}
                                         </p>
                                     </div>
                                     
+                                    <!-- Date Info -->
+                                    <div class="date-container">
+                                        <div class="date-row">
+                                            <i class="fas fa-calendar-alt date-icon"></i>
+                                            <div>
+                                                <strong>เริ่มโครงการ:</strong><br>
+                                                {{ project[2].strftime('%d/%m/%Y') if project[2] else 'ไม่ระบุ' }}
+                                            </div>
+                                        </div>
+                                        <div class="date-row">
+                                            <i class="fas fa-calendar-check date-icon"></i>
+                                            <div>
+                                                <strong>สิ้นสุดโครงการ:</strong><br>
+                                                {{ project[3].strftime('%d/%m/%Y') if project[3] else 'ไม่ระบุ' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Action Button -->
                                     <a href="{{ url_for('project_detail', project_id=project[0]) }}" class="btn btn-primary btn-block">
-                                        <i class="fas fa-info-circle"></i> ดูรายละเอียด
+                                        <i class="fas fa-info-circle"></i> ดูรายละเอียดโครงการ
                                     </a>
                                 </div>
                             </div>
@@ -179,31 +363,42 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="alert alert-info text-center" role="alert">
-                    <i class="fas fa-info-circle mr-2"></i> ไม่มีโครงการที่เปิดให้เข้าร่วมในขณะนี้
+                <div class="no-projects">
+                    <i class="fas fa-project-diagram"></i>
+                    <h4>ไม่มีโครงการที่เปิดให้เข้าร่วม</h4>
+                    <p>ขณะนี้ยังไม่มีโครงการที่เปิดให้เข้าร่วม กรุณาเช็คกลับมาใหม่อีกครั้ง</p>
                 </div>
             {% endif %}
 
-            {% if is_logged_in %}
-                {% if user_type == 'teacher' %}
-                    <a href="{{ url_for('teacher_home') }}" class="btn btn-secondary mt-3">
-                        <i class="fas fa-arrow-left"></i> กลับ
-                    </a>
-                {% elif user_type == 'admin' %}
-                    <a href="{{ url_for('admin_home') }}" class="btn btn-secondary mt-3">
-                        <i class="fas fa-arrow-left"></i> กลับ
+            <!-- Back Button -->
+            <div class="text-center mt-4">
+                {% if is_logged_in %}
+                    {% if user_type == 'teacher' %}
+                        <a href="{{ url_for('teacher_home') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> กลับสู่หน้าหลัก
+                        </a>
+                    {% elif user_type == 'admin' %}
+                        <a href="{{ url_for('admin_home') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> กลับสู่หน้าหลัก
+                        </a>
+                    {% elif user_type == 'student' %}
+                        <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> กลับสู่หน้าหลัก
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ url_for('home') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> กลับสู่หน้าหลัก
                     </a>
                 {% endif %}
-            {% else %}
-                <a href="{{ url_for('home') }}" class="btn btn-secondary mt-3">
-                    <i class="fas fa-arrow-left"></i> กลับ
-                </a>
-            {% endif %}
+            </div>
         </div>
     </div>
 
+    
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

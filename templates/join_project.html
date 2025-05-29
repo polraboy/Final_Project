@@ -61,6 +61,9 @@
         margin-bottom: 20px;
         border-left: 5px solid #ff8c00;
       }
+      .swal2-popup {
+        font-family: 'Kanit', sans-serif !important;
+      }
     </style>
   </head>
   <body>
@@ -134,31 +137,40 @@
             </div>
 
             <!-- ฟิลด์สำหรับนักศึกษาใหม่ -->
-            <div id="newStudentFields">
-              <div class="form-group">
-                <label for="join_name"><i class="fas fa-user"></i> ชื่อ-นามสกุล:</label>
-                <input type="text" class="form-control" id="join_name" name="join_name">
-              </div>
-              <div class="form-group">
-                <label for="join_branch"><i class="fas fa-graduation-cap"></i> สาขา:</label>
-                <select class="form-control" id="join_branch" name="branch_id">
-                  <option value="" disabled selected>เลือกสาขาของคุณ</option>
-                  {% for branch in branches %}
-                    <option value="{{ branch.branch_id if branch is mapping else branch[0] }}">
-                      {{ branch.branch_name if branch is mapping else branch[1] }}
-                    </option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="join_telephone"><i class="fas fa-phone"></i> เบอร์โทรศัพท์:</label>
-                <input type="tel" class="form-control" id="join_telephone" name="join_telephone">
-              </div>
-              <div class="form-group">
-                <label for="join_email"><i class="fas fa-envelope"></i> อีเมล:</label>
-                <input type="email" class="form-control" id="join_email" name="join_email">
-              </div>
-            </div>
+<div id="newStudentFields">
+  <!-- 1. รหัสนักศึกษา (ย้ายมาอยู่ใน newStudentFields) -->
+  
+  <!-- 2. ชื่อ-นามสกุล -->
+  <div class="form-group">
+    <label for="join_name"><i class="fas fa-user"></i> ชื่อ-นามสกุล:</label>
+    <input type="text" class="form-control" id="join_name" name="join_name">
+  </div>
+  
+  <!-- 3. เบอร์โทรศัพท์ -->
+  <div class="form-group">
+    <label for="join_telephone"><i class="fas fa-phone"></i> เบอร์โทรศัพท์:</label>
+    <input type="tel" class="form-control" id="join_telephone" name="join_telephone">
+  </div>
+  
+  <!-- 4. อีเมล -->
+  <div class="form-group">
+    <label for="join_email"><i class="fas fa-envelope"></i> อีเมล:</label>
+    <input type="email" class="form-control" id="join_email" name="join_email">
+  </div>
+  
+  <!-- 5. สาขา -->
+  <div class="form-group">
+    <label for="join_branch"><i class="fas fa-graduation-cap"></i> สาขา:</label>
+    <select class="form-control" id="join_branch" name="branch_id">
+      <option value="" disabled selected>เลือกสาขาของคุณ</option>
+      {% for branch in branches %}
+        <option value="{{ branch.branch_id if branch is mapping else branch[0] }}">
+          {{ branch.branch_name if branch is mapping else branch[1] }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
 
             <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
               <i class="fas fa-paper-plane"></i> สมัครเข้าร่วม
@@ -169,29 +181,6 @@
           <a href="{{ url_for('project_detail', project_id=project_id) }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> กลับไปหน้ารายละเอียดโครงการ
           </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal สำหรับยืนยันการสมัคร -->
-    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="confirmModalLabel">ยืนยันการสมัครเข้าร่วมโครงการ</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p>คุณต้องการยืนยันการสมัครเข้าร่วมโครงการนี้ใช่หรือไม่?</p>
-            <p>ชื่อ-นามสกุล: <strong id="studentName"></strong></p>
-            <p>รหัสนักศึกษา: <strong id="studentIdConfirm"></strong></p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
-            <button type="button" class="btn btn-primary" id="confirmSubmit">ยืนยัน</button>
-          </div>
         </div>
       </div>
     </div>
@@ -212,165 +201,217 @@
             $('#join_name, #join_branch, #join_telephone, #join_email').prop('required', false);
           }
         });
-
-        // จัดการการส่งฟอร์ม
-        $('#joinForm').submit(function(e) {
-          // ถ้าเป็นนักศึกษาที่เคยลงทะเบียนแล้ว
-          if ($('#returningStudent').is(':checked')) {
-            e.preventDefault();
-            var studentId = $('#student_id').val();
-            
-            if (!studentId) {
-              Swal.fire({
-                title: 'กรุณากรอกรหัสนักศึกษา',
-                text: 'กรุณากรอกรหัสนักศึกษาก่อนทำการตรวจสอบ',
-                icon: 'warning',
-                confirmButtonColor: '#ff8c00'
-              });
-              return;
-            }
-            
-            $.ajax({
-              url: '/check_student_id_column',
-              method: 'GET',
-              success: function(response) {
-                if (!response.has_column) {
-                  // ถ้าไม่มีคอลัมน์ ให้ปิดตัวเลือก returning และเลือก new โดยอัตโนมัติ
-                  $('#returningStudent').prop('disabled', true);
-                  $('#newStudent').prop('checked', true).trigger('change');
-                  $('.form-check-label[for="returningStudent"]').append(' (ไม่สามารถใช้งานได้)');
-                }
-              }
-            });
-            
-            // สร้าง spinner หรือข้อความกำลังดำเนินการ
-            Swal.fire({
-              title: 'กำลังตรวจสอบข้อมูล',
-              text: 'กรุณารอสักครู่...',
-              allowOutsideClick: false,
-              didOpen: () => {
-                Swal.showLoading();
-              }
-            });
-            
-            // ส่ง AJAX request เพื่อตรวจสอบข้อมูลนักศึกษา
-            $.ajax({
-              url: '/check_student',
-              method: 'POST',
-              data: { 
-                student_id: studentId, 
-                project_id: {{ project_id }} 
-              },
-              success: function(response) {
-                Swal.close(); // ปิด loading
-                
-                if (response.already_joined) {
-                  // นักศึกษาเคยลงทะเบียนโครงการนี้แล้ว
-                  Swal.fire({
-                    title: 'ลงทะเบียนซ้ำ',
-                    text: 'รหัสนักศึกษา ' + studentId + ' ได้ลงทะเบียนเข้าร่วมโครงการนี้แล้ว',
-                    icon: 'warning',
-                    confirmButtonColor: '#ff8c00'
-                  });
-                } else if (response.exists) {
-                  // แสดงชื่อนักศึกษาในป๊อปอัพ
-                  $('#studentName').text(response.student_name);
-                  $('#studentIdConfirm').text(studentId);
-                  $('#confirmModal').modal('show');
-                } else {
-                  // ไม่พบข้อมูลนักศึกษา
-                  Swal.fire({
-                    title: 'ไม่พบข้อมูล',
-                    text: 'ไม่พบข้อมูลนักศึกษารหัส ' + studentId + ' ในระบบ โปรดลงทะเบียนแบบนักศึกษาใหม่',
-                    icon: 'info',
-                    confirmButtonColor: '#ff8c00'
-                  }).then((result) => {
-                    $('#newStudent').prop('checked', true).trigger('change');
-                  });
-                }
-              },
-              error: function() {
-                Swal.close(); // ปิด loading
+      
+        // ตรวจสอบการทับซ้อนเมื่อกรอกรหัสนักศึกษาเสร็จ
+        $('#student_id').blur(function() {
+          var studentId = $(this).val();
+          if (studentId && studentId.length >= 8) {
+            checkScheduleConflict(studentId);
+          }
+        });
+      
+        // ฟังก์ชันตรวจสอบการทับซ้อน
+        function checkScheduleConflict(studentId) {
+          $.ajax({
+            url: '/check_schedule_conflict',
+            method: 'POST',
+            data: { 
+              student_id: studentId, 
+              project_id: {{ project_id }} 
+            },
+            success: function(response) {
+              if (response.has_conflict) {
+                var conflictText = 'คุณได้สมัครโครงการที่มีวันจัดทับซ้อนกันแล้ว:\n';
+                response.conflicts.forEach(function(conflict) {
+                  conflictText += `• ${conflict.name} (${conflict.start_date} - ${conflict.end_date}) - ${conflict.status}\n`;
+                });
                 
                 Swal.fire({
-                  title: 'เกิดข้อผิดพลาด',
-                  text: 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล กรุณาลองใหม่อีกครั้ง',
-                  icon: 'error',
-                  confirmButtonColor: '#ff8c00'
+                  title: 'พบการทับซ้อนของวันจัดโครงการ',
+                  text: conflictText,
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonColor: '#ff8c00',
+                  cancelButtonColor: '#6c757d',
+                  confirmButtonText: 'สมัครต่อไป',
+                  cancelButtonText: 'ยกเลิก',
+                  customClass: {
+                    popup: 'swal2-popup'
+                  }
+                }).then((result) => {
+                  if (!result.isConfirmed) {
+                    $('#student_id').val('').focus();
+                  }
                 });
               }
+            },
+            error: function() {
+              console.error('Error checking schedule conflict');
+            }
+          });
+        }
+      
+        // จัดการการส่งฟอร์ม
+        $('#joinForm').submit(function(e) {
+          e.preventDefault(); // ป้องกันการส่งฟอร์มแบบปกติ
+          
+          var studentId = $('#student_id').val();
+          var registrationType = $('input[name="registrationType"]:checked').val();
+          
+          if (!studentId) {
+            Swal.fire({
+              title: 'กรุณากรอกรหัสนักศึกษา',
+              text: 'กรุณากรอกรหัสนักศึกษาก่อนดำเนินการ',
+              icon: 'warning',
+              confirmButtonColor: '#ff8c00',
+              confirmButtonText: 'ตกลง'
             });
+            return;
           }
-          // ถ้าเป็นนักศึกษาใหม่ ตรวจสอบก่อนว่าได้กรอกข้อมูลครบหรือไม่
-          else if ($('#newStudent').is(':checked')) {
-            var studentId = $('#student_id').val();
+      
+          // ตรวจสอบข้อมูลสำหรับนักศึกษาใหม่
+          if (registrationType === 'new') {
             var name = $('#join_name').val();
             var branch = $('#join_branch').val();
             var phone = $('#join_telephone').val();
             var email = $('#join_email').val();
             
-            if (!studentId || !name || !branch || !phone || !email) {
-              e.preventDefault();
+            if (!name || !branch || !phone || !email) {
               Swal.fire({
                 title: 'ข้อมูลไม่ครบถ้วน',
                 text: 'กรุณากรอกข้อมูลให้ครบทุกช่อง',
                 icon: 'warning',
-                confirmButtonColor: '#ff8c00'
+                confirmButtonColor: '#ff8c00',
+                confirmButtonText: 'ตกลง'
               });
               return;
             }
-            
-            // ตรวจสอบว่ารหัสนักศึกษานี้ได้ลงทะเบียนโครงการนี้แล้วหรือไม่
-            e.preventDefault();
-            
-            Swal.fire({
-              title: 'กำลังตรวจสอบข้อมูล',
-              text: 'กรุณารอสักครู่...',
-              allowOutsideClick: false,
-              didOpen: () => {
-                Swal.showLoading();
-              }
-            });
-            
-            $.ajax({
-              url: '/check_student',
-              method: 'POST',
-              data: { 
-                student_id: studentId, 
-                project_id: {{ project_id }} 
-              },
-              success: function(response) {
-                Swal.close(); // ปิด loading
-                
-                if (response.already_joined) {
-                  // นักศึกษาเคยลงทะเบียนโครงการนี้แล้ว
-                  Swal.fire({
-                    title: 'ลงทะเบียนซ้ำ',
-                    text: 'รหัสนักศึกษา ' + studentId + ' ได้ลงทะเบียนเข้าร่วมโครงการนี้แล้ว',
-                    icon: 'warning',
-                    confirmButtonColor: '#ff8c00'
-                  });
-                } else {
-                  // ดำเนินการส่งฟอร์ม
-                  $('#joinForm')[0].submit();
-                }
-              },
-              error: function() {
-                Swal.close(); // ปิด loading
-                
-                // สำหรับกรณีเกิดข้อผิดพลาด ให้ดำเนินการส่งฟอร์มต่อไป
-                $('#joinForm')[0].submit();
-              }
-            });
           }
+          
+          // แสดง loading
+          Swal.fire({
+            title: 'กำลังตรวจสอบข้อมูล',
+            text: 'กรุณารอสักครู่...',
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+          
+          // ตรวจสอบว่ารหัสนักศึกษาได้ลงทะเบียนโครงการนี้แล้วหรือไม่
+          $.ajax({
+            url: '/check_student',
+            method: 'POST',
+            data: { 
+              student_id: studentId, 
+              project_id: {{ project_id }} 
+            },
+            success: function(response) {
+              Swal.close(); // ปิด loading
+              
+              if (response.already_joined) {
+                // นักศึกษาเคยลงทะเบียนโครงการนี้แล้ว
+                Swal.fire({
+                  title: 'ลงทะเบียนซ้ำ',
+                  text: 'รหัสนักศึกษา ' + studentId + ' ได้ลงทะเบียนเข้าร่วมโครงการนี้แล้ว',
+                  icon: 'warning',
+                  confirmButtonColor: '#ff8c00',
+                  confirmButtonText: 'ตกลง'
+                });
+                return;
+              }
+              
+              // สำหรับนักศึกษาเก่า - ตรวจสอบว่ามีข้อมูลในระบบหรือไม่
+              if (registrationType === 'returning') {
+                if (response.exists) {
+                  // พบข้อมูล - แสดงข้อมูลและขอยืนยัน
+                  showConfirmationPopup(response.student_name, studentId, response);
+                } else {
+                  // ไม่พบข้อมูล - แนะนำให้ลงทะเบียนแบบใหม่
+                  Swal.fire({
+                    title: 'ไม่พบข้อมูล',
+                    text: 'ไม่พบข้อมูลนักศึกษารหัส ' + studentId + ' ในระบบ โปรดลงทะเบียนแบบนักศึกษาใหม่',
+                    icon: 'info',
+                    confirmButtonColor: '#ff8c00',
+                    confirmButtonText: 'เปลี่ยนเป็นนักศึกษาใหม่'
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                      $('#newStudent').prop('checked', true).trigger('change');
+                    }
+                  });
+                }
+              } else {
+                // สำหรับนักศึกษาใหม่ - ดำเนินการลงทะเบียนโดยตรง
+                showConfirmationPopup($('#join_name').val(), studentId, null);
+              }
+            },
+            error: function(xhr, status, error) {
+              Swal.close(); // ปิด loading
+              
+              console.error('AJAX Error:', status, error);
+              Swal.fire({
+                title: 'เกิดข้อผิดพลาด',
+                text: 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล กรุณาลองใหม่อีกครั้ง',
+                icon: 'error',
+                confirmButtonColor: '#ff8c00',
+                confirmButtonText: 'ตกลง'
+              });
+            }
+          });
         });
-
-        // เมื่อคลิกปุ่มยืนยันในป๊อปอัพ
-        $('#confirmSubmit').click(function() {
-          $('#confirmModal').modal('hide');
-          $('#joinForm')[0].submit();
-        });
+      
+        // ฟังก์ชันแสดง popup ยืนยัน
+        function showConfirmationPopup(studentName, studentId, existingData) {
+          var registrationType = $('input[name="registrationType"]:checked').val();
+          var branchName = '';
+          
+          if (registrationType === 'returning' && existingData) {
+            branchName = existingData.branch_name || 'ไม่ระบุสาขา';
+          } else {
+            var selectedBranch = $('#join_branch option:selected');
+            branchName = selectedBranch.text() || 'ไม่ระบุสาขา';
+          }
+          
+          Swal.fire({
+            title: 'ยืนยันการสมัครเข้าร่วมโครงการ',
+            html: `
+              <div class="text-left">
+                <p><strong>รหัสนักศึกษา:</strong> ${studentId}</p>
+                <p><strong>ชื่อ-นามสกุล:</strong> ${studentName}</p>
+                <p><strong>สาขา:</strong> ${branchName}</p>
+                <hr>
+                <p class="text-center text-muted">คุณต้องการยืนยันการสมัครเข้าร่วมโครงการนี้ใช่หรือไม่?</p>
+              </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#dc3545',
+            confirmButtonText: '<i class="fas fa-check"></i> ยืนยัน',
+            cancelButtonText: '<i class="fas fa-times"></i> ยกเลิก',
+            customClass: {
+              popup: 'swal2-popup'
+            }
+          }).then((result) => {
+            if (result.isConfirmed) {
+              // แสดง loading ขณะส่งข้อมูล
+              Swal.fire({
+                title: 'กำลังส่งข้อมูล...',
+                text: 'กรุณารอสักครู่',
+                allowOutsideClick: false,
+                didOpen: () => {
+                  Swal.showLoading();
+                }
+              });
+              
+              // ส่งฟอร์ม
+              setTimeout(() => {
+                $('#joinForm')[0].submit();
+              }, 1000);
+            }
+          });
+        }
       });
-    </script>
+      </script>
   </body>
 </html>

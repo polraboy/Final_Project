@@ -155,6 +155,20 @@
         padding: 4px 8px;
         border-radius: 4px;
       }
+
+      /* เพิ่มสไตล์สำหรับแสดงผู้อนุมัติ */
+      .approver-badge {
+        background-color: #17a2b8;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        display: inline-block;
+      }
+
+      .approver-badge i {
+        margin-right: 4px;
+      }
     </style>
   </head>
   <body>
@@ -285,11 +299,12 @@
             <thead>
               <tr>
                 <th scope="col" style="width: 5%;">ลำดับ</th>
-                <th scope="col" style="width: 30%;">ชื่อโครงการ</th>
+                <th scope="col" style="width: 25%;">ชื่อโครงการ</th>
                 <th scope="col" style="width: 15%;">ผู้รับผิดชอบ</th>
-                <th scope="col" style="width: 15%;">สาขา</th>
+                <th scope="col" style="width: 10%;">สาขา</th>
                 <th scope="col" style="width: 15%;">วันที่จัด</th>
                 <th scope="col" style="width: 10%;">วันที่เสร็จสิ้น</th>
+                <th scope="col" style="width: 10%;">ผู้อนุมัติ</th>
                 <th scope="col" style="width: 10%;">รายงานสรุป</th>
               </tr>
             </thead>
@@ -308,6 +323,17 @@
                   <td>{{ project[4].strftime('%d/%m/%Y') }} - {{ project[5].strftime('%d/%m/%Y') }}</td>
                   <td>{{ project[6].strftime('%d/%m/%Y') if project[6] else "-" }}</td>
                   <td>
+                    {% if project[10] %}
+                      <span class="approver-badge">
+                        <i class="fas fa-user-check"></i> {{ project[10] }}
+                      </span>
+                    {% else %}
+                      <span class="text-muted">
+                        <i class="fas fa-question-circle"></i> ไม่ระบุ
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td>
                     {% if project[9] %}
                     <a href="{{ url_for('download_summary_pdf', project_id=project[0]) }}" class="btn btn-success btn-sm">
                       <i class="fas fa-download"></i> ดาวน์โหลด
@@ -320,7 +346,7 @@
                 {% endfor %}
               {% else %}
                 <tr>
-                  <td colspan="7" class="text-center">ไม่พบข้อมูลโครงการ</td>
+                  <td colspan="8" class="text-center">ไม่พบข้อมูลโครงการ</td>
                 </tr>
               {% endif %}
             </tbody>
