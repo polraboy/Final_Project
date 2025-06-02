@@ -422,11 +422,11 @@
                 {% for project in projects %}
                   <div class="record-item">
                     <!-- Progress Indicator -->
-                    {% if project.join_status == 1 %}
+                    {% if project.status_register == 1 %}
                       <div class="progress-indicator progress-approved"></div>
-                    {% elif project.join_status == 0 %}
+                    {% elif project.status_register == 0 %}
                       <div class="progress-indicator progress-pending"></div>
-                    {% elif project.join_status == 2 %}
+                    {% elif project.status_register == 2 %}
                       <div class="progress-indicator progress-rejected"></div>
                     {% endif %}
 
@@ -437,11 +437,11 @@
                     <div class="record-header">
                       <div class="record-title">{{ project.project_name }}</div>
                       <div class="record-status">
-                        {% if project.join_status == 0 %}
+                        {% if project.status_register == 0 %}
                           <span class="badge badge-status status-pending">รอการอนุมัติ</span>
-                        {% elif project.join_status == 1 %}
+                        {% elif project.status_register == 1 %}
                           <span class="badge badge-status status-approved">อนุมัติแล้ว</span>
-                        {% elif project.join_status == 2 %}
+                        {% elif project.status_register == 2 %}
                           <span class="badge badge-status status-rejected">ไม่อนุมัติ</span>
                         {% endif %}
                       </div>
@@ -482,7 +482,7 @@
                     </div>
 
                     <!-- Project Meta Info -->
-                    {% if project.project_statusStart == 2 and project.join_status == 1 %}
+                    {% if project.project_statusStart == 2 and project.status_register == 1 %}
                       <div class="project-meta">
                         {% if project.has_evaluated %}
                           <i class="fas fa-star text-warning"></i> <strong>ประเมินแล้ว:</strong> คุณได้ประเมินโครงการนี้เรียบร้อยแล้ว
@@ -498,7 +498,7 @@
                         <i class="fas fa-info-circle"></i> ดูรายละเอียด
                       </a>
                       
-                      {% if project.project_statusStart == 2 and project.join_status == 1 %}
+                      {% if project.project_statusStart == 2 and project.status_register == 1 %}
                         {% if project.has_evaluated %}
                           <button class="btn btn-success btn-sm" disabled>
                             <i class="fas fa-star"></i> ประเมินแล้ว

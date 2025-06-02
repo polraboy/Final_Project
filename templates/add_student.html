@@ -6,6 +6,7 @@
     <title>เพิ่มข้อมูลนักศึกษา</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
     <style>
         :root {
             --primary-color: #ff8c00;
@@ -123,11 +124,16 @@
         <div class="content-box">
             <h2 class="mb-4"><i class="fas fa-user-plus"></i> เพิ่มข้อมูลนักศึกษา</h2>
             
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 
+                <strong>หมายเหตุ:</strong> รหัสนักศึกษาจะถูกใช้เป็นรหัสสำหรับเข้าสู่ระบบและระบุตัวตนของนักศึกษา
+            </div>
+            
             <form action="{{ url_for('add_student') }}" method="post">
                 <div class="form-group">
                     <label for="student_id"><i class="fas fa-id-card"></i> รหัสนักศึกษา <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="student_id" name="student_id" required>
-                    <small class="form-text text-muted">ตัวอย่าง: 64030001</small>
+                    <small class="form-text text-muted">ตัวอย่าง: 64030001 (รหัสนี้จะเป็นรหัสสำหรับเข้าสู่ระบบ)</small>
                 </div>
                 
                 <div class="form-group">
@@ -143,6 +149,7 @@
                 <div class="form-group">
                     <label for="student_phone"><i class="fas fa-phone"></i> เบอร์โทรศัพท์ <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="student_phone" name="student_phone" required>
+                    <small class="form-text text-muted">เบอร์โทรศัพท์จะใช้สำหรับการเข้าสู่ระบบ</small>
                 </div>
                 
                 <div class="form-group">
@@ -167,7 +174,7 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     
@@ -184,7 +191,35 @@
                             alert('รหัสนักศึกษานี้มีอยู่ในระบบแล้ว');
                             this.focus();
                         }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
                     });
+            }
+        });
+
+        // ตรวจสอบข้อมูลก่อนส่งฟอร์ม
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const studentId = document.getElementById('student_id').value.trim();
+            const studentName = document.getElementById('student_name').value.trim();
+            const studentPhone = document.getElementById('student_phone').value.trim();
+
+            if (!studentId || studentId.length < 8) {
+                e.preventDefault();
+                alert('กรุณากรอกรหัสนักศึกษาให้ถูกต้อง (อย่างน้อย 8 หลัก)');
+                return false;
+            }
+
+            if (!studentName || studentName.length < 2) {
+                e.preventDefault();
+                alert('กรุณากรอกชื่อ-นามสกุลให้ถูกต้อง (อย่างน้อย 2 ตัวอักษร)');
+                return false;
+            }
+
+            if (!studentPhone || studentPhone.length < 9) {
+                e.preventDefault();
+                alert('กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (อย่างน้อย 9 หลัก)');
+                return false;
             }
         });
     </script>

@@ -6,6 +6,7 @@
     <title>แก้ไขข้อมูลนักศึกษา</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
     <style>
         :root {
             --primary-color: #ff8c00;
@@ -143,6 +144,7 @@
                 <div class="form-group">
                     <label for="student_phone"><i class="fas fa-phone"></i> เบอร์โทรศัพท์</label>
                     <input type="text" class="form-control" id="student_phone" name="student_phone" value="{{ student.phone }}">
+                    <small class="form-text text-muted">เบอร์โทรศัพท์ใช้สำหรับการเข้าสู่ระบบ</small>
                 </div>
                 
                 <div class="form-group">
@@ -153,6 +155,11 @@
                         <option value="{{ branch[0] }}" {% if student.branch_id == branch[0] %}selected{% endif %}>{{ branch[1] }}</option>
                         {% endfor %}
                     </select>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>หมายเหตุ:</strong> การแก้ไขข้อมูลนักศึกษาจะส่งผลต่อการเข้าสู่ระบบของนักศึกษาคนนี้
                 </div>
                 
                 <div class="form-group mt-4">
@@ -170,5 +177,25 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
+        // ตรวจสอบข้อมูลก่อนส่งฟอร์ม
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const studentName = document.getElementById('student_name').value.trim();
+            const studentPhone = document.getElementById('student_phone').value.trim();
+
+            if (!studentName || studentName.length < 2) {
+                e.preventDefault();
+                alert('กรุณากรอกชื่อ-นามสกุลให้ถูกต้อง (อย่างน้อย 2 ตัวอักษร)');
+                return false;
+            }
+
+            if (studentPhone && studentPhone.length < 9) {
+                e.preventDefault();
+                alert('กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (อย่างน้อย 9 หลัก)');
+                return false;
+            }
+        });
+    </script>
 </body>
 </html>

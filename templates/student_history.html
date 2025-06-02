@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard นักศึกษา</title>
+    <title>ประวัติการเข้าร่วมโครงการ</title>
     <link
       href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
       rel="stylesheet"
@@ -69,6 +69,7 @@
       .footer {
         background-color: var(--secondary-color);
         color: white;
+        padding: 20px 0;
         text-align: center;
         position: fixed;
         bottom: 0;
@@ -136,7 +137,7 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ml-auto">
           <li class="nav-item">
-            <a class="nav-link" href="/"
+            <a class="nav-link" href="{{ url_for('student_dashboard') }}"
               ><i class="fas fa-home"></i> หน้าหลัก</a
             >
           </li>
@@ -146,9 +147,14 @@
               ><i class="fas fa-project-diagram"></i> โครงการ</a
             >
           </li>
-          <li class="nav-item">
+          <li class="nav-item active">
             <a class="nav-link" href="{{ url_for('student_history', student_id=session.get('student_id')) }}"
               ><i class="fas fa-history"></i> ประวัติของฉัน</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('student_profile') }}"
+              ><i class="fas fa-user"></i> ข้อมูลส่วนตัว</a
             >
           </li>
           <li class="nav-item">
@@ -172,155 +178,80 @@
       
       <div class="content-box">
         <h2 class="mb-4">
-          <i class="fas fa-user-graduate"></i> ระบบนักศึกษา
+          <i class="fas fa-history"></i> ประวัติการเข้าร่วมโครงการ
         </h2>
         
         <!-- ข้อมูลนักศึกษา -->
+        {% if student_info %}
         <div class="student-info-box">
           <div class="row">
             <div class="col-md-6">
               <h4>ข้อมูลนักศึกษา</h4>
-              <p><strong><i class="fas fa-id-card"></i> รหัสนักศึกษา:</strong> {{ session.get('student_id') }}</p>
-              <p><strong><i class="fas fa-user"></i> ชื่อ-นามสกุล:</strong> {{ session.get('student_name') }}</p>
+              <p><strong><i class="fas fa-id-card"></i> รหัสนักศึกษา:</strong> {{ student_id }}</p>
+              <p><strong><i class="fas fa-user"></i> ชื่อ-นามสกุล:</strong> {{ student_info[0] }}</p>
             </div>
             <div class="col-md-6">
-              <p><strong><i class="fas fa-envelope"></i> อีเมล:</strong> {{ session.get('student_email') }}</p>
-              <p><strong><i class="fas fa-phone"></i> เบอร์โทรศัพท์:</strong> {{ session.get('student_phone') }}</p>
-              <p><strong><i class="fas fa-graduation-cap"></i> สาขา:</strong> {{ session.get('student_branch') }}</p>
+              <p><strong><i class="fas fa-envelope"></i> อีเมล:</strong> {{ student_info[1] or 'ไม่ระบุ' }}</p>
+              <p><strong><i class="fas fa-phone"></i> เบอร์โทรศัพท์:</strong> {{ student_info[2] or 'ไม่ระบุ' }}</p>
+              <p><strong><i class="fas fa-graduation-cap"></i> สาขา:</strong> {{ student_info[4] or 'ไม่ระบุสาขา' }}</p>
             </div>
           </div>
         </div>
+        {% endif %}
         
-        <!-- แท็บข้อมูล -->
-        <ul class="nav nav-tabs mb-4" id="studentTabs" role="tablist">
-          <li class="nav-item">
-            <a class="nav-link active" id="registered-tab" data-toggle="tab" href="#registered" role="tab">
-              <i class="fas fa-clipboard-check"></i> โครงการที่ลงทะเบียน
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" id="available-tab" data-toggle="tab" href="#available" role="tab">
-              <i class="fas fa-clipboard-list"></i> โครงการที่เปิดรับสมัคร
-            </a>
-          </li>
-        </ul>
+        <!-- รายการโครงการ -->
+        <h4>ประวัติการเข้าร่วมโครงการ</h4>
         
-        <div class="tab-content" id="studentTabContent">
-          <!-- โครงการที่ลงทะเบียนแล้ว -->
-          <div class="tab-pane fade show active" id="registered" role="tabpanel">
-            {% if projects %}
-              <div class="row">
-                {% for project in projects %}
-                  <div class="col-md-6">
-                    <div class="card project-card shadow-sm">
-                      <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>{{ project.project_name }}</span>
-                        {% if project.join_status == 0 %}
-                          <span class="badge badge-warning badge-status">รอการอนุมัติ</span>
-                        {% elif project.join_status == 1 %}
-                          <span class="badge badge-success badge-status">อนุมัติแล้ว</span>
-                        {% elif project.join_status == 2 %}
-                          <span class="badge badge-danger badge-status">ไม่อนุมัติ</span>
-                        {% endif %}
-                      </div>
-                      <div class="card-body">
-                        <p><i class="far fa-calendar-alt"></i> <strong>วันที่จัด:</strong> 
-                          {{ project.project_dotime.strftime('%d/%m/%Y') if project.project_dotime else '-' }} - 
-                          {{ project.project_endtime.strftime('%d/%m/%Y') if project.project_endtime else '-' }}
-                        </p>
-                        <p><i class="fas fa-map-marker-alt"></i> <strong>สถานที่:</strong> {{ project.project_address }}</p>
-                        <p><i class="fas fa-user-tie"></i> <strong>อาจารย์ผู้รับผิดชอบ:</strong> {{ project.teacher_name }}</p>
-                        
-                        {% if project.project_statusStart == 2 %}
-                          <p><i class="fas fa-check-circle text-success"></i> <strong>สถานะโครงการ:</strong> เสร็จสิ้นแล้ว</p>
-                          
-                          {% if project.join_status == 1 %}
-                            {% if project.has_evaluated %}
-                              <div class="alert alert-info">
-                                <i class="fas fa-star"></i> คุณได้ประเมินโครงการนี้แล้ว
-                              </div>
-                            {% else %}
-                              <a href="{{ url_for('project_evaluation', project_id=project.project_id, name=session.get('student_name'), email=session.get('student_email')) }}" class="btn btn-primary btn-block">
-                                <i class="fas fa-star"></i> ประเมินโครงการ
-                              </a>
-                            {% endif %}
-                          {% endif %}
-                        {% elif project.project_statusStart == 1 %}
-                          <p><i class="fas fa-hourglass-half text-warning"></i> <strong>สถานะโครงการ:</strong> กำลังดำเนินการ</p>
-                        {% elif project.project_statusStart == 0 or project.project_statusStart is none %}
-                          <p><i class="fas fa-clock text-secondary"></i> <strong>สถานะโครงการ:</strong> ยังไม่เริ่มโครงการ</p>
-                        {% endif %}
-                        
-                        <a href="{{ url_for('project_detail', project_id=project.project_id) }}" class="btn btn-info btn-block mt-2">
-                          <i class="fas fa-info-circle"></i> ดูรายละเอียด
-                        </a>
-                      </div>
-                    </div>
+        {% if projects %}
+          <div class="row">
+            {% for project in projects %}
+              <div class="col-md-6">
+                <div class="card project-card shadow-sm">
+                  <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>{{ project[2] }}</span>
+                    {% if project[0] == 0 %}
+                      <span class="badge badge-warning badge-status">รอการอนุมัติ</span>
+                    {% elif project[0] == 1 %}
+                      <span class="badge badge-success badge-status">อนุมัติแล้ว</span>
+                    {% elif project[0] == 2 %}
+                      <span class="badge badge-danger badge-status">ไม่อนุมัติ</span>
+                    {% endif %}
                   </div>
-                {% endfor %}
+                  <div class="card-body">
+                    <p><i class="far fa-calendar-alt"></i> <strong>วันที่จัด:</strong> 
+                      {{ project[4].strftime('%d/%m/%Y') if project[4] else '-' }} - 
+                      {{ project[5].strftime('%d/%m/%Y') if project[5] else '-' }}
+                    </p>
+                    <p><i class="fas fa-clock"></i> <strong>วันที่ลงทะเบียน:</strong> 
+                      {{ project[1].strftime('%d/%m/%Y %H:%M:%S') if project[1] else 'ไม่ระบุ' }}
+                    </p>
+                    
+                    {% if project[6] == 2 %}
+                      <p><i class="fas fa-check-circle text-success"></i> <strong>สถานะโครงการ:</strong> เสร็จสิ้นแล้ว</p>
+                    {% elif project[6] == 1 %}
+                      <p><i class="fas fa-hourglass-half text-warning"></i> <strong>สถานะโครงการ:</strong> กำลังดำเนินการ</p>
+                    {% elif project[6] == 0 or project[6] is none %}
+                      <p><i class="fas fa-clock text-secondary"></i> <strong>สถานะโครงการ:</strong> ยังไม่เริ่มโครงการ</p>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('project_detail', project_id=project[2]) }}" class="btn btn-info btn-block mt-2">
+                      <i class="fas fa-info-circle"></i> ดูรายละเอียด
+                    </a>
+                  </div>
+                </div>
               </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> 
+            {% if search_done %}
+              ไม่พบประวัติการเข้าร่วมโครงการ
             {% else %}
-              <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> คุณยังไม่ได้ลงทะเบียนเข้าร่วมโครงการใด
-              </div>
+              ไม่มีข้อมูลประวัติ
             {% endif %}
           </div>
-          
-          <!-- โครงการที่เปิดรับสมัคร -->
-          <div class="tab-pane fade" id="available" role="tabpanel">
-            {% if active_projects %}
-              <div class="row">
-                {% for project in active_projects %}
-                  <div class="col-md-6">
-                    <div class="card project-card shadow-sm">
-                      <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>{{ project.project_name }}</span>
-                        {% if project.current_count >= project.project_target %}
-                          <span class="badge badge-warning badge-status">เต็มแล้ว</span>
-                        {% else %}
-                          <span class="badge badge-success badge-status">เปิดรับสมัคร</span>
-                        {% endif %}
-                      </div>
-                      <div class="card-body">
-                        <p><i class="far fa-calendar-alt"></i> <strong>วันที่จัด:</strong> 
-                          {{ project.project_dotime.strftime('%d/%m/%Y') if project.project_dotime else '-' }} - 
-                          {{ project.project_endtime.strftime('%d/%m/%Y') if project.project_endtime else '-' }}
-                        </p>
-                        <p><i class="fas fa-map-marker-alt"></i> <strong>สถานที่:</strong> {{ project.project_address }}</p>
-                        <p><i class="fas fa-user-tie"></i> <strong>อาจารย์ผู้รับผิดชอบ:</strong> {{ project.teacher_name }}</p>
-                        <p><i class="fas fa-users"></i> <strong>จำนวนที่รับ:</strong> {{ project.current_count }}/{{ project.project_target }}</p>
-                        
-                        <div class="mt-3">
-                          <a href="{{ url_for('project_detail', project_id=project.project_id) }}" class="btn btn-info mr-2">
-                            <i class="fas fa-info-circle"></i> รายละเอียด
-                          </a>
-                          
-                          {% if project.already_joined %}
-                            <button class="btn btn-secondary" disabled>
-                              <i class="fas fa-check"></i> ลงทะเบียนแล้ว
-                            </button>
-                          {% elif project.current_count < project.project_target %}
-                            <a href="{{ url_for('join_project', project_id=project.project_id) }}" class="btn btn-success">
-                              <i class="fas fa-user-plus"></i> ลงทะเบียน
-                            </a>
-                          {% else %}
-                            <button class="btn btn-secondary" disabled>
-                              <i class="fas fa-times"></i> เต็มแล้ว
-                            </button>
-                          {% endif %}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                {% endfor %}
-              </div>
-            {% else %}
-              <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> ไม่มีโครงการที่เปิดรับสมัครในขณะนี้
-              </div>
-            {% endif %}
-          </div>
-        </div>
+        {% endif %}
       </div>
     </div>
 

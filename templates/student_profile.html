@@ -151,7 +151,7 @@
                     </div>
                     <div>
                         <h3 class="mb-1">{{ student.join_name }}</h3>
-                        <p class="mb-0"><i class="fas fa-id-card"></i> รหัสนักศึกษา: {{ student.join_student_id }}</p>
+                        <p class="mb-0"><i class="fas fa-id-card"></i> รหัสนักศึกษา: {{ student.join_id }}</p>
                         <p class="mb-0"><i class="fas fa-graduation-cap"></i> {{ student.branch_name }}</p>
                     </div>
                 </div>
@@ -167,7 +167,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="field-label"><i class="fas fa-id-card"></i> รหัสนักศึกษา</label>
-                            <input type="text" class="form-control readonly-field" value="{{ student.join_student_id }}" disabled>
+                            <input type="text" class="form-control readonly-field" value="{{ student.join_id }}" disabled>
                         </div>
                     </div>
                     <div class="col-md-6">

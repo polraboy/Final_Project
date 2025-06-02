@@ -137,40 +137,38 @@
             </div>
 
             <!-- ฟิลด์สำหรับนักศึกษาใหม่ -->
-<div id="newStudentFields">
-  <!-- 1. รหัสนักศึกษา (ย้ายมาอยู่ใน newStudentFields) -->
-  
-  <!-- 2. ชื่อ-นามสกุล -->
-  <div class="form-group">
-    <label for="join_name"><i class="fas fa-user"></i> ชื่อ-นามสกุล:</label>
-    <input type="text" class="form-control" id="join_name" name="join_name">
-  </div>
-  
-  <!-- 3. เบอร์โทรศัพท์ -->
-  <div class="form-group">
-    <label for="join_telephone"><i class="fas fa-phone"></i> เบอร์โทรศัพท์:</label>
-    <input type="tel" class="form-control" id="join_telephone" name="join_telephone">
-  </div>
-  
-  <!-- 4. อีเมล -->
-  <div class="form-group">
-    <label for="join_email"><i class="fas fa-envelope"></i> อีเมล:</label>
-    <input type="email" class="form-control" id="join_email" name="join_email">
-  </div>
-  
-  <!-- 5. สาขา -->
-  <div class="form-group">
-    <label for="join_branch"><i class="fas fa-graduation-cap"></i> สาขา:</label>
-    <select class="form-control" id="join_branch" name="branch_id">
-      <option value="" disabled selected>เลือกสาขาของคุณ</option>
-      {% for branch in branches %}
-        <option value="{{ branch.branch_id if branch is mapping else branch[0] }}">
-          {{ branch.branch_name if branch is mapping else branch[1] }}
-        </option>
-      {% endfor %}
-    </select>
-  </div>
-</div>
+            <div id="newStudentFields">
+              <!-- ชื่อ-นามสกุล -->
+              <div class="form-group">
+                <label for="join_name"><i class="fas fa-user"></i> ชื่อ-นามสกุล:</label>
+                <input type="text" class="form-control" id="join_name" name="join_name">
+              </div>
+              
+              <!-- เบอร์โทรศัพท์ -->
+              <div class="form-group">
+                <label for="join_telephone"><i class="fas fa-phone"></i> เบอร์โทรศัพท์:</label>
+                <input type="tel" class="form-control" id="join_telephone" name="join_telephone">
+              </div>
+              
+              <!-- อีเมล -->
+              <div class="form-group">
+                <label for="join_email"><i class="fas fa-envelope"></i> อีเมล:</label>
+                <input type="email" class="form-control" id="join_email" name="join_email">
+              </div>
+              
+              <!-- สาขา -->
+              <div class="form-group">
+                <label for="join_branch"><i class="fas fa-graduation-cap"></i> สาขา:</label>
+                <select class="form-control" id="join_branch" name="branch_id">
+                  <option value="" disabled selected>เลือกสาขาของคุณ</option>
+                  {% for branch in branches %}
+                    <option value="{{ branch.branch_id if branch is mapping else branch[0] }}">
+                      {{ branch.branch_name if branch is mapping else branch[1] }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
 
             <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
               <i class="fas fa-paper-plane"></i> สมัครเข้าร่วม
@@ -412,6 +410,6 @@
           });
         }
       });
-      </script>
+    </script>
   </body>
 </html>

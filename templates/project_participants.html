@@ -118,7 +118,7 @@
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center flex-wrap">
                     <h2 class="mb-0"><i class="fas fa-users"></i> รายชื่อผู้เข้าร่วมโครงการ</h2>
-                    {% if user_type == 'teacher' %}
+                    {% if can_approve %}
                     <div>
                         <!-- ปุ่มอนุมัติทั้งหมด -->
                         <form action="{{ url_for('approve_all_participants', project_id=project_id) }}" method="POST" 
@@ -130,20 +130,6 @@
                                 อนุมัติทั้งหมด ({% if waiting_count is defined %}{{ waiting_count }}{% else %}0{% endif %} คน)
                             </button>
                         </form>
-                        
-                        <!-- แสดงสรุปการดำเนินการ -->
-                        {% if waiting_count is defined and waiting_count > 0 %}
-                        <div class="approval-summary">
-                            <strong>การดำเนินการที่จะเกิดขึ้น:</strong><br>
-                            <span class="text-success">✓ อนุมัติ: {% if will_approve is defined %}{{ will_approve }}{% else %}0{% endif %} คน</span><br>
-                            {% if will_reject_conflict is defined and will_reject_conflict > 0 %}
-                            <span class="text-danger">✗ ปฏิเสธ (ทับซ้อน): {{ will_reject_conflict }} คน</span><br>
-                            {% endif %}
-                            {% if will_reject_over_limit is defined and will_reject_over_limit > 0 %}
-                            <span class="text-warning">✗ ปฏิเสธ (เกินจำนวน): {{ will_reject_over_limit }} คน</span><br>
-                            {% endif %}
-                        </div>
-                        {% endif %}
                     </div>
                     {% endif %}
                 </div>
@@ -208,17 +194,13 @@
                     {% set waiting_count_stats = 0 %}
                     {% set approved_count_stats = 0 %}
                     {% set rejected_count_stats = 0 %}
-                    {% set conflict_count_stats = 0 %}
                     
                     {% for p in participants %}
-                        {% if p.join_status == 0 %}
+                        {% if p.status_register == 0 %}
                             {% set waiting_count_stats = waiting_count_stats + 1 %}
-                            {% if p.join_student_id|has_schedule_conflict(project.project_dotime, project.project_endtime, project_id) %}
-                                {% set conflict_count_stats = conflict_count_stats + 1 %}
-                            {% endif %}
-                        {% elif p.join_status == 1 %}
+                        {% elif p.status_register == 1 %}
                             {% set approved_count_stats = approved_count_stats + 1 %}
-                        {% elif p.join_status == 2 %}
+                        {% elif p.status_register == 2 %}
                             {% set rejected_count_stats = rejected_count_stats + 1 %}
                         {% endif %}
                     {% endfor %}
@@ -232,20 +214,20 @@
                         </div>
                         <div class="col-md-3">
                             <div class="alert alert-warning mb-2">
-                                <strong>{{ waiting_count_stats - conflict_count_stats }}</strong><br>
-                                <small>รออนุมัติ (สามารถอนุมัติได้)</small>
+                                <strong>{{ waiting_count_stats }}</strong><br>
+                                <small>รออนุมัติ</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="alert alert-danger mb-2">
-                                <strong>{{ conflict_count_stats }}</strong><br>
-                                <small>รออนุมัติ (ทับซ้อน)</small>
+                                <strong>{{ rejected_count_stats }}</strong><br>
+                                <small>ไม่อนุมัติ</small>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="alert alert-secondary mb-2">
-                                <strong>{{ rejected_count_stats }}</strong><br>
-                                <small>ไม่อนุมัติ</small>
+                            <div class="alert alert-info mb-2">
+                                <strong>{{ total_participants }}</strong><br>
+                                <small>รวมทั้งหมด</small>
                             </div>
                         </div>
                     </div>
@@ -265,9 +247,8 @@
                                 <th width="9%">เบอร์โทรศัพท์</th>
                                 <th width="9%">สาขา</th>
                                 <th width="7%">สถานะ</th>
-                                <th width="8%">การทับซ้อน</th>
                                 <th width="13%">วันเวลาที่ลงทะเบียน</th>
-                                {% if user_type == 'teacher' %}
+                                {% if can_approve %}
                                 <th width="18%">การดำเนินการ</th>
                                 {% endif %}
                             </tr>
@@ -277,76 +258,38 @@
                             <tr>
                                 <td>{{ loop.index }}</td>
                                 <td>{{ p.join_name }}</td>
-                                <td>{{ p.join_student_id }}</td>
+                                <td>{{ p.join_id }}</td>
                                 <td>{{ p.join_email }}</td>
                                 <td>{{ p.join_telephone }}</td>
                                 <td>{{ p.branch_name }}</td>
                                 <td>
-                                    {% if p.join_status == 0 %}
+                                    {% if p.status_register == 0 %}
                                         <span class="badge badge-warning">รอการอนุมัติ</span>
-                                    {% elif p.join_status == 1 %}
+                                    {% elif p.status_register == 1 %}
                                         <span class="badge badge-success">อนุมัติแล้ว</span>
-                                    {% elif p.join_status == 2 %}
+                                    {% elif p.status_register == 2 %}
                                         <span class="badge badge-danger">ไม่อนุมัติ</span>
-                                    {% elif p.join_status == 3 %}
-                                        <span class="badge badge-info">รอการยืนยัน</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if p.join_status == 0 %}
-                                        {% if p.join_student_id|has_schedule_conflict(project.project_dotime, project.project_endtime, project_id) %}
-                                            <span class="badge badge-danger" title="มีโครงการอื่นที่อนุมัติแล้วทับซ้อนกัน">
-                                                <i class="fas fa-exclamation-triangle"></i> ทับซ้อน
-                                            </span>
-                                        {% else %}
-                                            <span class="text-success">
-                                                <i class="fas fa-check"></i> ปกติ
-                                            </span>
-                                        {% endif %}
-                                    {% elif p.join_status == 1 %}
-                                        <span class="text-success">
-                                            <i class="fas fa-check-circle"></i> อนุมัติแล้ว
-                                        </span>
-                                    {% elif p.join_status == 2 %}
-                                        <span class="text-muted">
-                                            <i class="fas fa-times-circle"></i> ไม่อนุมัติ
-                                        </span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if p.join_timestamp %}
-                                        <span class="registration-date">{{ p.join_timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</span>
+                                    {% if p.register_time %}
+                                        <span class="registration-date">{{ p.register_time.strftime('%d/%m/%Y %H:%M:%S') }}</span>
                                     {% else %}
                                         <span class="text-muted">ไม่ระบุ</span>
                                     {% endif %}
                                 </td>
-                                {% if user_type == 'teacher' %}
+                                {% if can_approve %}
                                 <td>
-                                    {% set has_conflict = p.join_student_id|has_schedule_conflict(project.project_dotime, project.project_endtime, project_id) %}
-                                    
-                                    <form action="{{ url_for('update_join_status', join_id=p.join_id) }}" method="POST">
+                                    <form action="{{ url_for('update_join_status') }}" method="POST">
+                                        <input type="hidden" name="join_id" value="{{ p.join_id }}">
+                                        <input type="hidden" name="project_id" value="{{ project_id }}">
                                         <select name="join_status" class="form-control form-control-sm" 
-                                                onchange="this.form.submit()"
-                                                {% if has_conflict and p.join_status == 0 %}disabled title="ไม่สามารถอนุมัติได้เนื่องจากมีโครงการอื่นที่อนุมัติแล้วทับซ้อนกัน"{% endif %}>
-                                            
-                                            <option value="0" {% if p.join_status == 0 %}selected{% endif %}>รอการอนุมัติ</option>
-                                            
-                                            <option value="1" 
-                                                    {% if p.join_status == 1 %}selected{% endif %} 
-                                                    {% if has_conflict and p.join_status != 1 %}disabled{% endif %}>
-                                                อนุมัติ{% if has_conflict and p.join_status != 1 %} (ทับซ้อน){% endif %}
-                                            </option>
-                                            
-                                            <option value="2" {% if p.join_status == 2 %}selected{% endif %}>ไม่อนุมัติ</option>
+                                                onchange="this.form.submit()">
+                                            <option value="0" {% if p.status_register == 0 %}selected{% endif %}>รอการอนุมัติ</option>
+                                            <option value="1" {% if p.status_register == 1 %}selected{% endif %}>อนุมัติ</option>
+                                            <option value="2" {% if p.status_register == 2 %}selected{% endif %}>ไม่อนุมัติ</option>
                                         </select>
                                     </form>
-                                    
-                                    {% if has_conflict and p.join_status == 0 %}
-                                        <small class="text-danger mt-1 d-block">
-                                            <i class="fas fa-exclamation-triangle"></i> 
-                                            มีโครงการอื่นที่อนุมัติแล้วทับซ้อนกัน
-                                        </small>
-                                    {% endif %}
                                 </td>
                                 {% endif %}
                             </tr>
@@ -374,38 +317,17 @@
 
     <script>
         function confirmApprovalAction() {
-            // ใช้ตัวแปรที่ส่งมาจาก Python
             const waitingCount = {% if waiting_count is defined %}{{ waiting_count }}{% else %}0{% endif %};
-            const conflictCount = {% if will_reject_conflict is defined %}{{ will_reject_conflict }}{% else %}0{% endif %};
-            const willApprove = {% if will_approve is defined %}{{ will_approve }}{% else %}0{% endif %};
-            const willRejectOverLimit = {% if will_reject_over_limit is defined %}{{ will_reject_over_limit }}{% else %}0{% endif %};
             
             if (waitingCount === 0) {
                 alert('ไม่มีผู้เข้าร่วมที่รออนุมัติ');
                 return false;
             }
             
-            let message = 'คุณต้องการดำเนินการดังนี้หรือไม่?\n\n';
-            
-            if (willApprove > 0) {
-                message += `✅ อนุมัติ: ${willApprove} คน\n`;
-            }
-            
-            if (conflictCount > 0) {
-                message += `❌ ปฏิเสธ (ทับซ้อนโครงการ): ${conflictCount} คน\n`;
-            }
-            
-            if (willRejectOverLimit > 0) {
-                message += `❌ ปฏิเสธ (เกินจำนวนที่กำหนด): ${willRejectOverLimit} คน\n`;
-            }
-            
-            message += '\n⚠️ การดำเนินการนี้จะไม่สามารถยกเลิกได้';
+            let message = `คุณต้องการอนุมัติผู้เข้าร่วม ${waitingCount} คนหรือไม่?\n\n`;
+            message += '⚠️ การดำเนินการนี้จะไม่สามารถยกเลิกได้';
             
             return confirm(message);
-        }
-
-        function showConflictReason(studentName, reason) {
-            alert(`นักศึกษา: ${studentName}\nเหตุผล: ${reason}`);
         }
     </script>
 </body>
