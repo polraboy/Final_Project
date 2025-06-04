@@ -1,226 +1,248 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เพิ่มข้อมูลนักศึกษา</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #ff8c00;
-            --secondary-color: #007bff;
-            --background-color: #f8f9fa;
-        }
-
         body {
-            background-color: var(--background-color);
-            font-family: "Kanit", sans-serif;
-            padding-bottom: 60px;
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8f9fa;
         }
-
-        .navbar {
-            background-color: var(--primary-color) !important;
+        .container {
+            max-width: 600px;
+            margin-top: 30px;
         }
-
-        .navbar-brand img {
-            margin-right: 10px;
-        }
-
-        .navbar-brand span {
-            font-size: 1rem;
-            line-height: 1.2;
-            color: white;
-        }
-
-        .nav-link {
-            color: white !important;
-        }
-
-        .content-box {
-            background-color: white;
-            padding: 30px;
+        .card {
+            border: none;
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            margin-top: 30px;
-            margin-bottom: 30px;
         }
-
-        .form-group label {
-            font-weight: 500;
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
         }
-
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background-color: #007bff;
+            border-color: #007bff;
         }
-
         .btn-primary:hover {
-            background-color: darken(var(--primary-color), 10%);
-            border-color: darken(var(--primary-color), 10%);
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .password-info {
+            background-color: #e8f4fd;
+            border: 1px solid #bee5eb;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.9em;
         }
     </style>
 </head>
-
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #007bff;">
         <a class="navbar-brand" href="#">
-            <img src="/static/image_2024-02-07_191338051.png" width="40" height="40" class="d-inline-block align-top" alt="Logo" />
-            <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br />วิทยาเขตขอนแก่น</span>
+            <i class="fas fa-user-shield"></i> ระบบแอดมิน
         </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('active_projects') }}"><i class="fas fa-project-diagram"></i> โครงการ</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('approve_project') }}"><i class="fas fa-check-circle"></i> อนุมัติคำขอโครงการ</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('edit_basic_info') }}"><i class="fas fa-cog"></i> ข้อมูลพื้นฐาน</a>
-                </li>
-                <li class="nav-item active">
-                    <a class="nav-link" href="{{ url_for('manage_students') }}"><i class="fas fa-user-graduate"></i> จัดการนักศึกษา</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('project_reports') }}">
-                        <i class="fas fa-chart-bar"></i> รายงาน
-                    </a>
-                </li>
-                {% if g.user %}
-                <li class="nav-item">
-                    <a class="nav-link" href="#" data-toggle="modal" data-target="#userInfoModal">
-                        <i class="fas fa-user"></i> {{ g.user.name }}
-                    </a>
-                </li>
-                {% endif %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a>
-                </li>
-            </ul>
+        <div class="navbar-nav ml-auto">
+            <a class="nav-link text-white" href="{{ url_for('admin_home') }}">
+                <i class="fas fa-tachometer-alt"></i> หน้าหลัก
+            </a>
+            <a class="nav-link text-white" href="{{ url_for('manage_students') }}">
+                <i class="fas fa-users"></i> จัดการนักศึกษา
+            </a>
+            <a class="nav-link text-white" href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+            </a>
         </div>
     </nav>
-    
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="container mt-3">
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
+
     <div class="container">
-        <div class="content-box">
-            <h2 class="mb-4"><i class="fas fa-user-plus"></i> เพิ่มข้อมูลนักศึกษา</h2>
-            
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> 
-                <strong>หมายเหตุ:</strong> รหัสนักศึกษาจะถูกใช้เป็นรหัสสำหรับเข้าสู่ระบบและระบุตัวตนของนักศึกษา
+        <!-- แสดง Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-center mb-0">
+                    <i class="fas fa-user-plus"></i> เพิ่มข้อมูลนักศึกษา
+                </h2>
             </div>
-            
-            <form action="{{ url_for('add_student') }}" method="post">
-                <div class="form-group">
-                    <label for="student_id"><i class="fas fa-id-card"></i> รหัสนักศึกษา <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="student_id" name="student_id" required>
-                    <small class="form-text text-muted">ตัวอย่าง: 64030001 (รหัสนี้จะเป็นรหัสสำหรับเข้าสู่ระบบ)</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="student_name"><i class="fas fa-user"></i> ชื่อ-นามสกุล <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="student_name" name="student_name" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="student_email"><i class="fas fa-envelope"></i> อีเมล</label>
-                    <input type="email" class="form-control" id="student_email" name="student_email">
-                </div>
-                
-                <div class="form-group">
-                    <label for="student_phone"><i class="fas fa-phone"></i> เบอร์โทรศัพท์ <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="student_phone" name="student_phone" required>
-                    <small class="form-text text-muted">เบอร์โทรศัพท์จะใช้สำหรับการเข้าสู่ระบบ</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="branch_id"><i class="fas fa-graduation-cap"></i> สาขา</label>
-                    <select class="form-control" id="branch_id" name="branch_id">
-                        <option value="">-- เลือกสาขา --</option>
-                        {% for branch in branches %}
-                        <option value="{{ branch[0] }}">{{ branch[1] }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="form-group mt-4">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> บันทึกข้อมูล
-                    </button>
-                    <a href="{{ url_for('manage_students') }}" class="btn btn-secondary ml-2">
-                        <i class="fas fa-times"></i> ยกเลิก
-                    </a>
-                </div>
-            </form>
+            <div class="card-body">
+                <form method="POST" id="addStudentForm">
+                    <!-- รหัสนักศึกษา -->
+                    <div class="form-group">
+                        <label for="student_id"><i class="fas fa-id-card"></i> รหัสนักศึกษา:</label>
+                        <input type="text" class="form-control" id="student_id" name="student_id" required
+                               placeholder="กรอกรหัสนักศึกษา">
+                        <small class="form-text text-muted">รหัสนักศึกษาจะใช้เป็น ID สำหรับเข้าสู่ระบบ</small>
+                    </div>
+
+                    <!-- ชื่อ-นามสกุล -->
+                    <div class="form-group">
+                        <label for="student_name"><i class="fas fa-user"></i> ชื่อ-นามสกุล:</label>
+                        <input type="text" class="form-control" id="student_name" name="student_name" required
+                               placeholder="กรอกชื่อ-นามสกุลนักศึกษา">
+                    </div>
+
+                    <!-- อีเมล -->
+                    <div class="form-group">
+                        <label for="student_email"><i class="fas fa-envelope"></i> อีเมล:</label>
+                        <input type="email" class="form-control" id="student_email" name="student_email"
+                               placeholder="กรอกอีเมลนักศึกษา">
+                    </div>
+
+                    <!-- เบอร์โทรศัพท์ -->
+                    <div class="form-group">
+                        <label for="student_phone"><i class="fas fa-phone"></i> เบอร์โทรศัพท์:</label>
+                        <input type="tel" class="form-control" id="student_phone" name="student_phone" required
+                               placeholder="กรอกเบอร์โทรศัพท์">
+                    </div>
+
+                    <!-- สาขา -->
+                    <div class="form-group">
+                        <label for="branch_id"><i class="fas fa-graduation-cap"></i> สาขา:</label>
+                        <select class="form-control" id="branch_id" name="branch_id">
+                            <option value="">เลือกสาขา</option>
+                            {% for branch in branches %}
+                                <option value="{{ branch[0] }}">{{ branch[1] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- รหัสผ่าน -->
+                    <div class="form-group">
+                        <label for="student_password"><i class="fas fa-lock"></i> รหัสผ่าน:</label>
+                        <input type="password" class="form-control" id="student_password" name="student_password" 
+                               minlength="4" placeholder="กรอกรหัsผ่านสำหรับเข้าสู่ระบบ">
+                        <div class="password-info">
+                            <i class="fas fa-info-circle"></i> 
+                            รหัสผ่านจะใช้สำหรับเข้าสู่ระบบนักศึกษา (อย่างน้อย 4 ตัวอักษร)
+                            <br><small>หากไม่กรอก นักศึกษาจะต้องตั้งรหัสผ่านเองในครั้งแรกที่ลงทะเบียนโครงการ</small>
+                        </div>
+                    </div>
+
+                    <!-- ยืนยันรหัสผ่าน -->
+                    <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+                        <label for="confirm_password"><i class="fas fa-lock"></i> ยืนยันรหัสผ่าน:</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                               minlength="4" placeholder="ยืนยันรหัสผ่าน">
+                        <div id="password-match-message" class="mt-2" style="display: none;"></div>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> เพิ่มนักศึกษา
+                        </button>
+                        <a href="{{ url_for('manage_students') }}" class="btn btn-secondary btn-lg ml-2">
+                            <i class="fas fa-arrow-left"></i> กลับ
+                        </a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    
+
     <script>
-        // ตรวจสอบรหัสนักศึกษาซ้ำ
-        document.getElementById('student_id').addEventListener('blur', function() {
-            const studentId = this.value;
-            if (studentId) {
-                // ส่ง AJAX request เพื่อตรวจสอบรหัสนักศึกษาซ้ำ
-                fetch(`/check_student_id_exists?student_id=${studentId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.exists) {
-                            alert('รหัสนักศึกษานี้มีอยู่ในระบบแล้ว');
-                            this.focus();
+        $(document).ready(function() {
+            // แสดง/ซ่อนช่องยืนยันรหัสผ่าน
+            $('#student_password').on('input', function() {
+                var hasPassword = $(this).val().length > 0;
+                if (hasPassword) {
+                    $('#confirmPasswordGroup').show();
+                    $('#confirm_password').prop('required', true);
+                } else {
+                    $('#confirmPasswordGroup').hide();
+                    $('#confirm_password').prop('required', false);
+                    $('#password-match-message').hide();
+                }
+            });
+
+            // ตรวจสอบความตรงกันของรหัสผ่าน
+            function checkPasswordMatch() {
+                var password = $('#student_password').val();
+                var confirmPassword = $('#confirm_password').val();
+                var messageDiv = $('#password-match-message');
+                
+                if (confirmPassword === '' || password === '') {
+                    messageDiv.hide();
+                    return true;
+                }
+                
+                if (password === confirmPassword) {
+                    messageDiv.removeClass('text-danger').addClass('text-success');
+                    messageDiv.html('<i class="fas fa-check"></i> รหัสผ่านตรงกัน');
+                    messageDiv.show();
+                    return true;
+                } else {
+                    messageDiv.removeClass('text-success').addClass('text-danger');
+                    messageDiv.html('<i class="fas fa-times"></i> รหัสผ่านไม่ตรงกัน');
+                    messageDiv.show();
+                    return false;
+                }
+            }
+
+            $('#confirm_password').on('input', checkPasswordMatch);
+
+            // ตรวจสอบรหัสนักศึกษาซ้ำ
+            $('#student_id').blur(function() {
+                var studentId = $(this).val();
+                if (studentId) {
+                    $.ajax({
+                        url: '/check_student_id_exists',
+                        method: 'GET',
+                        data: { student_id: studentId },
+                        success: function(response) {
+                            if (response.exists) {
+                                alert('รหัสนักศึกษานี้มีอยู่ในระบบแล้ว');
+                                $('#student_id').focus();
+                            }
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
                     });
-            }
-        });
+                }
+            });
 
-        // ตรวจสอบข้อมูลก่อนส่งฟอร์ม
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const studentId = document.getElementById('student_id').value.trim();
-            const studentName = document.getElementById('student_name').value.trim();
-            const studentPhone = document.getElementById('student_phone').value.trim();
+            // ตรวจสอบฟอร์มก่อนส่ง
+            $('#addStudentForm').on('submit', function(e) {
+                var password = $('#student_password').val();
+                var confirmPassword = $('#confirm_password').val();
 
-            if (!studentId || studentId.length < 8) {
-                e.preventDefault();
-                alert('กรุณากรอกรหัสนักศึกษาให้ถูกต้อง (อย่างน้อย 8 หลัก)');
-                return false;
-            }
+                // ถ้ากรอกรหัสผ่าน ต้องยืนยันด้วย
+                if (password && password !== confirmPassword) {
+                    e.preventDefault();
+                    alert('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+                    return false;
+                }
 
-            if (!studentName || studentName.length < 2) {
-                e.preventDefault();
-                alert('กรุณากรอกชื่อ-นามสกุลให้ถูกต้อง (อย่างน้อย 2 ตัวอักษร)');
-                return false;
-            }
+                // ตรวจสอบความยาวรหัสผ่าน
+                if (password && password.length < 4) {
+                    e.preventDefault();
+                    alert('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร');
+                    return false;
+                }
 
-            if (!studentPhone || studentPhone.length < 9) {
-                e.preventDefault();
-                alert('กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (อย่างน้อย 9 หลัก)');
-                return false;
-            }
+                return true;
+            });
         });
     </script>
 </body>

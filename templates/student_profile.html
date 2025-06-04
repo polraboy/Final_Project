@@ -1,260 +1,278 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>แก้ไขข้อมูลส่วนตัว - นักศึกษา</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรไฟล์นักศึกษา</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #ff8c00;
-            --secondary-color: #007bff;
-            --background-color: #f8f9fa;
-        }
-
         body {
-            background-color: var(--background-color);
-            font-family: "Kanit", sans-serif;
-            padding-bottom: 100px;
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8f9fa;
         }
-
-        .navbar {
-            background-color: var(--primary-color) !important;
+        .container {
+            max-width: 800px;
+            margin-top: 30px;
         }
-
-        .navbar-brand img {
-            margin-right: 10px;
-        }
-
-        .navbar-brand span {
-            font-size: 1rem;
-            line-height: 1.2;
-            color: white;
-        }
-
-        .nav-link {
-            color: white !important;
-        }
-
-        .content-box {
-            background-color: white;
-            padding: 30px;
+        .card {
+            border: none;
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            margin-top: 30px;
-            margin-bottom: 50px;
-        }
-
-        .btn-primary {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-        .btn-primary:hover {
-            background-color: darken(var(--secondary-color), 10%);
-            border-color: darken(var(--secondary-color), 10%);
-        }
-
-        .profile-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
             margin-bottom: 30px;
         }
-
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin-right: 20px;
+        .card-header {
+            background-color:rgb(242, 137, 8);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
         }
-
-        .editable-field {
+        .btn-primary {
+            background-color:rgb(234, 165, 52);
+            border-color:rgb(240, 126, 20);
+        }
+        .btn-primary:hover {
+            background-color:rgb(227, 148, 44);
+            border-color:rgb(243, 142, 48);
+        }
+        .profile-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .section-divider {
+            border-top: 2px solid #e9ecef;
+            margin: 30px 0 20px 0;
+            padding-top: 15px;
+        }
+        .password-status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .password-set {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .password-not-set {
             background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-        }
-
-        .readonly-field {
-            background-color: #f8f9fa;
-            border-left: 4px solid #6c757d;
-        }
-
-        .field-label {
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-bottom: 5px;
-        }
-
-        .alert-info {
-            border-left: 4px solid var(--secondary-color);
-        }
-
-        .form-control:disabled {
-            background-color: #f8f9fa;
-            opacity: 0.7;
+            border: 1px solid #ffeaa7;
+            color: #856404;
         }
     </style>
 </head>
-
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color:rgb(254, 133, 58);">
         <a class="navbar-brand" href="#">
-            <img src="/static/image_2024-02-07_191338051.png" width="40" height="40" class="d-inline-block align-top" alt="Logo" />
-            <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br />วิทยาเขตขอนแก่น</span>
+            <i class="fas fa-user-graduate"></i> ระบบนักศึกษา
         </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('student_dashboard') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('active_projects') }}"><i class="fas fa-project-diagram"></i> โครงการ</a>
-                </li>
-                <li class="nav-item active">
-                    <a class="nav-link" href="{{ url_for('student_profile') }}"><i class="fas fa-user"></i> ข้อมูลส่วนตัว</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a>
-                </li>
-            </ul>
+        <div class="navbar-nav ml-auto">
+            <a class="nav-link text-white" href="{{ url_for('student_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i> แดชบอร์ด
+            </a>
+            <a class="nav-link text-white" href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+            </a>
         </div>
     </nav>
 
     <div class="container">
-        <!-- Flash Messages -->
+        
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
+                    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert">
+                            <span>&times;</span>
+                        </button>
+                    </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
-        <div class="content-box">
-            <!-- Profile Header -->
-            <div class="profile-header">
-                <div class="d-flex align-items-center">
-                    <div class="profile-avatar">
-                        <i class="fas fa-user-graduate"></i>
-                    </div>
-                    <div>
-                        <h3 class="mb-1">{{ student.join_name }}</h3>
-                        <p class="mb-0"><i class="fas fa-id-card"></i> รหัสนักศึกษา: {{ student.join_id }}</p>
-                        <p class="mb-0"><i class="fas fa-graduation-cap"></i> {{ student.branch_name }}</p>
-                    </div>
-                </div>
+        <!-- ข้อมูลส่วนตัว -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0">
+                    <i class="fas fa-user-edit"></i> โปรไฟล์ส่วนตัว
+                </h2>
             </div>
+            <div class="card-body">
+                <!-- ข้อมูลปัจจุบัน -->
+                <div class="profile-info">
+                    <h5><i class="fas fa-info-circle"></i> ข้อมูลปัจจุบัน</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>รหัสนักศึกษา:</strong> {{ student.join_id }}</p>
+                            <p><strong>ชื่อ-นามสกุล:</strong> {{ student.join_name }}</p>
+                            <p><strong>สาขา:</strong> {{ student.branch_name }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>อีเมล:</strong> {{ student.join_email }}</p>
+                            <p><strong>เบอร์โทรศัพท์:</strong> {{ student.join_telephone }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- สถานะรหัสผ่าน -->
+                    <div class="password-status {{ 'password-set' if student.has_password else 'password-not-set' }}">
+                        <i class="fas fa-{{ 'shield-alt' if student.has_password else 'exclamation-triangle' }}"></i>
+                        {% if student.has_password %}
+                            <strong>รหัสผ่าน:</strong> ได้ตั้งค่าแล้ว (สามารถเข้าสู่ระบบด้วยรหัสผ่านได้)
+                        {% else %}
+                            <strong>รหัสผ่าน:</strong> ยังไม่ได้ตั้งค่า (แนะนำให้ตั้งรหัสผ่านเพื่อความปลอดภัย)
+                        {% endif %}
+                    </div>
+                </div>
 
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> 
-                <strong>หมายเหตุ:</strong> คุณสามารถแก้ไขได้เฉพาะชื่อ-นามสกุล, อีเมล และเบอร์โทรศัพท์เท่านั้น ข้อมูลอื่นๆ ติดต่อผู้ดูแลระบบเพื่อแก้ไข
+                <!-- ฟอร์มแก้ไขข้อมูล -->
+                <form method="POST" id="updateForm">
+                    <h5><i class="fas fa-edit"></i> แก้ไขข้อมูลส่วนตัว</h5>
+                    
+                    <!-- ข้อมูลพื้นฐาน -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="join_name"><i class="fas fa-user" ></i> ชื่อ-นามสกุล:</label>
+                                <input type="text" class="form-control" id="join_name" name="join_name" 
+                                       value="{{ student.join_name }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="join_email"><i class="fas fa-envelope"></i> อีเมล:</label>
+                                <input type="email" class="form-control" id="join_email" name="join_email" 
+                                       value="{{ student.join_email }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="join_telephone"><i class="fas fa-phone"></i> เบอร์โทรศัพท์</label>
+                        <input type="tel" class="form-control" id="join_telephone" name="join_telephone" 
+                               value="{{ student.join_telephone }}" required>
+                    </div>
+
+                    <!-- ส่วนเปลี่ยนรหัสผ่าน -->
+                    <div class="section-divider">
+                        <h5><i class="fas fa-lock"></i> จัดการรหัสผ่าน</h5>
+                        
+                        {% if student.has_password %}
+                            <div class="form-group">
+                                <label for="current_password"><i class="fas fa-key"></i> รหัสผ่านปัจจุบัน:</label>
+                                <input type="password" class="form-control" id="current_password" name="current_password" 
+                                       placeholder="กรอกรหัสผ่านปัจจุบัน">
+                                <small class="form-text text-muted">กรอกเฉพาะเมื่อต้องการเปลี่ยนรหัสผ่าน</small>
+                            </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="new_password"><i class="fas fa-lock"></i> รหัสผ่าน{{ 'ใหม่' if student.has_password else '' }}:</label>
+                                    <input type="password" class="form-control" id="new_password" name="new_password" 
+                                           placeholder="กรอกรหัสผ่าน{{ 'ใหม่' if student.has_password else '' }}" minlength="4">
+                                    <small class="form-text text-muted">อย่างน้อย 4 ตัวอักษร {{ '(เว้นว่างหากไม่ต้องการเปลี่ยน)' if student.has_password else '' }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="confirm_password"><i class="fas fa-lock"></i> ยืนยันรหัสผ่าน:</label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                                           placeholder="ยืนยันรหัสผ่าน{{ 'ใหม่' if student.has_password else '' }}" minlength="4">
+                                    <div id="password-match-message" class="mt-2" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> บันทึกการเปลี่ยนแปลง
+                        </button>
+                        <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary btn-lg ml-2">
+                            <i class="fas fa-times"></i> ยกเลิก
+                        </a>
+                    </div>
+                </form>
             </div>
-
-            <form method="POST" action="{{ url_for('student_profile') }}">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="field-label"><i class="fas fa-id-card"></i> รหัสนักศึกษา</label>
-                            <input type="text" class="form-control readonly-field" value="{{ student.join_id }}" disabled>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="field-label"><i class="fas fa-graduation-cap"></i> สาขา</label>
-                            <select class="form-control readonly-field" disabled>
-                                <option>{{ student.branch_name }}</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="form-group">
-                            <label class="field-label"><i class="fas fa-user"></i> ชื่อ-นามสกุล <span class="text-warning">(แก้ไขได้)</span></label>
-                            <input type="text" class="form-control editable-field" name="join_name" value="{{ student.join_name }}" required>
-                            <small class="form-text text-muted">สามารถแก้ไขได้</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="field-label"><i class="fas fa-envelope"></i> อีเมล <span class="text-warning">(แก้ไขได้)</span></label>
-                            <input type="email" class="form-control editable-field" name="join_email" value="{{ student.join_email }}" required>
-                            <small class="form-text text-muted">สามารถแก้ไขได้</small>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="field-label"><i class="fas fa-phone"></i> เบอร์โทรศัพท์ <span class="text-warning">(แก้ไขได้)</span></label>
-                            <input type="tel" class="form-control editable-field" name="join_telephone" value="{{ student.join_telephone }}" required>
-                            <small class="form-text text-muted">สามารถแก้ไขได้</small>
-                        </div>
-                    </div>
-                </div>
-
-                <hr class="my-4">
-
-                <div class="form-group">
-                    <label class="field-label"><i class="fas fa-key"></i> เบอร์โทรศัพท์ปัจจุบัน (สำหรับยืนยันตัวตน) <span class="text-danger">*</span></label>
-                    <input type="tel" class="form-control" name="current_phone" placeholder="กรอกเบอร์โทรศัพท์ปัจจุบันเพื่อยืนยันการเปลี่ยนแปลง" required>
-                    <small class="form-text text-danger">จำเป็นต้องกรอกเบอร์โทรศัพท์ปัจจุบันเพื่อยืนยันการเปลี่ยนแปลง</small>
-                </div>
-
-                <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> ยกเลิก
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> บันทึกการเปลี่ยนแปลง
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    
+
     <script>
-        // ตรวจสอบข้อมูลก่อนส่งฟอร์ม
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const name = document.querySelector('input[name="join_name"]').value.trim();
-            const email = document.querySelector('input[name="join_email"]').value.trim();
-            const phone = document.querySelector('input[name="join_telephone"]').value.trim();
-            
-            if (!name || name.length < 2) {
-                e.preventDefault();
-                alert('กรุณากรอกชื่อ-นามสกุลให้ถูกต้อง (อย่างน้อย 2 ตัวอักษร)');
-                return false;
+        $(document).ready(function() {
+            // ตรวจสอบความตรงกันของรหัสผ่าน
+            function checkPasswordMatch() {
+                var password = $('#new_password').val();
+                var confirmPassword = $('#confirm_password').val();
+                var messageDiv = $('#password-match-message');
+                
+                if (confirmPassword === '' || password === '') {
+                    messageDiv.hide();
+                    return true;
+                }
+                
+                if (password === confirmPassword) {
+                    messageDiv.removeClass('text-danger').addClass('text-success');
+                    messageDiv.html('<i class="fas fa-check"></i> รหัสผ่านตรงกัน');
+                    messageDiv.show();
+                    return true;
+                } else {
+                    messageDiv.removeClass('text-success').addClass('text-danger');
+                    messageDiv.html('<i class="fas fa-times"></i> รหัสผ่านไม่ตรงกัน');
+                    messageDiv.show();
+                    return false;
+                }
             }
-            
-            if (!email || !email.includes('@')) {
-                e.preventDefault();
-                alert('กรุณากรอกอีเมลให้ถูกต้อง');
-                return false;
-            }
-            
-            if (!phone || phone.length < 9) {
-                e.preventDefault();
-                alert('กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (อย่างน้อย 9 หลัก)');
-                return false;
-            }
+
+            $('#new_password, #confirm_password').on('input', checkPasswordMatch);
+
+            // ตรวจสอบฟอร์มก่อนส่ง
+            $('#updateForm').on('submit', function(e) {
+                var newPassword = $('#new_password').val();
+                var confirmPassword = $('#confirm_password').val();
+                var hasPassword = {{ 'true' if student.has_password else 'false' }};
+                var currentPassword = $('#current_password').val();
+
+                // ตรวจสอบรหัสผ่าน
+                if (newPassword || confirmPassword) {
+                    if (newPassword !== confirmPassword) {
+                        e.preventDefault();
+                        alert('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+                        return false;
+                    }
+
+                    if (newPassword.length < 4) {
+                        e.preventDefault();
+                        alert('รหัsผ่านต้องมีอย่างน้อย 4 ตัวอักษร');
+                        return false;
+                    }
+
+                    // ถ้ามีรหัสผ่านเดิมแล้ว ต้องกรอกรหัสผ่านปัจจุบัน
+                    if (hasPassword && !currentPassword) {
+                        e.preventDefault();
+                        alert('กรุณากรอกรหัสผ่านปัจจุบัน');
+                        $('#current_password').focus();
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            // เมื่อกรอกรหัสผ่านใหม่ ให้ require ยืนยันรหัสผ่านด้วย
+            $('#new_password').on('input', function() {
+                var hasValue = $(this).val().length > 0;
+                $('#confirm_password').prop('required', hasValue);
+            });
         });
     </script>
 </body>

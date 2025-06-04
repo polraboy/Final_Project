@@ -90,6 +90,69 @@
       .flash-messages {
         margin-bottom: 20px;
       }
+
+      /* สไตล์พิเศษสำหรับ tab สมัครสมาชิก */
+      .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+      }
+
+      .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+      }
+
+      #reg-password-match {
+        font-size: 0.9em;
+      }
+
+      /* ปรับปรุง Tab ให้เห็นชัดเจน */
+      .nav-tabs {
+        border-bottom: 2px solid #ddd;
+        background: #f5f5f5;
+        padding: 5px;
+        border-radius: 8px 8px 0 0;
+        margin-bottom: 0;
+      }
+
+      .nav-tabs .nav-item {
+        margin-bottom: 0;
+        margin-right: 2px;
+      }
+
+      .nav-tabs .nav-link {
+        border: 1px solid #ccc;
+        background: #e9e9e9;
+        color: #333;
+        font-weight: 500;
+        padding: 10px 20px;
+        border-radius: 5px 5px 0 0;
+        margin-bottom: -2px;
+      }
+
+      .nav-tabs .nav-link:hover {
+        background: #d4edda;
+        color: #155724;
+        border-color: #c3e6cb;
+      }
+
+      .nav-tabs .nav-link.active {
+        background: #28a745;
+        color: white;
+        border-color: #28a745;
+        font-weight: bold;
+      }
+
+      .nav-tabs .nav-link.active:hover {
+        background: #28a745;
+        color: white;
+        border-color: #28a745;
+      }
+
+      /* ทำให้ไอคอนชัดเจน */
+      .nav-tabs .nav-link i {
+        margin-right: 5px;
+      }
     </style>
   </head>
 
@@ -168,6 +231,11 @@
               <i class="fas fa-user-graduate"></i> นักศึกษา
             </a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" id="register-tab" data-toggle="tab" href="#student-register" role="tab">
+              <i class="fas fa-user-plus"></i> สมัครสมาชิก
+            </a>
+          </li>
         </ul>
         
         <!-- เนื้อหาของแต่ละ Tab -->
@@ -218,13 +286,13 @@
                 />
               </div>
               <div class="form-group">
-                <label for="phone"><i class="fas fa-phone"></i> เบอร์โทรศัพท์</label>
+                <label for="student_password"><i class="fas fa-lock"></i> รหัสผ่าน</label>
                 <input
-                  type="text"
+                  type="password"
                   class="form-control"
-                  id="phone"
-                  name="phone"
-                  placeholder="กรอกเบอร์โทรศัพท์ (ตัวเลขเท่านั้น)"
+                  id="student_password"
+                  name="password"
+                  placeholder="กรอกรหัสผ่าน"
                 />
               </div>
               <div class="alert alert-info">
@@ -235,12 +303,237 @@
               </button>
             </form>
           </div>
+
+          <!-- สมัครสมาชิกนักศึกษา -->
+          <div class="tab-pane fade" id="student-register" role="tabpanel">
+            <form action="{{ url_for('register_student') }}" method="post" id="registerForm">
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> สมัครสมาชิกเพื่อเข้าร่วมโครงการต่างๆ ของมหาวิทยาลัย
+              </div>
+
+              <div class="form-group">
+                <label for="reg_student_id"><i class="fas fa-id-card"></i> รหัสนักศึกษา</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="reg_student_id"
+                  name="student_id"
+                  placeholder="กรอกรหัสนักศึกษา"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="reg_student_name"><i class="fas fa-user"></i> ชื่อ-นามสกุล</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="reg_student_name"
+                  name="student_name"
+                  placeholder="กรอกชื่อ-นามสกุล"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="reg_student_email"><i class="fas fa-envelope"></i> อีเมล</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  id="reg_student_email"
+                  name="student_email"
+                  placeholder="กรอกอีเมล"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="reg_student_phone"><i class="fas fa-phone"></i> เบอร์โทรศัพท์</label>
+                <input
+                  type="tel"
+                  class="form-control"
+                  id="reg_student_phone"
+                  name="student_phone"
+                  placeholder="กรอกเบอร์โทรศัพท์"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="reg_branch_id"><i class="fas fa-graduation-cap"></i> สาขา</label>
+                <select class="form-control" id="reg_branch_id" name="branch_id" required>
+                  <option value="">เลือกสาขาของคุณ</option>
+                  <!-- Options จะถูกโหลดผ่าน AJAX -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="reg_password"><i class="fas fa-lock"></i> รหัสผ่าน</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="reg_password"
+                  name="password"
+                  placeholder="กรอกรหัสผ่าน (อย่างน้อย 4 ตัวอักษร)"
+                  minlength="4"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="reg_confirm_password"><i class="fas fa-lock"></i> ยืนยันรหัสผ่าน</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="reg_confirm_password"
+                  name="confirm_password"
+                  placeholder="ยืนยันรหัสผ่าน"
+                  minlength="4"
+                  required
+                />
+                <div id="reg-password-match" class="mt-2" style="display: none;"></div>
+              </div>
+
+              <div class="alert alert-warning">
+                <small><i class="fas fa-exclamation-triangle"></i> หลังจากสมัครสมาชิกแล้ว คุณสามารถเข้าสู่ระบบและลงทะเบียนเข้าร่วมโครงการต่างๆ ได้ทันที</small>
+              </div>
+
+              <button type="submit" class="btn btn-success btn-block">
+                <i class="fas fa-user-plus"></i> สมัครสมาชิก
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+      $(document).ready(function() {
+        // โหลดข้อมูลสาขาเมื่อเปิด tab สมัครสมาชิก
+        $('#register-tab').on('shown.bs.tab', function() {
+          if ($('#reg_branch_id option').length <= 1) {
+            loadBranches();
+          }
+        });
+
+        // ฟังก์ชันโหลดข้อมูลสาขา
+        function loadBranches() {
+          $.ajax({
+            url: '/get_branches',
+            method: 'GET',
+            success: function(response) {
+              var branchSelect = $('#reg_branch_id');
+              branchSelect.empty();
+              branchSelect.append('<option value="">เลือกสาขาของคุณ</option>');
+              
+              if (response.branches && response.branches.length > 0) {
+                response.branches.forEach(function(branch) {
+                  branchSelect.append('<option value="' + branch.id + '">' + branch.name + '</option>');
+                });
+              }
+            },
+            error: function() {
+              console.error('Error loading branches');
+            }
+          });
+        }
+
+        // ตรวจสอบรหัสนักศึกษาซ้ำ
+        $('#reg_student_id').blur(function() {
+          var studentId = $(this).val();
+          if (studentId && studentId.length >= 8) {
+            $.ajax({
+              url: '/check_student_exists',
+              method: 'POST',
+              data: { student_id: studentId },
+              success: function(response) {
+                if (response.exists) {
+                  alert('รหัสนักศึกษานี้มีอยู่ในระบบแล้ว กรุณาใช้รหัสอื่น หรือเข้าสู่ระบบแทน');
+                  $('#reg_student_id').focus();
+                }
+              }
+            });
+          }
+        });
+
+        // ตรวจสอบความตรงกันของรหัสผ่าน
+        function checkPasswordMatch() {
+          var password = $('#reg_password').val();
+          var confirmPassword = $('#reg_confirm_password').val();
+          var messageDiv = $('#reg-password-match');
+          
+          if (confirmPassword === '' || password === '') {
+            messageDiv.hide();
+            return true;
+          }
+          
+          if (password === confirmPassword) {
+            messageDiv.removeClass('text-danger').addClass('text-success');
+            messageDiv.html('<i class="fas fa-check"></i> รหัสผ่านตรงกัน');
+            messageDiv.show();
+            return true;
+          } else {
+            messageDiv.removeClass('text-success').addClass('text-danger');
+            messageDiv.html('<i class="fas fa-times"></i> รหัสผ่านไม่ตรงกัน');
+            messageDiv.show();
+            return false;
+          }
+        }
+
+        $('#reg_password, #reg_confirm_password').on('input', checkPasswordMatch);
+
+        // ตรวจสอบฟอร์มสมัครสมาชิกก่อนส่ง
+        $('#registerForm').on('submit', function(e) {
+          var password = $('#reg_password').val();
+          var confirmPassword = $('#reg_confirm_password').val();
+          var studentId = $('#reg_student_id').val();
+          var studentName = $('#reg_student_name').val();
+          var studentEmail = $('#reg_student_email').val();
+          var studentPhone = $('#reg_student_phone').val();
+          var branchId = $('#reg_branch_id').val();
+
+          // ตรวจสอบข้อมูลครบถ้วน
+          if (!studentId || !studentName || !studentEmail || !studentPhone || !branchId || !password || !confirmPassword) {
+            e.preventDefault();
+            alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+            return false;
+          }
+
+          // ตรวจสอบรหัสผ่าน
+          if (password !== confirmPassword) {
+            e.preventDefault();
+            alert('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+            return false;
+          }
+
+          if (password.length < 4) {
+            e.preventDefault();
+            alert('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร');
+            return false;
+          }
+
+          // ตรวจสอบรูปแบบอีเมล
+          var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(studentEmail)) {
+            e.preventDefault();
+            alert('กรุณากรอกอีเมลให้ถูกต้อง');
+            return false;
+          }
+
+          // ตรวจสอบเบอร์โทร
+          if (studentPhone.length < 9) {
+            e.preventDefault();
+            alert('กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (อย่างน้อย 9 หลัก)');
+            return false;
+          }
+
+          return true;
+        });
+      });
+    </script>
   </body>
 </html>

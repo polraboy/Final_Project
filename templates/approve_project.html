@@ -259,82 +259,83 @@
                             <th>ไฟล์โครงการ</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for project in projects %}
-                        <tr>
-                          <td>{{ loop.index + (page - 1) * per_page }}</td>
-                          <td>
-                            <strong>{{ project[1] }}</strong>
-                          </td>
-                          <td>
-                            {% if project[2] == 0 %}
-                              <span class="badge badge-secondary">ยังไม่ยื่นอนุมัติ</span>
-                            {% elif project[2] == 1 %}
-                              <span class="badge badge-warning">รออนุมัติ</span>
-                              {% if project[4] %}
-                                <br><small>ส่งเมื่อ: <span class="thai-date">{{ project[4].strftime('%d/%m/%Y %H:%M:%S') }}</span></small>
-                              {% endif %}
-                            {% elif project[2] == 2 %}
-                              <span class="badge badge-success">อนุมัติแล้ว</span>
-                              {% if project[5] %}
-                                <br><small>อนุมัติเมื่อ: <span class="thai-date">{{ project[5].strftime('%d/%m/%Y %H:%M:%S') }}</span></small>
-                              {% endif %}
-                            {% elif project[2] == 3 %}
-                              <span class="badge badge-danger">ส่งกลับไปแก้ไข</span>
-                              {% if project[6] %}
-                                <br><small>ส่งกลับไปแก้ไขเมื่อ: <span class="thai-date">{{ project[6].strftime('%d/%m/%Y %H:%M:%S') }}</span></small>
-                              {% endif %}
-                            {% endif %}
-                          </td>
-                          <td>
-                            {% if project[7] %}
-                              <span class="approver-badge">
-                                <i class="fas fa-user-check"></i> {{ project[7] }}
-                              </span>
-                            {% else %}
-                              <span class="text-muted">
-                                <i class="fas fa-minus"></i> ยังไม่มีผู้อนุมัติ
-                              </span>
-                            {% endif %}
-                          </td>
-                          <td class="action-buttons">
-                            {% if project[2] == 1 %}
-                                <!-- ปุ่มอนุมัติโครงการ -->
-                                <button type="button" onclick="confirmApproval({{ project[0] }}, '{{ project[1] }}')" class="btn btn-success btn-sm">
-                                    <i class="fas fa-check"></i> อนุมัติ
-                                </button>
-                                
-                                <!-- ปุ่มส่งกลับไปแก้ไข -->
-                                <button type="button" onclick="showRejectModal({{ project[0] }}, '{{ project[1] }}')" class="btn btn-danger btn-sm">
-                                    <i class="fas fa-edit"></i> ส่งกลับไปแก้ไข
-                                </button>
-                                
-                                <!-- ปุ่มดูเหตุผลการส่งกลับครั้งก่อน -->
-                                {% if project_prev_reject and project_prev_reject.get(project[0]) %}
-                                    <button type="button" onclick="showPreviousRejectReason('{{ project[1] }}', `{{ project_prev_reject.get(project[0]) }}`)" class="btn btn-info btn-sm">
-                                        <i class="fas fa-history"></i> ดูเหตุผลครั้งก่อน
-                                    </button>
-                                {% endif %}
-                            {% else %}
-                                <span class="text-muted">
-                                    <i class="fas fa-info-circle"></i> ไม่สามารถดำเนินการได้
-                                </span>
-                            {% endif %}
-                          </td>
-                          <td>
-                            {% if project[3] %}
-                              <button type="button" onclick="confirmDownload({{ project[0] }}, '{{ project[1] }}')" class="btn btn-primary btn-sm">
-                                <i class="fas fa-download"></i> ดาวน์โหลด PDF
-                              </button>
-                            {% else %}
-                              <span class="badge badge-secondary">
-                                <i class="fas fa-file-times"></i> ไม่มี PDF
-                              </span>
-                            {% endif %}
-                          </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
+                   <!-- แก้ไขเฉพาะส่วน tbody ในตาราง -->
+<tbody>
+  {% for project in projects %}
+  <tr>
+    <td>{{ loop.index + (page - 1) * per_page }}</td>
+    <td>
+      <strong>{{ project[1] }}</strong>
+    </td>
+    <td>
+      {% if project[2] == 0 %}
+        <span class="badge badge-secondary">ยังไม่ยื่นอนุมัติ</span>
+      {% elif project[2] == 1 %}
+        <span class="badge badge-warning">รออนุมัติ</span>
+        {% if project[4] %}
+          <br><small>ส่งเมื่อ: <span class="thai-date">{{ project[4].strftime('%d/%m/%Y %H:%M:%S') }}</span></small>
+        {% endif %}
+      {% elif project[2] == 2 %}
+        <span class="badge badge-success">อนุมัติแล้ว</span>
+        {% if project[5] %}
+          <br><small>อนุมัติเมื่อ: <span class="thai-date">{{ project[5].strftime('%d/%m/%Y %H:%M:%S') }}</span></small>
+        {% endif %}
+      {% elif project[2] == 3 %}
+        <span class="badge badge-danger">ส่งกลับไปแก้ไข</span>
+        {% if project[6] %}
+          <br><small>ส่งกลับไปแก้ไขเมื่อ: <span class="thai-date">{{ project[6].strftime('%d/%m/%Y %H:%M:%S') }}</span></small>
+        {% endif %}
+      {% endif %}
+    </td>
+    <td>
+      {% if project[7] %}
+        <span class="approver-badge">
+          <i class="fas fa-user-check"></i> {{ project[7] }}
+        </span>
+      {% else %}
+        <span class="text-muted">
+          <i class="fas fa-minus"></i> ยังไม่มีผู้อนุมัติ
+        </span>
+      {% endif %}
+    </td>
+    <td class="action-buttons">
+      {% if project[2] == 1 %}
+          <!-- ปุ่มอนุมัติโครงการ -->
+          <button type="button" onclick="confirmApproval({{ project[0] }}, '{{ project[1] }}')" class="btn btn-success btn-sm">
+              <i class="fas fa-check"></i> อนุมัติ
+          </button>
+          
+          <!-- ปุ่มส่งกลับไปแก้ไข -->
+          <button type="button" onclick="showRejectModal({{ project[0] }}, '{{ project[1] }}')" class="btn btn-danger btn-sm">
+              <i class="fas fa-edit"></i> ส่งกลับไปแก้ไข
+          </button>
+          
+          <!-- ปุ่มดูเหตุผลการส่งกลับครั้งก่อน -->
+          {% if project_prev_reject and project_prev_reject.get(project[0]) %}
+              <button type="button" onclick="showPreviousRejectReason('{{ project[1] }}', `{{ project_prev_reject.get(project[0]) }}`)" class="btn btn-info btn-sm">
+                  <i class="fas fa-history"></i> ดูเหตุผลครั้งก่อน
+              </button>
+          {% endif %}
+      {% else %}
+          <span class="text-muted">
+              <i class="fas fa-info-circle"></i> ไม่สามารถดำเนินการได้
+          </span>
+      {% endif %}
+    </td>
+    <td>
+      {% if project[3] %}
+        <button type="button" onclick="confirmDownload({{ project[0] }}, '{{ project[1] }}')" class="btn btn-primary btn-sm">
+          <i class="fas fa-download"></i> ดาวน์โหลด PDF
+        </button>
+      {% else %}
+        <span class="badge badge-secondary">
+          <i class="fas fa-file-times"></i> ไม่มี PDF
+        </span>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</tbody>
                 </table>
             </div>
 

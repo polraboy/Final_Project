@@ -147,6 +147,7 @@ def before_request():
             }
 
 
+# แก้ไข route home ใน app.py
 @app.route("/")
 def home():
     page = request.args.get("page", 1, type=int)
@@ -168,14 +169,15 @@ def home():
             (c[0], c[1], base64.b64encode(c[2]).decode("utf-8")) for c in constants
         ]
 
-        # แก้ไข: ใช้ status_register แทน join
+        # แก้ไข: ใช้ approval table แทน project table สำหรับ project_statusStart
         active_projects_query = """
             SELECT p.project_id, p.project_name, p.project_dotime, p.project_endtime, 
-                   p.project_address, p.project_statusStart, p.project_target, t.teacher_name,
+                   p.project_address, a.project_statusStart, p.project_target, t.teacher_name,
                    (SELECT COUNT(*) FROM status_register sr WHERE sr.project_id = p.project_id AND sr.status_register = 1) as participant_count
             FROM project p
             JOIN teacher t ON p.teacher_id = t.teacher_id
-            WHERE p.project_status = 2 AND (p.project_statusStart = 1 OR p.project_statusStart = 2)
+            JOIN approval a ON p.project_id = a.project_id
+            WHERE a.project_status = 2 AND (a.project_statusStart = 1 OR a.project_statusStart = 2)
             ORDER BY p.project_dotime ASC
             LIMIT 10
         """
@@ -204,6 +206,7 @@ def home():
         active_projects=active_projects
     )
 
+# แทนที่ส่วนการล็อกอินนักศึกษาใน app.py
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -246,47 +249,52 @@ def login():
                 flash("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง", "danger")
         
         elif login_type == "student":
-            # แก้ไข: การล็อกอินนักศึกษาใช้รหัสบัตรนักศึกษา
+            # แก้ไข: เอา filter การอนุมัติออก - ให้เข้าสู่ระบบได้ทันทีหลังสมัคร
             student_id = request.form.get("student_id")  # รหัสบัตรนักศึกษา
-            phone = request.form.get("phone")
+            password = request.form.get("password")      # รหัสผ่าน
             
-            if not student_id or not phone:
+            if not student_id or not password:
                 flash("กรุณากรอกข้อมูลให้ครบถ้วน", "danger")
                 return render_template("login.html")
             
             with get_db_cursor() as (db, cursor):
-                # แก้ไข: ใช้ join กับ status_register
+                # แก้ไข: ตรวจสอบจากตาราง join โดยตรง ไม่ต้องผ่าน status_register
                 query = """
                 SELECT j.join_id, j.join_name, j.join_email, j.join_telephone, j.branch_id, 
-                       b.branch_name
+                       b.branch_name, j.join_password
                 FROM `join` j
                 LEFT JOIN branch b ON j.branch_id = b.branch_id
-                JOIN status_register sr ON j.join_id = sr.join_id
-                WHERE j.join_id = %s AND j.join_telephone = %s AND sr.status_register = 1
-                ORDER BY sr.register_time DESC
+                WHERE j.join_id = %s
                 LIMIT 1
                 """
-                cursor.execute(query, (student_id, phone))
+                cursor.execute(query, (student_id,))
                 student = cursor.fetchone()
                 
                 if not student:
-                    check_query = """
-                    SELECT sr.status_register FROM `join` j
-                    JOIN status_register sr ON j.join_id = sr.join_id
-                    WHERE j.join_id = %s AND j.join_telephone = %s
-                    LIMIT 1
-                    """
-                    cursor.execute(check_query, (student_id, phone))
-                    status_check = cursor.fetchone()
-                    
-                    if status_check:
-                        if status_check[0] == 0:
-                            flash("บัญชีของคุณยังไม่ได้รับการอนุมัติ", "warning")
+                    flash("ไม่พบข้อมูลนักศึกษาในระบบ", "danger")
+                    return render_template("login.html")
+                
+                # ตรวจสอบรหัสผ่าน
+                stored_password = student[6]  # join_password
+                password_valid = False
+                
+                if stored_password:
+                    try:
+                        # ลองตรวจสอบแบบ hash ก่อน
+                        if stored_password.startswith(('pbkdf2:', 'scrypt:', 'argon2:', '$')):
+                            password_valid = check_password_hash(stored_password, password)
                         else:
-                            flash("ข้อมูลไม่ถูกต้อง", "danger")
-                    else:
-                        flash("ไม่พบข้อมูลนักศึกษาในระบบ", "danger")
-                    
+                            # เป็นรหัสผ่านแบบ plain text
+                            password_valid = (stored_password == password)
+                    except Exception as e:
+                        # ถ้าเกิดข้อผิดพลาดในการตรวจสอบ hash ให้ลองเปรียบเทียบตรงๆ
+                        password_valid = (stored_password == password)
+                else:
+                    # ถ้าไม่มีรหัสผ่าน ให้ใช้เบอร์โทรแทน (backward compatibility)
+                    password_valid = (student[3] == password)  # join_telephone
+                
+                if not password_valid:
+                    flash("รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง", "danger")
                     return render_template("login.html")
                 
                 session.clear()
@@ -302,6 +310,7 @@ def login():
                 return redirect(url_for("student_dashboard"))
 
     return render_template("login.html")
+# แก้ไข route student_dashboard ใน app.py
 @app.route("/student_dashboard")
 def student_dashboard():
     if "student_id" not in session or session.get("user_type") != "student":
@@ -311,14 +320,15 @@ def student_dashboard():
     student_id = session.get("student_id")
     
     with get_db_cursor() as (db, cursor):
-        # แก้ไข: ใช้ status_register
+        # แก้ไข: ใช้ approval table สำหรับ project_statusStart
         query = """
         SELECT sr.status_register, p.project_id, p.project_name, p.project_dotime, 
-               p.project_endtime, p.project_statusStart, p.project_address, t.teacher_name,
+               p.project_endtime, a.project_statusStart, p.project_address, t.teacher_name,
                (SELECT COUNT(*) FROM project_evaluation pe WHERE pe.join_id = sr.join_id AND pe.project_id = sr.project_id) as has_evaluated
         FROM status_register sr
         JOIN project p ON sr.project_id = p.project_id
         JOIN teacher t ON p.teacher_id = t.teacher_id
+        JOIN approval a ON p.project_id = a.project_id
         WHERE sr.join_id = %s
         ORDER BY sr.register_time DESC
         """
@@ -339,7 +349,7 @@ def student_dashboard():
                 "has_evaluated": p[8] > 0
             })
         
-        # แก้ไข: ใช้ status_register
+        # แก้ไข: ใช้ approval table สำหรับ project_statusStart
         query = """
         SELECT p.project_id, p.project_name, p.project_dotime, p.project_endtime, 
                p.project_target, p.project_address, t.teacher_name,
@@ -347,7 +357,8 @@ def student_dashboard():
                (SELECT COUNT(*) FROM status_register WHERE project_id = p.project_id AND join_id = %s) as already_joined
         FROM project p
         JOIN teacher t ON p.teacher_id = t.teacher_id
-        WHERE p.project_status = 2 AND p.project_statusStart = 1
+        JOIN approval a ON p.project_id = a.project_id
+        WHERE a.project_status = 2 AND a.project_statusStart = 1
         ORDER BY p.project_dotime ASC
         """
         cursor.execute(query, (student_id,))
@@ -372,7 +383,6 @@ def student_dashboard():
         projects=projects,
         active_projects=active_projects
     )
-
 def generate_confirmation_token(join_id, email):
     # สร้างโทเค็นอย่างง่ายจาก join_id และ email
     import hashlib
@@ -567,77 +577,69 @@ def approve_project():
     if request.method == "POST":
         project_id = request.form.get("project_id")
         action = request.form.get("action")
-        admin_id = g.user["id"]  # ดึง admin_id ของผู้ที่ล็อกอินอยู่
+        admin_id = g.user["id"]
         
         with get_db_cursor() as (db, cursor):
-            # ดึงข้อมูลโครงการและอาจารย์
-            cursor.execute("""
-                SELECT p.project_name, t.teacher_name
-                FROM project p
-                JOIN teacher t ON p.teacher_id = t.teacher_id
-                WHERE p.project_id = %s
-            """, (project_id,))
-            result = cursor.fetchone()
-            if result:
-                project_name, teacher_name = result
-            else:
-                project_name, teacher_name = "ไม่ทราบชื่อโครงการ", "ไม่ทราบชื่อ"
-
             if action == "approve":
-                new_status = 2
-                status_text = "อนุมัติ"
-                # เพิ่ม admin_id ในการอัปเดต
-                query = """UPDATE project SET project_status = %s, project_approve_date = NOW(), admin_id = %s 
-                          WHERE project_id = %s"""
-                cursor.execute(query, (new_status, admin_id, project_id))
+                cursor.execute("""
+                    UPDATE approval 
+                    SET project_status = 2, project_approve_date = NOW(), admin_id = %s
+                    WHERE project_id = %s
+                """, (admin_id, project_id))
+                flash('โครงการได้รับการอนุมัติแล้ว', 'success')
             elif action == "reject":
-                new_status = 3
-                status_text = "ตีกลับ"
                 reason = request.form.get("reason", "")
-                # เพิ่ม admin_id ในการอัปเดต
-                query = """UPDATE project SET project_status = %s, project_reject = %s, project_reject_date = NOW(), admin_id = %s 
-                          WHERE project_id = %s"""
-                cursor.execute(query, (new_status, reason, admin_id, project_id))
-            else:
-                status_text = "ไม่ทราบสถานะ"
+                cursor.execute("""
+                    UPDATE approval 
+                    SET project_status = 3, project_reject_date = NOW(), 
+                        project_reject = %s, admin_id = %s
+                    WHERE project_id = %s
+                """, (reason, admin_id, project_id))
+                flash('โครงการได้รับการตีกลับแล้ว', 'success')
             
             db.commit()
-
-        flash(f'โครงการได้รับการ{status_text}แล้ว', 'success')
         return redirect(url_for("approve_project"))
 
     page = request.args.get("page", 1, type=int)
-    per_page = 6  # จำนวนโปรเจคต่อหน้า
+    per_page = 6
     search_query = request.args.get("search", "")
     approval_filter = request.args.get("approval", "all")
 
     with get_db_cursor() as (db, cursor):
         base_query = """
-        SELECT p.project_id, p.project_name, p.project_status, 
-               CASE WHEN p.project_pdf IS NOT NULL THEN TRUE ELSE FALSE END as has_pdf,
-               p.project_submit_date, p.project_approve_date, p.project_reject_date,
-               a.admin_name as approver_name
-        FROM project p
-        LEFT JOIN admin a ON p.admin_id = a.admin_id
+            SELECT p.project_id, p.project_name, a.project_status, 
+                   CASE WHEN a.project_pdf IS NOT NULL THEN TRUE ELSE FALSE END as has_pdf,
+                   a.project_submit_date, a.project_approve_date, a.project_reject_date,
+                   ad.admin_name as approver_name
+            FROM project p
+            JOIN approval a ON p.project_id = a.project_id
+            LEFT JOIN admin ad ON a.admin_id = ad.admin_id
         """
-        count_query = "SELECT COUNT(*) FROM project p"
+        
+        count_query = """
+            SELECT COUNT(*) 
+            FROM project p
+            JOIN approval a ON p.project_id = a.project_id
+        """
+        
         where_clauses = []
         query_params = []
 
         if approval_filter == "approved":
-            where_clauses.append("p.project_status = 2")
+            where_clauses.append("a.project_status = 2")
         elif approval_filter == "pending":
-            where_clauses.append("p.project_status = 1")
+            where_clauses.append("a.project_status = 1")
         elif approval_filter == "unapproved":
-            where_clauses.append("p.project_status = 0")
+            where_clauses.append("a.project_status = 0")
 
         if search_query:
             where_clauses.append("p.project_name LIKE %s")
             query_params.append(f"%{search_query}%")
 
         if where_clauses:
-            base_query += " WHERE " + " AND ".join(where_clauses)
-            count_query += " WHERE " + " AND ".join(where_clauses)
+            where_clause = " WHERE " + " AND ".join(where_clauses)
+            base_query += where_clause
+            count_query += where_clause
 
         # Count total projects
         cursor.execute(count_query, query_params)
@@ -646,12 +648,12 @@ def approve_project():
         # Calculate total pages
         total_pages = ceil(total_projects / per_page)
 
-        # Get projects for current page - เรียงจากใหม่ไปเก่า
+        # Get projects for current page
         base_query += """ ORDER BY 
             CASE 
-                WHEN p.project_submit_date IS NOT NULL THEN p.project_submit_date
-                WHEN p.project_approve_date IS NOT NULL THEN p.project_approve_date  
-                WHEN p.project_reject_date IS NOT NULL THEN p.project_reject_date
+                WHEN a.project_submit_date IS NOT NULL THEN a.project_submit_date
+                WHEN a.project_approve_date IS NOT NULL THEN a.project_approve_date  
+                WHEN a.project_reject_date IS NOT NULL THEN a.project_reject_date
                 ELSE p.project_id
             END DESC,
             p.project_id DESC
@@ -661,18 +663,18 @@ def approve_project():
         cursor.execute(base_query, query_params)
         projects = cursor.fetchall()
         
-        # ดึงข้อมูลเหตุผลการตีกลับของโครงการที่รออนุมัติในหน้านี้
+        # ดึงข้อมูลเหตุผลการตีกลับ
         project_prev_reject = {}
-        pending_project_ids = [p[0] for p in projects if p[2] == 1]  # ดึง ID ของโครงการสถานะ "รออนุมัติ"
+        pending_project_ids = [p[0] for p in projects if p[2] == 1]
         
         if pending_project_ids:
             placeholders = ', '.join(['%s'] * len(pending_project_ids))
             cursor.execute(
                 f"""
-                SELECT p.project_id, p.project_reject 
-                FROM project p
-                WHERE p.project_id IN ({placeholders})
-                AND p.project_reject IS NOT NULL AND p.project_reject != ''
+                SELECT a.project_id, a.project_reject 
+                FROM approval a
+                WHERE a.project_id IN ({placeholders})
+                AND a.project_reject IS NOT NULL AND a.project_reject != ''
                 """,
                 pending_project_ids
             )
@@ -689,6 +691,7 @@ def approve_project():
         per_page=per_page,
         project_prev_reject=project_prev_reject
     )
+
 def get_projects():
     with get_db_cursor() as (db, cursor):
         query = "SELECT project_id, project_name, project_status, project_statusStart FROM project"
@@ -764,7 +767,6 @@ def join_project(project_id):
                 flash("โครงการไม่พบ", "error")
                 return redirect(url_for("active_projects"))
 
-            # แก้ไข: ใช้ status_register
             cursor.execute(
                 "SELECT COUNT(*) FROM status_register WHERE project_id = %s",
                 (project_id,),
@@ -778,7 +780,7 @@ def join_project(project_id):
                 registration_type = request.form.get("registrationType")
                 student_id = request.form.get("student_id")  # รหัสบัตรนักศึกษา
                 
-                # แก้ไข: ตรวจสอบใน status_register
+                # ตรวจสอบใน status_register
                 cursor.execute(
                     "SELECT COUNT(*) FROM status_register WHERE project_id = %s AND join_id = %s",
                     (project_id, student_id)
@@ -823,19 +825,26 @@ def join_project(project_id):
                     join_telephone = request.form["join_telephone"]
                     join_email = request.form["join_email"]
                     branch_id = request.form.get("branch_id")
+                    join_password = request.form.get("join_password", "")  # รหัสผ่านใหม่
 
-                    # บันทึกข้อมูลนักศึกษาใหม่
+                    # เข้ารหัสรหัสผ่าน
+                    hashed_password = ""
+                    if join_password:
+                        hashed_password = generate_password_hash(join_password)
+
+                    # บันทึกข้อมูลนักศึกษาใหม่พร้อมรหัสผ่าน
                     cursor.execute(
                         """
-                        INSERT INTO `join` (join_id, join_name, join_telephone, join_email, branch_id)
-                        VALUES (%s, %s, %s, %s, %s)
+                        INSERT INTO `join` (join_id, join_name, join_telephone, join_email, branch_id, join_password)
+                        VALUES (%s, %s, %s, %s, %s, %s)
                         ON DUPLICATE KEY UPDATE 
                         join_name = VALUES(join_name),
                         join_telephone = VALUES(join_telephone),
                         join_email = VALUES(join_email),
-                        branch_id = VALUES(branch_id)
+                        branch_id = VALUES(branch_id),
+                        join_password = VALUES(join_password)
                         """,
-                        (student_id, join_name, join_telephone, join_email, branch_id)
+                        (student_id, join_name, join_telephone, join_email, branch_id, hashed_password)
                     )
                     
                     # บันทึกลง status_register
@@ -939,9 +948,8 @@ def update_join_status():
         join_status = int(request.form.get('join_status', 0))
         
         with get_db_cursor() as (db, cursor):
-            # แก้ไข: ใช้ status_register
-            cursor.execute(
-                """
+            # ดึงข้อมูลผู้เข้าร่วมและโครงการ
+            cursor.execute("""
                 SELECT sr.status_register, j.join_name, p.project_target, p.teacher_id, p.project_name, 
                        p.project_dotime, p.project_endtime,
                        (SELECT COUNT(*) FROM status_register WHERE project_id = sr.project_id AND status_register = 1) as current_approved
@@ -949,9 +957,7 @@ def update_join_status():
                 JOIN `join` j ON sr.join_id = j.join_id
                 JOIN project p ON sr.project_id = p.project_id
                 WHERE sr.join_id = %s AND sr.project_id = %s
-                """,
-                (join_id, project_id)
-            )
+            """, (join_id, project_id))
             participant_info = cursor.fetchone()
             
             if not participant_info:
@@ -960,10 +966,16 @@ def update_join_status():
                 
             old_status = participant_info[0]
             student_name = participant_info[1]
+            project_target = int(participant_info[2]) if participant_info[2] else 0
+            project_teacher_id = participant_info[3]
+            project_name = participant_info[4]
+            project_dotime = participant_info[5]
+            project_endtime = participant_info[6]
+            current_approved = int(participant_info[7]) if participant_info[7] else 0
             
+            # ตรวจสอบสิทธิ์
             user_type = session.get("user_type", "")
             logged_in_teacher_id = session.get("teacher_id") if user_type == "teacher" else None
-            project_teacher_id = participant_info[3]
             
             is_project_owner = logged_in_teacher_id and str(logged_in_teacher_id) == str(project_teacher_id)
             is_admin = user_type == "admin"
@@ -972,21 +984,88 @@ def update_join_status():
                 flash("คุณไม่มีสิทธิ์ในการอนุมัติผู้เข้าร่วมโครงการนี้", "error")
                 return redirect(url_for("project_participants", project_id=project_id))
             
-            # อัปเดตสถานะใน status_register
+            # ตรวจสอบจำนวนที่นั่ง
+            if join_status == 1 and old_status != 1:  # อนุมัติใหม่
+                if current_approved >= project_target:
+                    flash(f"ไม่สามารถอนุมัติได้ เนื่องจากโครงการเต็มแล้ว ({current_approved}/{project_target})", "error")
+                    return redirect(url_for("project_participants", project_id=project_id))
+            
+            # **ฟีเจอร์หลัก: ตรวจสอบและปฏิเสธโครงการที่ทับซ้อนอัตโนมัติ**
+            auto_rejected_projects = []
+            if join_status == 1 and old_status != 1:  # เมื่ออนุมัติใหม่เท่านั้น
+                # หาโครงการอื่นที่ทับซ้อนกับโครงการที่จะอนุมัติ
+                cursor.execute("""
+                    SELECT sr.project_id, p.project_name, p.project_dotime, p.project_endtime, sr.status_register,
+                           t.teacher_name
+                    FROM status_register sr
+                    JOIN project p ON sr.project_id = p.project_id
+                    JOIN teacher t ON p.teacher_id = t.teacher_id
+                    WHERE sr.join_id = %s 
+                    AND sr.project_id != %s
+                    AND sr.status_register IN (0, 1)  -- รออนุมัติหรืออนุมัติแล้ว
+                    AND (
+                        (p.project_dotime <= %s AND p.project_endtime >= %s) OR
+                        (p.project_dotime <= %s AND p.project_endtime >= %s) OR
+                        (p.project_dotime >= %s AND p.project_endtime <= %s)
+                    )
+                """, (join_id, project_id,
+                     project_endtime, project_dotime, 
+                     project_dotime, project_dotime, 
+                     project_dotime, project_endtime))
+                
+                conflicting_projects = cursor.fetchall()
+                
+                # ปฏิเสธโครงการที่ทับซ้อนอัตโนมัติ
+                for conflict in conflicting_projects:
+                    conflict_project_id = conflict[0]
+                    conflict_project_name = conflict[1]
+                    conflict_status = conflict[4]
+                    teacher_name = conflict[5]
+                    
+                    # เปลี่ยนสถานะเป็น 2 = ไม่อนุมัติ
+                    cursor.execute("""
+                        UPDATE status_register 
+                        SET status_register = 2 
+                        WHERE join_id = %s AND project_id = %s
+                    """, (join_id, conflict_project_id))
+                    
+                    auto_rejected_projects.append({
+                        'name': conflict_project_name,
+                        'teacher': teacher_name,
+                        'old_status': conflict_status
+                    })
+            
+            # อัปเดตสถานะโครงการหลัก
             cursor.execute(
                 "UPDATE status_register SET status_register = %s WHERE join_id = %s AND project_id = %s",
                 (join_status, join_id, project_id)
             )
             
-            status_text = {0: "รอการอนุมัติ", 1: "อนุมัติแล้ว", 2: "ไม่อนุมัติ"}.get(join_status, "ไม่ทราบสถานะ")
-            flash(f"อัปเดตสถานะ '{student_name}' เป็น '{status_text}' เรียบร้อยแล้ว", "success")
-            
             db.commit()
+            
+            # แสดงข้อความแจ้งผลลัพธ์
+            status_text = {0: "รอการอนุมัติ", 1: "อนุมัติแล้ว", 2: "ไม่อนุมัติ"}.get(join_status, "ไม่ทราบสถานะ")
+            main_message = f"อัปเดตสถานะ '{student_name}' เป็น '{status_text}' ในโครงการ '{project_name}' เรียบร้อยแล้ว"
+            
+            # แจ้งเกี่ยวกับโครงการที่ถูกปฏิเสธอัตโนมัติ
+            if auto_rejected_projects:
+                rejected_list = []
+                for rejected in auto_rejected_projects:
+                    status_desc = "ที่รออนุมัติ" if rejected['old_status'] == 0 else "ที่อนุมัติแล้ว"
+                    rejected_list.append(f"• {rejected['name']} (อ.{rejected['teacher']}) - {status_desc}")
+                
+                rejection_message = f"\n\n🚫 ปฏิเสธโครงการที่ทับซ้อนอัตโนมัติ ({len(auto_rejected_projects)} โครงการ):\n" + "\n".join(rejected_list)
+                main_message += rejection_message
+                flash(main_message, "warning")
+            else:
+                flash(main_message, "success")
                 
     except Exception as e:
         flash(f"เกิดข้อผิดพลาด: {str(e)}", "error")
+        print(f"Error in update_join_status: {e}")  # สำหรับ debug
         
     return redirect(url_for("project_participants", project_id=project_id))
+
 
 
 @app.route("/project/<int:project_id>/approve_all", methods=["POST"])
@@ -994,9 +1073,9 @@ def update_join_status():
 def approve_all_participants(project_id):
     try:
         with get_db_cursor() as (db, cursor):
+            # ดึงข้อมูลโครงการ
             cursor.execute(
-                """SELECT project_target, teacher_id, project_name, project_dotime, project_endtime 
-                   FROM project WHERE project_id = %s""",
+                "SELECT project_target, teacher_id, project_name, project_dotime, project_endtime FROM project WHERE project_id = %s",
                 (project_id,)
             )
             project = cursor.fetchone()
@@ -1007,7 +1086,11 @@ def approve_all_participants(project_id):
             
             max_participants = int(project[0]) if project[0] else 0
             project_teacher_id = project[1]
+            project_name = project[2]
+            project_dotime = project[3]
+            project_endtime = project[4]
             
+            # ตรวจสอบสิทธิ์
             user_type = session.get("user_type", "")
             logged_in_teacher_id = session.get("teacher_id") if user_type == "teacher" else None
             
@@ -1018,52 +1101,101 @@ def approve_all_participants(project_id):
                 flash("คุณไม่มีสิทธิ์ในการอนุมัติผู้เข้าร่วมโครงการนี้", "error")
                 return redirect(url_for("project_participants", project_id=project_id))
             
-            # แก้ไข: ใช้ status_register
+            # นับจำนวนที่อนุมัติแล้ว
             cursor.execute(
                 "SELECT COUNT(*) FROM status_register WHERE project_id = %s AND status_register = 1",
                 (project_id,)
             )
-            current_approved = cursor.fetchone()[0]
+            current_approved = cursor.fetchone()[0] or 0
             
-            cursor.execute(
-                """
+            # ดึงรายชื่อผู้รออนุมัติ
+            cursor.execute("""
                 SELECT sr.join_id, j.join_name, sr.register_time 
                 FROM status_register sr
                 JOIN `join` j ON sr.join_id = j.join_id
                 WHERE sr.project_id = %s AND sr.status_register = 0
                 ORDER BY sr.register_time ASC
-                """,
-                (project_id,)
-            )
+            """, (project_id,))
             waiting_participants = cursor.fetchall()
             
             if not waiting_participants:
                 flash("ไม่มีผู้เข้าร่วมที่รออนุมัติ", "info")
                 return redirect(url_for("project_participants", project_id=project_id))
             
+            # คำนวณที่นั่งที่เหลือ
             remaining_slots = max(0, max_participants - current_approved)
             approved_count = 0
+            total_auto_rejected = 0
             
+            # อนุมัติผู้เข้าร่วมตามลำดับการลงทะเบียน
             for i, participant in enumerate(waiting_participants):
                 join_id = participant[0]
+                student_name = participant[1]
                 
                 if approved_count < remaining_slots:
+                    # **ตรวจสอบและปฏิเสธโครงการที่ทับซ้อนก่อนอนุมัติ**
+                    cursor.execute("""
+                        SELECT sr.project_id, p.project_name
+                        FROM status_register sr
+                        JOIN project p ON sr.project_id = p.project_id
+                        WHERE sr.join_id = %s 
+                        AND sr.project_id != %s
+                        AND sr.status_register IN (0, 1)  -- รออนุมัติหรืออนุมัติแล้ว
+                        AND (
+                            (p.project_dotime <= %s AND p.project_endtime >= %s) OR
+                            (p.project_dotime <= %s AND p.project_endtime >= %s) OR
+                            (p.project_dotime >= %s AND p.project_endtime <= %s)
+                        )
+                    """, (join_id, project_id,
+                         project_endtime, project_dotime, 
+                         project_dotime, project_dotime, 
+                         project_dotime, project_endtime))
+                    
+                    conflicting_projects = cursor.fetchall()
+                    
+                    # ปฏิเสธโครงการที่ทับซ้อนอัตโนมัติ
+                    for conflict in conflicting_projects:
+                        conflict_project_id = conflict[0]
+                        cursor.execute("""
+                            UPDATE status_register 
+                            SET status_register = 2 
+                            WHERE join_id = %s AND project_id = %s
+                        """, (join_id, conflict_project_id))
+                        total_auto_rejected += 1
+                    
+                    # อนุมัติโครงการหลัก
                     cursor.execute(
                         "UPDATE status_register SET status_register = 1 WHERE join_id = %s AND project_id = %s",
                         (join_id, project_id)
                     )
                     approved_count += 1
                 else:
+                    # ไม่อนุมัติ (เต็มแล้ว)
                     cursor.execute(
                         "UPDATE status_register SET status_register = 2 WHERE join_id = %s AND project_id = %s",
                         (join_id, project_id)
                     )
             
             db.commit()
-            flash(f"อนุมัติผู้เข้าร่วม {approved_count} คน", "success")
+            
+            # แสดงข้อความผลลัพธ์
+            messages = []
+            if approved_count > 0:
+                messages.append(f"อนุมัติผู้เข้าร่วม {approved_count} คน เรียบร้อยแล้ว")
+                if approved_count < len(waiting_participants):
+                    rejected_count = len(waiting_participants) - approved_count
+                    messages.append(f"ไม่อนุมัติ {rejected_count} คน เนื่องจากโครงการเต็มแล้ว")
+            else:
+                messages.append("โครงการเต็มแล้ว ไม่สามารถอนุมัติผู้เข้าร่วมเพิ่มได้")
+            
+            if total_auto_rejected > 0:
+                messages.append(f"🚫 ปฏิเสธโครงการที่ทับซ้อนอัตโนมัติ {total_auto_rejected} โครงการ")
+            
+            flash(" | ".join(messages), "success" if approved_count > 0 else "warning")
                 
     except Exception as e:
         flash(f"เกิดข้อผิดพลาด: {str(e)}", "error")
+        print(f"Error in approve_all_participants: {e}")  # สำหรับ debug
         
     return redirect(url_for("project_participants", project_id=project_id))
 
@@ -1190,11 +1322,13 @@ def check_schedule_conflict():
 def project_participants(project_id):
     try:
         with get_db_cursor() as (db, cursor):
+            # ดึงข้อมูลโครงการพื้นฐาน
             cursor.execute("""
                 SELECT p.project_id, p.project_name, p.project_style, p.project_dotime, p.project_endtime, 
-                       p.project_target, p.project_status, p.project_detail, p.project_budgettype, p.project_year,
-                       p.teacher_id
+                       p.project_target, p.project_detail, p.project_budgettype, p.project_year,
+                       p.teacher_id, a.project_status, a.project_statusStart
                 FROM project p
+                JOIN approval a ON p.project_id = a.project_id
                 WHERE p.project_id = %s
             """, (project_id,))
             project_data = cursor.fetchone()
@@ -1203,47 +1337,46 @@ def project_participants(project_id):
                 flash("ไม่พบข้อมูลโครงการ", "error")
                 return redirect(url_for("home"))
             
-            # แก้ไข: ใช้ status_register
+            # นับจำนวนผู้เข้าร่วมที่อนุมัติแล้ว
             cursor.execute(
                 "SELECT COUNT(*) FROM status_register WHERE project_id = %s AND status_register = 1",
                 (project_id,)
             )
-            approved_count = cursor.fetchone()[0]
+            approved_count = cursor.fetchone()[0] or 0
             
+            # ดึงข้อมูลอาจารย์ผู้รับผิดชอบ
             cursor.execute("""
                 SELECT t.teacher_id, t.teacher_name, t.teacher_email, t.teacher_phone, b.branch_name
                 FROM project p
                 JOIN teacher t ON p.teacher_id = t.teacher_id
-                JOIN branch b ON t.branch_id = b.branch_id
+                LEFT JOIN branch b ON t.branch_id = b.branch_id
                 WHERE p.project_id = %s
             """, (project_id,))
             teacher_data = cursor.fetchone()
             
-            # แก้ไข: ใช้ status_register join กับ join
-            cursor.execute(
-                """
-                SELECT j.join_id, j.join_name, j.join_email, j.join_telephone, sr.status_register,
-                       j.branch_id, b.branch_name, sr.register_time
+            # ดึงรายชื่อผู้เข้าร่วมทั้งหมด
+            cursor.execute("""
+                SELECT j.join_id, j.join_name, j.join_email, j.join_telephone, 
+                       sr.status_register, j.branch_id, b.branch_name, sr.register_time
                 FROM status_register sr
                 JOIN `join` j ON sr.join_id = j.join_id
                 LEFT JOIN branch b ON j.branch_id = b.branch_id
                 WHERE sr.project_id = %s
-                ORDER BY sr.status_register, sr.register_time
-                """,
-                (project_id,)
-            )
+                ORDER BY sr.status_register ASC, sr.register_time ASC
+            """, (project_id,))
             participants_raw = cursor.fetchall()
             
+            # จัดรูปแบบข้อมูลผู้เข้าร่วม
             participants = []
             waiting_count = 0
             
             for p in participants_raw:
                 participant = {
                     'join_id': p[0], 
-                    'join_name': p[1],
-                    'join_email': p[2],
-                    'join_telephone': p[3],
-                    'status_register': p[4],  # เปลี่ยนจาก join_status
+                    'join_name': p[1] or 'ไม่ระบุชื่อ',
+                    'join_email': p[2] or 'ไม่ระบุอีเมล',
+                    'join_telephone': p[3] or 'ไม่ระบุเบอร์',
+                    'status_register': p[4],
                     'branch_id': p[5],
                     'branch_name': p[6] if p[6] else "ไม่ระบุสาขา",
                     'register_time': p[7],
@@ -1254,20 +1387,23 @@ def project_participants(project_id):
                 if p[4] == 0:  # status_register = 0 (รออนุมัติ)
                     waiting_count += 1
             
+            # จัดรูปแบบข้อมูลโครงการ
             project = {
                 'project_id': project_data[0],
                 'project_name': project_data[1],
                 'project_style': project_data[2],
                 'project_dotime': project_data[3],
                 'project_endtime': project_data[4],
-                'project_target': project_data[5],
-                'project_status': project_data[6],
-                'project_detail': project_data[7],
-                'project_budgettype': project_data[8],
-                'project_year': project_data[9],
-                'teacher_id': project_data[10]
+                'project_target': int(project_data[5]) if project_data[5] else 0,
+                'project_detail': project_data[6],
+                'project_budgettype': project_data[7],
+                'project_year': project_data[8],
+                'teacher_id': project_data[9],
+                'project_status': project_data[10],
+                'project_statusStart': project_data[11]
             }
             
+            # จัดรูปแบบข้อมูลอาจารย์
             teacher = None
             if teacher_data:
                 teacher = {
@@ -1275,9 +1411,10 @@ def project_participants(project_id):
                     'teacher_name': teacher_data[1],
                     'teacher_email': teacher_data[2],
                     'teacher_phone': teacher_data[3],
-                    'branch_name': teacher_data[4]
+                    'branch_name': teacher_data[4] or 'ไม่ระบุสาขา'
                 }
 
+            # ตรวจสอบสิทธิ์ผู้ใช้
             is_logged_in = "user_type" in session
             user_type = session.get("user_type", "")
             logged_in_teacher_id = session.get("teacher_id") if user_type == "teacher" else None
@@ -1286,7 +1423,8 @@ def project_participants(project_id):
             is_admin = user_type == "admin"
             can_approve = is_admin or is_project_owner
             
-            available_slots = int(project['project_target']) - approved_count if project['project_target'] else 0
+            # คำนวณที่นั่งที่เหลือ
+            available_slots = max(0, project['project_target'] - approved_count)
             
             return render_template(
                 "project_participants.html",
@@ -1307,7 +1445,9 @@ def project_participants(project_id):
             
     except Exception as e:
         flash(f"เกิดข้อผิดพลาด: {str(e)}", "error")
+        print(f"Error in project_participants: {e}")  # สำหรับ debug
         return redirect(url_for("project_detail", project_id=project_id))
+        
 @app.route("/uploads/<filename>")
 @login_required("teacher")
 def uploaded_file(filename):
@@ -1683,48 +1823,30 @@ def download_project_pdf(project_id):
     user_type = g.user["type"]
 
     with get_db_cursor() as (db, cursor):
-        # ดึงข้อมูลโครงการ
+        # ดึงข้อมูล PDF จากตาราง approval
         if user_type == "teacher":
-            teacher_id = g.user["id"]
             query = """
-                SELECT project_pdf, project_name, 
-                       project_budgettype, project_year, project_style, project_address, 
-                       project_dotime, project_endtime, project_target, project_budget, 
-                       project_detail, project_output, project_strategy, project_indicator,
-                       project_cluster, project_commonality, project_physical_grouping,
-                       project_rationale, project_objectives, project_goals, 
-                       project_output_target, project_outcome_target, project_activity,
-                       project_activities_json, project_quantity_indicator, project_quality_indicator,
-                       project_time_indicator, project_cost_indicator, project_expected_results,
-                       project_compensation_json, project_expenses_json
-                FROM project 
-                WHERE project_id = %s AND teacher_id = %s
+                SELECT p.project_name, a.project_pdf 
+                FROM project p
+                JOIN approval a ON p.project_id = a.project_id
+                WHERE p.project_id = %s AND p.teacher_id = %s
             """
-            cursor.execute(query, (project_id, teacher_id))
+            cursor.execute(query, (project_id, g.user["id"]))
         else:  # admin
             query = """
-                SELECT project_pdf, project_name, 
-                       project_budgettype, project_year, project_style, project_address, 
-                       project_dotime, project_endtime, project_target, project_budget, 
-                       project_detail, project_output, project_strategy, project_indicator,
-                       project_cluster, project_commonality, project_physical_grouping,
-                       project_rationale, project_objectives, project_goals, 
-                       project_output_target, project_outcome_target, project_activity,
-                       project_activities_json, project_quantity_indicator, project_quality_indicator,
-                       project_time_indicator, project_cost_indicator, project_expected_results,
-                       project_compensation_json, project_expenses_json
-                FROM project 
-                WHERE project_id = %s
+                SELECT p.project_name, a.project_pdf 
+                FROM project p
+                JOIN approval a ON p.project_id = a.project_id
+                WHERE p.project_id = %s
             """
             cursor.execute(query, (project_id,))
 
         result = cursor.fetchone()
 
-        if result and result[0]:  # มี PDF ในฐานข้อมูล
-            pdf_content = result[0]
-            project_name = result[1]
+        if result and result[1]:  # มี PDF ในฐานข้อมูล
+            pdf_content = result[1]
+            project_name = result[0]
             
-            # ตรวจสอบว่า PDF ถูกต้องหรือไม่
             if verify_pdf(pdf_content):
                 return send_file(
                     BytesIO(pdf_content),
@@ -1733,77 +1855,11 @@ def download_project_pdf(project_id):
                     mimetype="application/pdf",
                 )
             else:
-                # ถ้า PDF ไม่ถูกต้อง ให้สร้างใหม่
-                project_data = {
-                    "project_name": result[1],
-                    "project_budgettype": result[2],
-                    "project_year": result[3],
-                    "project_style": result[4],
-                    "project_address": result[5],
-                    "project_dotime": result[6],
-                    "project_endtime": result[7],
-                    "project_target": result[8],
-                    "project_budget": result[9],
-                    "project_detail": result[10],
-                    "project_output": result[11],
-                    "strategy": result[12],
-                    "indicator": result[13],
-                    "cluster": result[14],
-                    "commonality": result[15],
-                    "physical_grouping": result[16],
-                    "rationale": result[17],
-                    "objectives": result[18],
-                    "goals": result[19],
-                    "output_target": result[20],
-                    "outcome_target": result[21],
-                    "project_activity": result[22],
-                }
-                
-                # แปลง JSON strings
-                try:
-                    if result[23]:  # project_activities_json
-                        project_data["activities"] = json.loads(result[23])
-                except:
-                    project_data["activities"] = []
-                    
-                project_data["quantity_indicator"] = result[24]
-                project_data["quality_indicator"] = result[25]
-                project_data["time_indicator"] = result[26]
-                project_data["cost_indicator"] = result[27]
-                project_data["expected_results"] = result[28]
-                
-                try:
-                    if result[29]:  # project_compensation_json
-                        project_data["compensation"] = json.loads(result[29])
-                except:
-                    project_data["compensation"] = []
-                    
-                try:
-                    if result[30]:  # project_expenses_json
-                        project_data["expenses"] = json.loads(result[30])
-                except:
-                    project_data["expenses"] = []
-                
-                # สร้าง PDF ใหม่
-                pdf_buffer = create_project_pdf(project_data)
-                if pdf_buffer:
-                    new_pdf_content = pdf_buffer.getvalue()
-                    
-                    # บันทึกลงฐานข้อมูล
-                    update_query = "UPDATE project SET project_pdf = %s WHERE project_id = %s"
-                    cursor.execute(update_query, (new_pdf_content, project_id))
-                    db.commit()
-                    
-                    return send_file(
-                        BytesIO(new_pdf_content),
-                        as_attachment=True,
-                        download_name=f"{project_name}.pdf",
-                        mimetype="application/pdf",
-                    )
+                flash("ไฟล์ PDF เสียหาย", "error")
         else:
-            # ไม่มี PDF หรือไม่พบโครงการ
             flash("ไม่พบไฟล์ PDF สำหรับโครงการนี้", "error")
-            return redirect(url_for("teacher_projects" if user_type == "teacher" else "approve_project"))
+            
+        return redirect(url_for("teacher_projects" if user_type == "teacher" else "approve_project"))
 
 
 def prepare_logo(logo_path):
@@ -2486,7 +2542,7 @@ def create_project_pdf(project_data):
 def project_reports():
     # ดึงข้อมูลสำหรับตัวกรอง
     with get_db_cursor() as (db, cursor):
-        # ดึงข้อมูlสาขา
+        # ดึงข้อมูลสาขา
         cursor.execute("SELECT branch_id, branch_name FROM branch ORDER BY branch_name")
         branches = cursor.fetchall()
         
@@ -2508,17 +2564,19 @@ def project_reports():
         budget_type = request.args.get("budget_type", "all")
         policy = request.args.get("policy", "all")
         
-        # สร้าง query พื้นฐาน - เพิ่มข้อมูลผู้อนุมัติ
+        # แก้ไข: สร้าง query พื้นฐาน - ใช้ summary table และ approval table
         base_query = """
             SELECT p.project_id, p.project_name, p.project_year, p.project_budgettype,
-                   p.project_dotime, p.project_endtime, p.project_close_date,
+                   p.project_dotime, p.project_endtime, s.project_close_date,
                    p.project_budget, p.project_policy, t.teacher_name, b.branch_name,
-                   a.admin_name as approver_name
+                   a.admin_id, ad.admin_name as approver_name
             FROM project p
             JOIN teacher t ON p.teacher_id = t.teacher_id
             JOIN branch b ON t.branch_id = b.branch_id
-            LEFT JOIN admin a ON p.admin_id = a.admin_id
-            WHERE p.project_statusStart = 2
+            JOIN approval a ON p.project_id = a.project_id
+            LEFT JOIN summary s ON p.project_id = s.project_id
+            LEFT JOIN admin ad ON a.admin_id = ad.admin_id
+            WHERE a.project_statusStart = 2
         """
         
         # เพิ่มเงื่อนไขการกรอง
@@ -2541,7 +2599,7 @@ def project_reports():
             params.append(policy)
         
         # เพิ่มการเรียงลำดับ
-        base_query += " ORDER BY p.project_close_date DESC"
+        base_query += " ORDER BY COALESCE(s.project_close_date, p.project_endtime) DESC"
         
         # ดึงข้อมูลโครงการ
         cursor.execute(base_query, params)
@@ -2578,7 +2636,7 @@ def project_reports():
         # จัดกลุ่มข้อมูลตามผู้อนุมัติ
         approver_stats = {}
         for p in projects:
-            approver_name = p[11] if p[11] is not None else "ไม่ระบุผู้อนุมัติ"
+            approver_name = p[12] if p[12] is not None else "ไม่ระบุผู้อนุมัติ"
             if approver_name not in approver_stats:
                 approver_stats[approver_name] = {
                     "count": 0,
@@ -2602,7 +2660,7 @@ def project_reports():
         total_budget=total_budget,
         branch_stats=branch_stats,
         policy_stats=policy_stats,
-        approver_stats=approver_stats  # เพิ่มสถิติผู้อนุมัติ
+        approver_stats=approver_stats
     )
 @app.route("/close_project/<int:project_id>", methods=["POST"])
 @login_required("teacher")
@@ -2626,14 +2684,36 @@ def close_project(project_id):
         
         # อัปเดตสถานะโปรเจ็คเป็นปิดโครงการ
         cursor.execute(
-            "UPDATE project SET project_statusStart = 2, project_close_date = NOW() WHERE project_id = %s",
+            "UPDATE approval SET project_statusStart = 2 WHERE project_id = %s",
             (project_id,)
         )
+        
+        # สร้างหรืออัปเดตระเบียนใน summary table
+        cursor.execute("""
+            INSERT INTO summary (project_id, project_close_date)
+            VALUES (%s, NOW())
+            ON DUPLICATE KEY UPDATE project_close_date = NOW()
+        """, (project_id,))
+        
         db.commit()
         
         flash("ปิดโครงการเรียบร้อยแล้ว", "success")
         
     return redirect(url_for("teacher_projects"))
+def get_success_level(score):
+    """คำนวณระดับความสำเร็จจากคะแนน"""
+    if score >= 90:
+        return "ดีเยี่ยม"
+    elif score >= 80:
+        return "ดีมาก"
+    elif score >= 70:
+        return "ดี"
+    elif score >= 60:
+        return "พอใช้"
+    elif score >= 50:
+        return "ต้องปรับปรุง"
+    else:
+        return "ต้องปรับปรุงเร่งด่วน"
 import json
 @app.template_filter('from_json')
 def from_json(value):
@@ -3038,11 +3118,11 @@ def teacher_evaluation_project(project_id):
             flash('คุณไม่มีสิทธิ์ดูข้อมูลโครงการนี้', 'error')
             return redirect(url_for('teacher_projects'))
         
-        # แก้ไข: ใช้ status_register
+        # อัปเดต: ใช้ status_register
         cursor.execute("""
             SELECT COUNT(*) as total_participants
             FROM status_register
-            WHERE project_id = %s
+            WHERE project_id = %s AND status_register = 1
         """, (project_id,))
         participants_count = cursor.fetchone()[0] or 0
         
@@ -3114,6 +3194,7 @@ def teacher_evaluation_project(project_id):
         participants_count=participants_count
     )
 
+
 @app.route("/cancel_submission", methods=["POST"])
 @login_required("teacher")
 def cancel_submission():
@@ -3126,19 +3207,21 @@ def cancel_submission():
     
     try:
         with get_db_cursor() as (db, cursor):
-            # ตรวจสอบว่าเป็นโครงการของอาจารย์และสถานะเป็น "รออนุมัติ" หรือไม่
+            # ตรวจสอบสิทธิ์และสถานะ
             cursor.execute(
-                "SELECT project_id FROM project WHERE project_id = %s AND teacher_id = %s AND project_status = 1",
+                """SELECT a.project_status 
+                   FROM project p
+                   JOIN approval a ON p.project_id = a.project_id
+                   WHERE p.project_id = %s AND p.teacher_id = %s AND a.project_status = 1""",
                 (project_id, teacher_id)
             )
-            project = cursor.fetchone()
             
-            if not project:
+            if not cursor.fetchone():
                 return jsonify({"success": False, "message": "ไม่พบโครงการหรือไม่มีสิทธิ์ในการยกเลิก"})
             
             # อัปเดตสถานะกลับเป็น "ยังไม่ยื่นอนุมัติ"
             cursor.execute(
-                "UPDATE project SET project_status = 0 WHERE project_id = %s",
+                "UPDATE approval SET project_status = 0, project_submit_date = NULL WHERE project_id = %s",
                 (project_id,)
             )
             db.commit()
@@ -3153,16 +3236,19 @@ def cancel_submission():
 @login_required("teacher", "admin")
 def project_summary(project_id):
     with get_db_cursor() as (db, cursor):
+        # อัปเดต query ให้ใช้ summary table
         cursor.execute("""
             SELECT p.project_id, p.project_name, p.project_budgettype, p.project_year, 
                    p.project_style, p.project_address, p.project_dotime, p.project_endtime, 
-                   p.project_target, p.project_status, p.project_statusStart, 
-                   p.project_budget, p.project_submit_date, p.project_approve_date,
-                   p.project_close_date, t.teacher_name, b.branch_name, p.summary_text,
-                   p.project_problems, p.project_solutions
+                   p.project_target, a.project_status, a.project_statusStart, 
+                   p.project_budget, a.project_submit_date, a.project_approve_date,
+                   s.project_close_date, t.teacher_name, b.branch_name, s.summary_text,
+                   s.project_problems, s.project_solutions
             FROM project p
             JOIN teacher t ON p.teacher_id = t.teacher_id
             JOIN branch b ON t.branch_id = b.branch_id
+            JOIN approval a ON p.project_id = a.project_id
+            LEFT JOIN summary s ON p.project_id = s.project_id
             WHERE p.project_id = %s
         """, (project_id,))
         project = cursor.fetchone()
@@ -3190,11 +3276,11 @@ def project_summary(project_id):
             "teacher_name": project[15],
             "branch_name": project[16],
             "summary_text": project[17] if project[17] else "",
-            "project_problems": project[18] if len(project) > 18 and project[18] else "",
-            "project_solutions": project[19] if len(project) > 19 and project[19] else ""
+            "project_problems": project[18] if project[18] else "",
+            "project_solutions": project[19] if project[19] else ""
         }
         
-        # แก้ไข: ใช้ status_register
+        # ดึงข้อมูลผู้เข้าร่วม - อัปเดตให้ใช้ status_register
         cursor.execute("""
             SELECT COUNT(*) as approved_count
             FROM status_register 
@@ -3202,28 +3288,36 @@ def project_summary(project_id):
         """, (project_id,))
         participant_count = int(cursor.fetchone()[0])
         
+        # ดึงข้อมูลการประเมิน
         cursor.execute("""
             SELECT 
                 COUNT(*) as total_evaluations,
-                ROUND(AVG(evaluation_score), 2) as average_score
+                ROUND(AVG(evaluation_score), 2) as average_score,
+                MIN(evaluation_score) as min_score,
+                MAX(evaluation_score) as max_score
             FROM 
                 project_evaluation
             WHERE 
                 project_id = %s
         """, (project_id,))
-        evaluation_summary = cursor.fetchone()
+        summary = cursor.fetchone()
         
-        if evaluation_summary:
+        if summary:
             evaluation_dict = {
-                "total_evaluations": int(evaluation_summary[0]),
-                "average_score": float(evaluation_summary[1] or 0)
+                "total_evaluations": int(summary[0]),
+                "average_score": float(summary[1] or 0),
+                "min_score": float(summary[2] or 0),
+                "max_score": float(summary[3] or 0)
             }
         else:
             evaluation_dict = {
                 "total_evaluations": 0,
-                "average_score": 0.0
+                "average_score": 0.0,
+                "min_score": 0.0,
+                "max_score": 0.0
             }
         
+        # ดึงความคิดเห็นการประเมิน
         evaluation_comments = []
         if evaluation_dict["total_evaluations"] > 0:
             cursor.execute("""
@@ -3255,7 +3349,6 @@ def project_summary(project_id):
         evaluation_comments=evaluation_comments,
         project_success=project_success
     )
-
 @app.route("/admin_project_history")
 @login_required("admin")
 def admin_project_history():
@@ -3263,61 +3356,61 @@ def admin_project_history():
         return redirect(url_for("login"))
 
     page = request.args.get("page", 1, type=int)
-    per_page = 6  # จำนวนโปรเจคต่อหน้า
+    per_page = 6
     search_query = request.args.get("search", "")
     branch_filter = request.args.get("branch", "all")
 
     with get_db_cursor() as (db, cursor):
-        # สร้าง base query - เพิ่มข้อมูลผู้อนุมัติ
+        # อัปเดต query ให้ใช้ summary table
         base_query = """
             SELECT p.project_id, p.project_name, p.project_year, p.project_budgettype,
-                   p.project_dotime, p.project_endtime, p.project_close_date,
+                   p.project_dotime, p.project_endtime, s.project_close_date,
                    t.teacher_name, b.branch_name, 
-                   CASE WHEN p.summary_pdf IS NOT NULL THEN TRUE ELSE FALSE END as has_summary,
-                   a.admin_name as approver_name
+                   CASE WHEN s.summary_pdf IS NOT NULL THEN TRUE ELSE FALSE END as has_summary,
+                   ad.admin_name as approver_name
             FROM project p
+            JOIN approval a ON p.project_id = a.project_id
+            LEFT JOIN summary s ON p.project_id = s.project_id
             JOIN teacher t ON p.teacher_id = t.teacher_id
             JOIN branch b ON t.branch_id = b.branch_id
-            LEFT JOIN admin a ON p.admin_id = a.admin_id
-            WHERE p.project_statusStart = 2
+            LEFT JOIN admin ad ON a.admin_id = ad.admin_id
+            WHERE a.project_statusStart = 2
         """
         
         count_query = """
             SELECT COUNT(*) 
             FROM project p
+            JOIN approval a ON p.project_id = a.project_id
             JOIN teacher t ON p.teacher_id = t.teacher_id
             JOIN branch b ON t.branch_id = b.branch_id
-            WHERE p.project_statusStart = 2
+            WHERE a.project_statusStart = 2
         """
         
         query_params = []
         
-        # เพิ่มเงื่อนไขการค้นหา
         if search_query:
             base_query += " AND (p.project_name LIKE %s OR t.teacher_name LIKE %s)"
             count_query += " AND (p.project_name LIKE %s OR t.teacher_name LIKE %s)"
             search_pattern = f"%{search_query}%"
             query_params.extend([search_pattern, search_pattern])
             
-        # เพิ่มเงื่อนไขกรองตามสาขา
         if branch_filter != "all":
             base_query += " AND b.branch_id = %s"
             count_query += " AND b.branch_id = %s"
             query_params.append(branch_filter)
             
-        # นับจำนวนโครงการทั้งหมดที่ตรงตามเงื่อนไข
+        # Count total projects
         cursor.execute(count_query, query_params)
         total_projects = cursor.fetchone()[0]
         
-        # คำนวณจำนวนหน้าทั้งหมด
+        # Calculate total pages
         total_pages = ceil(total_projects / per_page)
         
-        # จัดเรียงและจำกัดจำนวนการแสดงผล
-        base_query += " ORDER BY p.project_close_date DESC LIMIT %s OFFSET %s"
+        # Get projects for current page
+        base_query += " ORDER BY COALESCE(s.project_close_date, p.project_endtime) DESC LIMIT %s OFFSET %s"
         offset = (page - 1) * per_page
         query_params.extend([per_page, offset])
         
-        # ดึงข้อมูลโครงการ
         cursor.execute(base_query, query_params)
         projects = cursor.fetchall()
         
@@ -3334,28 +3427,7 @@ def admin_project_history():
         branch_filter=branch_filter,
         branches=branches
     )
-def get_success_level(score):
-    """กำหนดระดับความสำเร็จของโครงการจากคะแนน"""
-    score = float(score)  # แปลงให้เป็น float เพื่อความแน่ใจ
-    if score >= 90:
-        return "ดีเยี่ยม"
-    elif score >= 80:
-        return "ดีมาก"
-    elif score >= 70:
-        return "ดี"
-    elif score >= 60:
-        return "ค่อนข้างดี"
-    elif score >= 50:
-        return "พอใช้"
-    else:
-        return "ควรปรับปรุง"
-# ฟังก์ชันสำหรับกรองข้อความ nl2br เพื่อแปลงบรรทัดใหม่เป็น <br>
-@app.template_filter('nl2br')
-def nl2br(value):
-    if value:
-        value = re.sub(r'\r\n|\r|\n', '<br>', value)
-        return Markup(value)
-    return ''
+
 
 # ฟังก์ชันบันทึกข้อความสรุปโครงการ
 @app.route("/save_project_summary/<int:project_id>", methods=["POST"])
@@ -3367,12 +3439,11 @@ def save_project_summary(project_id):
 
     teacher_id = session["teacher_id"]
     
-    # รับข้อมูลและตรวจสอบความถูกต้องของข้อมูล
     summary_text = request.form.get("summary_text", "")
     project_problems = request.form.get("project_problems", "")
     project_solutions = request.form.get("project_solutions", "")
     
-    # ตรวจสอบว่าเป็น string เสมอ
+    # ตรวจสอบรูปแบบข้อมูล
     if not isinstance(summary_text, str):
         summary_text = str(summary_text) if summary_text is not None else ""
     if not isinstance(project_problems, str):
@@ -3380,7 +3451,7 @@ def save_project_summary(project_id):
     if not isinstance(project_solutions, str):
         project_solutions = str(project_solutions) if project_solutions is not None else ""
     
-    # ตรวจสอบรูปแบบข้อมูล - ป้องกันการบันทึกข้อมูลไม่ถูกต้อง
+    # ป้องกันการบันทึกข้อมูลไม่ถูกต้อง
     if any(timestamp in project_problems for timestamp in 
           ["2025-", "2024-", "2023-", "2022-", "2021-"]):
         project_problems = ""
@@ -3402,11 +3473,26 @@ def save_project_summary(project_id):
             return redirect(url_for("teacher_projects"))
         
         try:
-            # อัปเดตข้อความสรุปโครงการ ปัญหา และแนวทางแก้ไข
-            cursor.execute(
-                "UPDATE project SET summary_text = %s, project_problems = %s, project_solutions = %s WHERE project_id = %s",
-                (summary_text, project_problems, project_solutions, project_id)
-            )
+            # ตรวจสอบว่ามีระเบียนใน summary หรือยัง
+            cursor.execute("SELECT summary_id FROM summary WHERE project_id = %s", (project_id,))
+            summary_exists = cursor.fetchone()
+            
+            if summary_exists:
+                # อัปเดตข้อมูลที่มีอยู่
+                cursor.execute(
+                    """UPDATE summary 
+                       SET summary_text = %s, project_problems = %s, project_solutions = %s
+                       WHERE project_id = %s""",
+                    (summary_text, project_problems, project_solutions, project_id)
+                )
+            else:
+                # สร้างระเบียนใหม่
+                cursor.execute(
+                    """INSERT INTO summary (project_id, summary_text, project_problems, project_solutions, project_close_date)
+                       VALUES (%s, %s, %s, %s, NOW())""",
+                    (project_id, summary_text, project_problems, project_solutions)
+                )
+            
             db.commit()
             
             # สร้าง PDF ทันทีหลังจากบันทึกข้อความ
@@ -3414,7 +3500,6 @@ def save_project_summary(project_id):
             
             if pdf_created:
                 flash("บันทึกสรุปรายงานและสร้าง PDF เรียบร้อยแล้ว", "success")
-                # เปลี่ยนเส้นทางไปยังหน้าดาวน์โหลด PDF ทันที
                 return redirect(url_for("download_summary_pdf", project_id=project_id))
             else:
                 flash("บันทึกข้อความสรุปเรียบร้อยแล้ว แต่ไม่สามารถสร้าง PDF ได้", "warning")
@@ -3423,172 +3508,101 @@ def save_project_summary(project_id):
             flash(f"เกิดข้อผิดพลาดในการบันทึกข้อมูล: {err}", "error")
             return redirect(url_for("project_summary", project_id=project_id))
 def generate_summary_pdf(project_id):
+    """สร้าง PDF สรุปผลการดำเนินโครงการ (อัปเดตสำหรับตารางใหม่)"""
     try:
-        # นำเข้าคลาส PageBreak
         from reportlab.platypus import PageBreak
-        # ดึงข้อมูลโครงการ
+        
+        # ดึงข้อมูลโครงการจากตารางใหม่
         with get_db_cursor() as (db, cursor):
-            # ดึงข้อมูลโครงการและสาขาของอาจารย์
             cursor.execute("""
                 SELECT p.project_id, p.project_name, p.project_budgettype, p.project_year, 
                        p.project_style, p.project_address, p.project_dotime, p.project_endtime, 
                        p.project_target, p.project_budget, p.project_detail,
-                       p.project_output, p.project_strategy, p.project_indicator, 
-                       p.project_cluster, p.project_commonality, p.project_physical_grouping,
-                       p.project_rationale, p.project_objectives, p.project_goals, 
-                       p.project_output_target, p.project_outcome_target, p.project_activity,
-                       p.project_quantity_indicator, p.project_quality_indicator,
-                       p.project_time_indicator, p.project_cost_indicator,
-                       p.project_expected_results, p.summary_text, p.project_close_date,
-                       p.project_problems, p.project_solutions,
-                       t.teacher_id, t.teacher_name, b.branch_name 
+                       t.teacher_name, b.branch_name,
+                       a.project_status, a.project_statusStart, a.project_submit_date, 
+                       a.project_approve_date, s.project_close_date, s.summary_text,
+                       s.project_problems, s.project_solutions
                 FROM project p
                 JOIN teacher t ON p.teacher_id = t.teacher_id
                 JOIN branch b ON t.branch_id = b.branch_id
+                JOIN approval a ON p.project_id = a.project_id
+                LEFT JOIN summary s ON p.project_id = s.project_id
                 WHERE p.project_id = %s
             """, (project_id,))
+            
             project = cursor.fetchone()
             
             if not project:
                 logging.error(f"ไม่พบข้อมูลโครงการ ID: {project_id}")
                 return False
             
-            # ดึงข้อมูลชื่ออาจารย์และชื่อสาขาที่ถูกต้อง
-            teacher_id = project[31]
-            teacher_name = project[32]
-            branch_name = project[33]
-            
-            # ตรวจสอบความถูกต้องของชื่ออาจารย์
-            print(f"Debug: teacher_id={teacher_id}, teacher_name='{teacher_name}'")
-
-            if (not teacher_name or 
-                    not isinstance(teacher_name, str) or 
-                    teacher_name.strip() == "" or
-                    teacher_name in ["dsadad", "test", "ไม่ระบุชื่อ"] or 
-                    len(teacher_name.strip()) < 2 or 
-                    teacher_name.isdigit()):
-                    
-                    print("Teacher name is invalid, fetching from database...")
-                    # ดึงชื่อจากตาราง teacher
-                    cursor.execute("SELECT teacher_name FROM teacher WHERE teacher_id = %s", (teacher_id,))
-                    teacher_result = cursor.fetchone()
-                    if teacher_result and teacher_result[0] and teacher_result[0].strip():
-                        teacher_name = teacher_result[0].strip()
-                        print(f"Found teacher name: '{teacher_name}'")
-                    else:
-                        # ถ้ายังไม่พบ ลองดึงจาก JOIN
-                        cursor.execute("""
-                            SELECT t.teacher_name 
-                            FROM project p 
-                            JOIN teacher t ON p.teacher_id = t.teacher_id 
-                            WHERE p.project_id = %s
-                        """, (project_id,))
-                        alt_result = cursor.fetchone()
-                        if alt_result and alt_result[0] and alt_result[0].strip():
-                            teacher_name = alt_result[0].strip()
-                        else:
-                            teacher_name = "ผู้รับผิดชอบโครงการ"
-
-                    print(f"Final teacher_name: '{teacher_name}'")
-            
-            # ตรวจสอบความถูกต้องของชื่อสาขา
-            if not branch_name or not isinstance(branch_name, str) or branch_name.isdigit() or len(branch_name) < 2:
-    # ถ้าชื่อสาขาไม่ถูกต้อง ให้ดึงจากตาราง branch โดยตรง
-                    cursor.execute("""
-                    SELECT b.branch_name 
-                    FROM branch b 
-                    JOIN teacher t ON b.branch_id = t.branch_id 
-                    WHERE t.teacher_id = %s
-                """, (teacher_id,))
-                    branch_result = cursor.fetchone()
-                    if branch_result and branch_result[0]:
-                        branch_name = branch_result[0]
-                    else:
-                        branch_name = "ไม่ระบุสาขา"
-            
-            # ดึงข้อมูลผู้เข้าร่วมโครงการที่ได้รับการอนุมัติ
+            # ดึงข้อมูลผู้เข้าร่วม
             cursor.execute("""
                 SELECT COUNT(*) as approved_count
-                FROM `join` 
-                WHERE project_id = %s AND join_status = 1
+                FROM status_register 
+                WHERE project_id = %s AND status_register = 1
             """, (project_id,))
             participant_count = int(cursor.fetchone()[0])
             
-            # ดึงข้อมูลการประเมินความพึงพอใจ
+            # ดึงข้อมูลการประเมิน
             cursor.execute("""
                 SELECT 
                     COUNT(*) as total_evaluations,
-                    ROUND(AVG(evaluation_score), 2) as average_score,
-                    MIN(evaluation_score) as min_score,
-                    MAX(evaluation_score) as max_score
+                    ROUND(AVG(evaluation_score), 2) as average_score
                 FROM 
                     project_evaluation
                 WHERE 
                     project_id = %s
             """, (project_id,))
             evaluation_summary = cursor.fetchone()
+        
+        # แยกข้อมูลจาก tuple
+        project_name = project[1]
+        project_budgettype = project[2]
+        project_year = project[3]
+        project_style = project[4]
+        project_address = project[5]
+        project_dotime = project[6]
+        project_endtime = project[7]
+        project_target = int(project[8]) if project[8] is not None else 0
+        project_budget = float(project[9]) if project[9] is not None else 0
+        teacher_name = project[11]
+        branch_name = project[12]
+        project_close_date = project[17]
+        summary_text = project[18] if project[18] else ""
+        project_problems = project[19] if project[19] else ""
+        project_solutions = project[20] if project[20] else ""
+        
+        # ตรวจสอบความถูกต้องของชื่ออาจารย์
+        if (not teacher_name or 
+            not isinstance(teacher_name, str) or 
+            teacher_name.strip() == "" or
+            teacher_name in ["dsadad", "test", "ไม่ระบุชื่อ"] or 
+            len(teacher_name.strip()) < 2 or 
+            teacher_name.isdigit()):
             
-            # แปลงข้อมูลประเมินให้พร้อมใช้งาน
-            if evaluation_summary:
-                total_evaluations = int(evaluation_summary[0]) if evaluation_summary[0] is not None else 0
-                average_score = float(evaluation_summary[1]) if evaluation_summary[1] is not None else 0
-                min_score = float(evaluation_summary[2]) if evaluation_summary[2] is not None else 0
-                max_score = float(evaluation_summary[3]) if evaluation_summary[3] is not None else 0
-            else:
-                total_evaluations = 0
-                average_score = 0
-                min_score = 0
-                max_score = 0
-            
-            # คำนวณประสิทธิผลโครงการ (จากความพึงพอใจ)
-            satisfaction_percentage = average_score * 20  # แปลงคะแนนจาก 0-5 เป็น 0-100
-            project_target = int(project[8]) if project[8] is not None else 0
-            target_percentage = (participant_count / project_target) * 100 if project_target > 0 else 0
-            
-            # ดึงข้อมูลแบบละเอียดของการประเมิน
-            section_scores = {
-                "content": 0,      # ด้านเนื้อหาและประโยชน์
-                "speaker": 0,      # ด้านวิทยากร/ผู้สอน
-                "management": 0,   # ด้านการจัดการและสถานที่
-                "satisfaction": 0  # ความพึงพอใจโดยรวม
-            }
-            
-            section_counts = {
-                "content": 0,
-                "speaker": 0,
-                "management": 0,
-                "satisfaction": 0
-            }
-            
-            if total_evaluations > 0:
-                cursor.execute("""
-                    SELECT evaluation_data
-                    FROM project_evaluation
-                    WHERE project_id = %s
-                """, (project_id,))
-                
-                for row in cursor.fetchall():
-                    if row[0]:  # มีข้อมูลการประเมิน
-                        try:
-                            eval_data = json.loads(row[0])
-                            
-                            # แยกคะแนนตามส่วน
-                            for key, value in eval_data.items():
-                                if isinstance(value, (int, float)):  # เฉพาะค่าที่เป็นตัวเลข
-                                    section = key.split('_')[0]
-                                    if section in section_scores:
-                                        section_scores[section] += value
-                                        section_counts[section] += 1
-                        except:
-                            continue
-            
-            # คำนวณค่าเฉลี่ยแต่ละส่วน
-            avg_scores = {}
-            for section, total in section_scores.items():
-                if section_counts[section] > 0:
-                    avg_scores[section] = total / section_counts[section]
+            with get_db_cursor() as (db, cursor):
+                cursor.execute("SELECT teacher_name FROM teacher WHERE teacher_id = (SELECT teacher_id FROM project WHERE project_id = %s)", (project_id,))
+                teacher_result = cursor.fetchone()
+                if teacher_result and teacher_result[0] and teacher_result[0].strip():
+                    teacher_name = teacher_result[0].strip()
                 else:
-                    avg_scores[section] = 0
+                    teacher_name = "ผู้รับผิดชอบโครงการ"
+        
+        if not branch_name or not isinstance(branch_name, str) or branch_name.isdigit() or len(branch_name) < 2:
+            with get_db_cursor() as (db, cursor):
+                cursor.execute("""
+                    SELECT b.branch_name 
+                    FROM branch b 
+                    JOIN teacher t ON b.branch_id = t.branch_id 
+                    JOIN project p ON t.teacher_id = p.teacher_id
+                    WHERE p.project_id = %s
+                """, (project_id,))
+                branch_result = cursor.fetchone()
+                if branch_result and branch_result[0]:
+                    branch_name = branch_result[0]
+                else:
+                    branch_name = "ไม่ระบุสาขา"
         
         # สร้าง PDF
         buffer = BytesIO()
@@ -3622,24 +3636,15 @@ def generate_summary_pdf(project_id):
             fontName='THSarabunNew-Bold',
             fontSize=16,
             leading=20,
-            alignment=1,  # center
+            alignment=1,
             spaceAfter=8
         )
         
-        title_style = ParagraphStyle(
-            'Title',
-            fontName='THSarabunNew-Bold',
-            fontSize=18,
-            alignment=1,  # center
-            spaceAfter=8
-        )
-        
-        # สไตล์ที่ปรับปรุงสำหรับตาราง
         table_header_style = ParagraphStyle(
             'TableHeader',
             fontName='THSarabunNew-Bold',
             fontSize=14,
-            alignment=1,  # center alignment
+            alignment=1,
             spaceBefore=4,
             spaceAfter=4
         )
@@ -3650,7 +3655,7 @@ def generate_summary_pdf(project_id):
             fontSize=14,
             spaceBefore=4,
             spaceAfter=4,
-            alignment=1  # center alignment by default
+            alignment=1
         )
         
         table_item_left_style = ParagraphStyle(
@@ -3659,23 +3664,18 @@ def generate_summary_pdf(project_id):
             fontSize=14,
             spaceBefore=4,
             spaceAfter=4,
-            alignment=0  # left alignment
+            alignment=0
         )
 
         def header(canvas, doc):
             canvas.saveState()
-            # วันที่พิมพ์
             canvas.setFont('THSarabunNew', 12)
             today = datetime.now().strftime("%d/%m/%Y")
             canvas.drawRightString(doc.pagesize[0] - 40, doc.pagesize[1] - 40, f"พิมพ์เมื่อ: {today}")
-            
-            # หมายเลขหน้า
             canvas.setFont('THSarabunNew', 12)
             canvas.drawRightString(doc.pagesize[0] - 40, 30, f"หน้า {canvas.getPageNumber()}")
             
-            # โลโก้และหัวกระดาษเฉพาะหน้าแรก
-            if canvas.getPageNumber() == 1:  # เฉพาะหน้าแรก
-                # โลโก้มหาวิทยาลัย
+            if canvas.getPageNumber() == 1:
                 logo_path = os.path.join(app.static_folder, "2.png")
                 if os.path.exists(logo_path):
                     try:
@@ -3701,7 +3701,6 @@ def generate_summary_pdf(project_id):
                     except Exception as e:
                         logging.error(f"Error loading logo: {e}")
                 
-                # หัวเรื่องโปรไฟล์
                 canvas.setFont('THSarabunNew-Bold', 20)
                 canvas.drawCentredString(
                     page_center,
@@ -3711,40 +3710,25 @@ def generate_summary_pdf(project_id):
             
             canvas.restoreState()
 
-        def footer(canvas, doc):
-            canvas.saveState()
-            # เส้นคั่นด้านล่าง
-            canvas.setLineWidth(1)
-            canvas.line(40, 50, doc.pagesize[0] - 40, 50)
-            canvas.setFont('THSarabunNew', 12)
-            canvas.drawCentredString(
-                doc.pagesize[0] / 2,
-                35,
-                "มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขตขอนแก่น"
-            )
-            canvas.restoreState()
-
         content = []
+        content.append(Spacer(1, 120))
         
-        # สร้างหัวกระดาษ - บันทึกข้อความ
-        content.append(Spacer(1, 120))  # เพิ่มระยะห่างด้านบนให้มากขึ้น
-        
-        # ดึงข้อมูลจาก project
+        # สร้างเนื้อหา PDF
         project_date_format = ""
         try:
-            if isinstance(project[6], datetime):
-                project_dotime = project[6].strftime('%d/%m/%Y')
-                project_endtime = project[7].strftime('%d/%m/%Y')
-                project_date_format = f"{project_dotime} ถึง {project_endtime}"
+            if isinstance(project_dotime, datetime):
+                project_dotime_str = project_dotime.strftime('%d/%m/%Y')
+                project_endtime_str = project_endtime.strftime('%d/%m/%Y')
+                project_date_format = f"{project_dotime_str} ถึง {project_endtime_str}"
             else:
-                project_date_format = f"{project[6]} ถึง {project[7]}"
+                project_date_format = f"{project_dotime} ถึง {project_endtime}"
         except:
             project_date_format = "ไม่ระบุ"
         
-        # ส่วนงานภายใน - ใช้ branch_name ที่ได้ตรวจสอบและแก้ไขแล้ว
-        content.append(Paragraph(f"<b>ส่วนงานภายใน</b> สาขา/แผนก การบัญชี คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ โทร. (IP) ................", normal_style))
+        # ส่วนงานภายใน
+        content.append(Paragraph(f"<b>ส่วนงานภายใน</b> สาขา/แผนก {branch_name} คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ โทร. (IP) ................", normal_style))
         
-        # สร้าง format วันที่
+        # วันที่
         today = datetime.now()
         thai_month = [
             "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
@@ -3753,24 +3737,20 @@ def generate_summary_pdf(project_id):
         thai_year = today.year + 543
         
         content.append(Paragraph(f"<b>ที่</b> มทร.อีสาน 34............/ <b>วันที่</b> {today.day} {thai_month[today.month-1]} {thai_year}", normal_style))
-        
-        # เรื่องและเรียน
         content.append(Paragraph("<b>เรื่อง</b> ขอส่งรายงานผลการดำเนินโครงการ", normal_style))
         content.append(Paragraph("<b>เรียน</b> คณบดีคณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ", normal_style))
+        content.append(Spacer(1, 15))
         
-        # เว้นระยะห่างจากเส้นแบ่ง
-        content.append(Spacer(1, 15))  # เพิ่มระยะห่างหลังจากส่วนหัว
+        # เนื้อหาหลัก
+        main_text = f"""        ตามที่ สาขา/แผนก {branch_name} คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ ได้ดำเนินโครงการ{project_name} งบประมาณ{project_budgettype} (ในแผน) ประจำปีงบประมาณ พ.ศ. {project_year} จำนวนเงิน {'{:,.2f}'.format(project_budget)} บาท ({thai_money_text(project_budget)}) วันที่{project_date_format} ณ {project_address}
         
-        # เนื้อหา
-        content.append(Spacer(1, 6))
-        project_budget = float(project[9]) if project[9] is not None else 0
-        project_target = int(project[8]) if project[8] is not None else 0
-        
-       # ประมาณบรรทัด 740-750
-        main_text = f"""        ตามที่ สาขา/แผนก การบัญชี คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ ได้ดำเนินโครงการ{project[1]} งบประมาณ{project[2]} (ในแผน) ประจำปีงบประมาณ พ.ศ. {project[3]} จำนวนเงิน {'{:,.2f}'.format(project_budget)} บาท ({thai_money_text(project_budget)}) วันที่{project_date_format} ณ {project[5]}
-        
-        ในการนี้ สาขา/แผนก การบัญชี คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ ได้ดำเนินโครงการเสร็จเป็นที่เรียบร้อยแล้ว จึงขอนำส่งรายงานสรุปผลประเมินความสำเร็จตามวัตถุประสงค์ของแผนการจัดกิจกรรมตามผลผลิต โดยมีรายละเอียดดังเอกสารแนบ"""
+        ในการนี้ สาขา/แผนก {branch_name} คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ ได้ดำเนินโครงการเสร็จเป็นที่เรียบร้อยแล้ว จึงขอนำส่งรายงานสรุปผลประเมินความสำเร็จตามวัตถุประสงค์ของแผนการจัดกิจกรรมตามผลผลิต โดยมีรายละเอียดดังเอกสารแนบ"""
         content.append(Paragraph(main_text, normal_style))
+        
+        # คำนวณผลการดำเนินงาน
+        target_percentage = (participant_count / project_target) * 100 if project_target > 0 else 0
+        average_score = float(evaluation_summary[1] or 0) if evaluation_summary else 0
+        satisfaction_percentage = average_score * 20
         
         # สร้างตารางสรุป
         target_percent = '{:.1f}'.format(target_percentage)
@@ -3828,30 +3808,29 @@ def generate_summary_pdf(project_id):
              Paragraph("บรรลุ", table_item_style)]
         ]
         
-        col_widths = [200, 70, 70, 100, 70]  # กำหนดความกว้างคอลัมน์
+        col_widths = [200, 70, 70, 100, 70]
         summary_table = Table(data, colWidths=col_widths)
         
-        # ปรับแต่งตาราง
         summary_table.setStyle(TableStyle([
             ('FONT', (0, 0), (-1, -1), 'THSarabunNew', 14),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
             ('BOX', (0, 0), (-1, -1), 1, colors.black),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('ALIGN', (1, 0), (-1, -1), 'CENTER'),  # Center align all cells except first column
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),   # Center align header row
+            ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
             ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
             ('BACKGROUND', (0, 1), (0, 1), colors.lightgrey),
             ('BACKGROUND', (0, 4), (0, 4), colors.lightgrey),
             ('BACKGROUND', (0, 7), (0, 7), colors.lightgrey),
             ('BACKGROUND', (0, 9), (0, 9), colors.lightgrey),
-            ('SPAN', (1, 1), (4, 1)),  # ช่วงเชิงปริมาณ
-            ('SPAN', (1, 4), (4, 4)),  # ช่วงเชิงคุณภาพ
-            ('SPAN', (1, 7), (4, 7)),  # ช่วงเชิงเวลา
-            ('SPAN', (1, 9), (4, 9)),  # ช่วงเชิงค่าใช้จ่าย
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),   # เพิ่ม padding ซ้าย
-            ('RIGHTPADDING', (0, 0), (-1, -1), 8),  # เพิ่ม padding ขวา
-            ('TOPPADDING', (0, 0), (-1, -1), 4),    # เพิ่ม padding บน
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4), # เพิ่ม padding ล่าง
+            ('SPAN', (1, 1), (4, 1)),
+            ('SPAN', (1, 4), (4, 4)),
+            ('SPAN', (1, 7), (4, 7)),
+            ('SPAN', (1, 9), (4, 9)),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
         ]))
         
         content.append(Spacer(1, 6))
@@ -3861,207 +3840,34 @@ def generate_summary_pdf(project_id):
         # ลงชื่อ
         content.append(Paragraph("จึงเรียนมาเพื่อโปรดพิจารณา", normal_style))
         content.append(Spacer(1, 15))
-        
-        # ใช้ชื่ออาจารย์ที่ตรวจสอบและแก้ไขแล้ว
         content.append(Paragraph(f"({teacher_name})", normal_style))
         content.append(Paragraph("ผู้รับผิดชอบโครงการ", normal_style))
-
         
-        # สร้างหน้าใหม่สำหรับส่วนรายงานสรุปผล
+        # หน้าใหม่สำหรับรายงานสรุปผล
         content.append(PageBreak())
         
         # หัวรายงานสรุปผล
-        # ประมาณบรรทัด 840-850 หรือส่วนอื่นๆ ที่ใช้ branch_name
-        content.append(Paragraph(f"<b>ชื่อโครงการ :</b> {project[1]}", normal_style))
-        content.append(Paragraph(f"<b>สาขา :</b> สาขาการบัญชี <b></b>  ประจำปีงบประมาณ {project[3]}", normal_style))
-        content.append(Paragraph(f"<b>ระยะเวลา</b> วันที่{project_date_format} <b>สถานที่</b> ณ {project[5]}", normal_style))
+        content.append(Paragraph(f"<b>ชื่อโครงการ :</b> {project_name}", normal_style))
+        content.append(Paragraph(f"<b>สาขา :</b> {branch_name} <b>งบประมาณ{project_budgettype}</b> ประจำปีงบประมาณ {project_year}", normal_style))
+        content.append(Paragraph(f"<b>ระยะเวลา</b> วันที่{project_date_format} <b>สถานที่</b> ณ {project_address}", normal_style))
         content.append(Paragraph(f"<b>ผู้รับผิดชอบ</b> ชื่อ{teacher_name}", normal_style))
         content.append(Spacer(1, 12))
         
-        # ตารางวัตถุประสงค์และเป้าหมาย
-        objective_data = [
-            [Paragraph(f"<b>วัตถุประสงค์ :</b> {project[18]}", normal_style)],
-            [Paragraph(f"<b>เป้าหมายเชิงผลผลิต (Output) :</b> {project[20]}", normal_style)],
-            [Paragraph(f"<b>เป้าหมายเชิงผลลัพธ์ (Outcome) :</b> {project[21]}", normal_style)]
-        ]
-        
-        objective_table = Table(objective_data, colWidths=[550])
-        objective_table.setStyle(TableStyle([
-            ('FONT', (0, 0), (-1, -1), 'THSarabunNew', 14),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('BOX', (0, 0), (-1, -1), 1, colors.black),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 4),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-        ]))
-        
-        content.append(objective_table)
-        content.append(Spacer(1, 12))
-        
-        # สร้างตารางตัวบ่งชี้ - ใช้ข้อมูลจริงจากฐานข้อมูล
-        # ตรวจสอบ project_quantity_indicator
-        quantity_indicator = ""
-        if project[23] is not None:
-            if isinstance(project[23], str):
-                quantity_indicator = project[23]
-            else:
-                quantity_indicator = str(project[23])
-                
-        if not quantity_indicator:
-            quantity_indicator = str(project_target)  # ใช้ค่า project_target ถ้าไม่มีค่า
-
-        # ตรวจสอบค่า quality_indicator
-        quality_indicator = ""
-        if project[24] is not None:
-            if isinstance(project[24], str):
-                quality_indicator = project[24]
-            else:
-                quality_indicator = str(project[24])
-                
-        if not quality_indicator:
-            quality_indicator = "ผู้เข้าร่วมมีความพึงพอใจไม่น้อยกว่าร้อยละ 70"
-
-        # ตรวจสอบค่า time_indicator
-        time_indicator = ""
-        if project[25] is not None:
-            if isinstance(project[25], str):
-                time_indicator = project[25]
-            else:
-                time_indicator = str(project[25])
-                
-        if not time_indicator:
-            time_indicator = "ร้อยละของโครงการแล้วเสร็จตามระยะเวลาที่กำหนด ไม่ต่ำกว่าร้อยละ 100"
-
-        # ตรวจสอบค่า cost_indicator
-        cost_indicator = ""
-        if project[26] is not None:
-            if isinstance(project[26], str):
-                cost_indicator = project[26]
-            else:
-                cost_indicator = str(project[26])
-                
-        if not cost_indicator:
-            cost_indicator = '{:,.2f}'.format(project_budget)
-
-        # สร้างตารางตัวบ่งชี้ด้วยข้อมูลจริง
-        # สร้างตารางตัวบ่งชี้ด้วยข้อมูลจริง
-        indicator_data = [
-            [Paragraph("<b>ตัวบ่งชี้</b>", table_header_style), 
-            Paragraph("<b>ค่าเป้าหมาย</b>", table_header_style), 
-            Paragraph("<b>บรรลุ (/ X)</b>", table_header_style)],
-            
-            [Paragraph("<b>เชิงปริมาณ :</b>", table_item_style),
-            Paragraph(f"{quantity_indicator}", table_item_style),
-            Paragraph("/" if target_percentage >= 80 else "X", table_item_style)],
-            
-            [Paragraph(f"- ผู้เข้าร่วมโครงการจำนวน {project_target} คน", table_item_left_style),
-            Paragraph(f"{project_target}", table_item_style),
-            Paragraph("/" if participant_count >= project_target * 0.8 else "X", table_item_style)],
-            
-            [Paragraph("- จำนวนโครงการที่ได้ดำเนินการ", table_item_left_style),
-            Paragraph("1", table_item_style),
-            Paragraph("/", table_item_style)],
-            
-            [Paragraph("<b>เชิงคุณภาพ :</b>", table_item_style),
-            Paragraph("", table_item_style),
-            Paragraph("", table_item_style)],
-            
-            [Paragraph("- ร้อยละของผู้เข้าร่วมโครงการ", table_item_left_style),
-            Paragraph("75%", table_item_style),
-            Paragraph("/" if target_percentage >= 75 else "X", table_item_style)],
-            
-            [Paragraph("- พึงพอใจของผู้เข้าร่วมโครงการ", table_item_left_style),
-            Paragraph(f"{average_score:.1f}/5", table_item_style),
-            Paragraph("/" if average_score >= 3 else "X", table_item_style)],
-            
-            [Paragraph("<b>เชิงเวลา :</b>", table_item_style),
-            Paragraph("", table_item_style),
-            Paragraph("", table_item_style)],
-            
-            [Paragraph("- โครงการแล้วเสร็จตามระยะเวลาที่กำหนด", table_item_left_style),
-            Paragraph("100%", table_item_style),
-            Paragraph("/", table_item_style)],
-            
-            [Paragraph("<b>เชิงค่าใช้จ่าย :</b>", table_item_style),
-            Paragraph(f"{cost_indicator} บาท", table_item_style),
-            Paragraph("/", table_item_style)],
-            
-            [Paragraph(f"- งบประมาณที่ใช้ในการดำเนินโครงการ {'{:,.2f}'.format(project_budget)} บาท", table_item_left_style),
-            Paragraph("", table_item_style),
-            Paragraph("", table_item_style)]
-        ]
-        
-        indicator_table = Table(indicator_data, colWidths=[270, 120, 160])
-        indicator_table.setStyle(TableStyle([
-            ('FONT', (0, 0), (-1, -1), 'THSarabunNew', 14),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('BOX', (0, 0), (-1, -1), 1, colors.black),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('ALIGN', (1, 0), (2, -1), 'CENTER'),  # Center align second and third columns
-            ('ALIGN', (0, 0), (2, 0), 'CENTER'),   # Center align header row
-            ('ALIGN', (0, 1), (0, -1), 'LEFT'),    # Left align first column
-            ('BACKGROUND', (0, 0), (2, 0), colors.lightgrey),
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),   # เพิ่ม padding ซ้าย
-            ('RIGHTPADDING', (0, 0), (-1, -1), 8),  # เพิ่ม padding ขวา
-            ('TOPPADDING', (0, 0), (-1, -1), 4),    # เพิ่ม padding บน
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4), # เพิ่ม padding ล่าง
-        ]))
-        
-        content.append(indicator_table)
-        content.append(Spacer(1, 12))
-        
-        # เพิ่มตารางปัญหาและแนวทางแก้ไข
-        # ตรวจสอบข้อมูลปัญหาและการแก้ไข
-        project_problems = ""
-        project_solutions = ""
-
-        # ดึงข้อมูลปัญหาและวิธีแก้ไขจากฐานข้อมูลอีกครั้ง
-        try:
-            with get_db_cursor() as (db, cursor):
-                cursor.execute("""
-                    SELECT project_problems, project_solutions
-                    FROM project
-                    WHERE project_id = %s
-                """, (project_id,))
-                problem_result = cursor.fetchone()
-                
-                if problem_result:
-                    # ตรวจสอบข้อมูลปัญหา
-                    if problem_result[0] is not None:
-                        if isinstance(problem_result[0], datetime):
-                            # ถ้าเป็น datetime แสดงว่าข้อมูลผิดพลาด ให้ใช้ค่าว่าง
-                            project_problems = "ไม่มีข้อมูล"
-                        elif isinstance(problem_result[0], (int, float)):
-                            project_problems = str(problem_result[0])
-                        else:
-                            project_problems = str(problem_result[0])
-                            
-                        # ตรวจสอบรูปแบบข้อความ
-                        if project_problems and any(timestamp in project_problems for timestamp in 
-                                                ["2025-", "2024-", "2023-", "2022-", "2021-"]):
-                            project_problems = "ไม่มีข้อมูล"
-                    
-                    # ตรวจสอบวิธีแก้ไข
-                    if problem_result[1] is not None:
-                        if isinstance(problem_result[1], datetime):
-                            # ถ้าเป็น datetime แสดงว่าข้อมูลผิดพลาด ให้ใช้ค่าว่าง
-                            project_solutions = "ไม่มีข้อมูล"
-                        elif isinstance(problem_result[1], (int, float)):
-                            project_solutions = str(problem_result[1])
-                        else:
-                            project_solutions = str(problem_result[1])
-                            
-                        # ตรวจสอบรูปแบบข้อความ
-                        if project_solutions and any(timestamp in project_solutions for timestamp in 
-                                                ["2025-", "2024-", "2023-", "2022-", "2021-"]):
-                            project_solutions = "ไม่มีข้อมูล"
-        except Exception as e:
-            logging.error(f"Error fetching problem data: {e}")
+        # ตารางปัญหาและแนวทางแก้ไข
+        # ตรวจสอบและทำความสะอาดข้อมูล
+        if project_problems and any(timestamp in project_problems for timestamp in 
+                                  ["2025-", "2024-", "2023-", "2022-", "2021-"]):
             project_problems = "ไม่มีข้อมูล"
+        
+        if project_solutions and any(timestamp in project_solutions for timestamp in 
+                                   ["2025-", "2024-", "2023-", "2022-", "2021-"]):
             project_solutions = "ไม่มีข้อมูล"
-
+        
+        if not project_problems:
+            project_problems = "ไม่มีข้อมูล"
+        if not project_solutions:
+            project_solutions = "ไม่มีข้อมูล"
+        
         problem_data = [
             [Paragraph("<b>ปัญหา :</b>", normal_style), ""],
             [Paragraph(project_problems, normal_style), ""],
@@ -4079,10 +3885,10 @@ def generate_summary_pdf(project_id):
             ('RIGHTPADDING', (0, 0), (-1, -1), 8),
             ('TOPPADDING', (0, 0), (-1, -1), 4),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-            ('SPAN', (0, 0), (1, 0)),  # ปัญหา
-            ('SPAN', (0, 1), (1, 1)),  # รายละเอียดปัญหา
-            ('SPAN', (0, 2), (1, 2)),  # แนวทางแก้ไข
-            ('SPAN', (0, 3), (1, 3)),  # รายละเอียดแนวทางแก้ไข
+            ('SPAN', (0, 0), (1, 0)),
+            ('SPAN', (0, 1), (1, 1)),
+            ('SPAN', (0, 2), (1, 2)),
+            ('SPAN', (0, 3), (1, 3)),
         ]))
         
         content.append(Paragraph("<b>ปัญหาและแนวทางแก้ไข</b>", heading_style))
@@ -4090,26 +3896,40 @@ def generate_summary_pdf(project_id):
         content.append(Spacer(1, 12))
         
         # สรุปข้อมูลจากผู้ใช้
-        summary_text = project[28] if len(project) > 28 and project[28] else ""
         if summary_text:
             content.append(PageBreak())
             content.append(Paragraph("<b>สรุปผลการดำเนินโครงการ</b>", heading_style))
             content.append(Spacer(1, 10))
             
-            # แยกข้อความเป็นย่อหน้า
             paragraphs = summary_text.split('\n')
             for para in paragraphs:
                 if para.strip():
                     content.append(Paragraph(para, normal_style))
-            
+        
         try:
             doc.build(content, onFirstPage=header, onLaterPages=header)
             buffer.seek(0)
             
-            # บันทึก PDF ลงฐานข้อมูล
+            # บันทึก PDF ลงตาราง summary
             with get_db_cursor() as (db, cursor):
-                query = "UPDATE project SET summary_pdf = %s WHERE project_id = %s"
-                cursor.execute(query, (buffer.getvalue(), project_id))
+                # ตรวจสอบว่ามีระเบียนใน summary หรือยัง
+                cursor.execute("SELECT summary_id FROM summary WHERE project_id = %s", (project_id,))
+                summary_exists = cursor.fetchone()
+                
+                if summary_exists:
+                    # อัปเดต PDF ที่มีอยู่
+                    cursor.execute("""
+                        UPDATE summary 
+                        SET summary_pdf = %s
+                        WHERE project_id = %s
+                    """, (buffer.getvalue(), project_id))
+                else:
+                    # สร้างระเบียนใหม่พร้อม PDF
+                    cursor.execute("""
+                        INSERT INTO summary (project_id, summary_pdf, project_close_date)
+                        VALUES (%s, %s, NOW())
+                    """, (project_id, buffer.getvalue()))
+                
                 db.commit()
                 
             return True
@@ -4263,19 +4083,21 @@ def cleanup_database():
 def download_summary_pdf(project_id):
     try:
         with get_db_cursor() as (db, cursor):
-            # ดึงข้อมูล PDF
+            # ดึงข้อมูล PDF จากตาราง summary
             if g.user["type"] == "teacher":
                 query = """
-                    SELECT project_name, summary_pdf 
-                    FROM project 
-                    WHERE project_id = %s AND teacher_id = %s
+                    SELECT p.project_name, s.summary_pdf 
+                    FROM project p
+                    JOIN summary s ON p.project_id = s.project_id
+                    WHERE p.project_id = %s AND p.teacher_id = %s
                 """
                 cursor.execute(query, (project_id, g.user["id"]))
             else:  # admin
                 query = """
-                    SELECT project_name, summary_pdf 
-                    FROM project 
-                    WHERE project_id = %s
+                    SELECT p.project_name, s.summary_pdf 
+                    FROM project p
+                    JOIN summary s ON p.project_id = s.project_id
+                    WHERE p.project_id = %s
                 """
                 cursor.execute(query, (project_id,))
                 
@@ -4288,7 +4110,7 @@ def download_summary_pdf(project_id):
                 if pdf_created:
                     # ดึงข้อมูล PDF ที่เพิ่งสร้าง
                     cursor.execute(
-                        "SELECT project_name, summary_pdf FROM project WHERE project_id = %s",
+                        "SELECT p.project_name, s.summary_pdf FROM project p JOIN summary s ON p.project_id = s.project_id WHERE p.project_id = %s",
                         (project_id,)
                     )
                     result = cursor.fetchone()
@@ -4299,10 +4121,8 @@ def download_summary_pdf(project_id):
                     
             project_name, pdf_content = result
             
-            # สร้างชื่อไฟล์ที่ใช้เฉพาะตัวอักษรภาษาอังกฤษและตัวเลข
             safe_filename = f"project_summary_{project_id}.pdf"
             
-            # ส่ง PDF กลับไปยังผู้ใช้
             response = make_response(pdf_content)
             response.headers['Content-Type'] = 'application/pdf'
             response.headers['Content-Disposition'] = f'attachment; filename="{safe_filename}"'
@@ -4319,12 +4139,15 @@ def project_history():
 
     teacher_id = session["teacher_id"]
     page = request.args.get("page", 1, type=int)
-    per_page = 6  # จำนวนโปรเจคต่อหน้า
+    per_page = 6
 
     with get_db_cursor() as (db, cursor):
         # นับจำนวนโปรเจคที่ปิดแล้วทั้งหมด
         cursor.execute(
-            "SELECT COUNT(*) FROM project WHERE teacher_id = %s AND project_statusStart = 2", 
+            """SELECT COUNT(*) 
+               FROM project p
+               JOIN approval a ON p.project_id = a.project_id
+               WHERE p.teacher_id = %s AND a.project_statusStart = 2""", 
             (teacher_id,)
         )
         total_projects = cursor.fetchone()[0]
@@ -4332,21 +4155,17 @@ def project_history():
         # คำนวณจำนวนหน้าทั้งหมด
         total_pages = ceil(total_projects / per_page)
 
-        # ดึงข้อมูลโปรเจคตามหน้าที่ต้องการ
+        # ดึงข้อมูลโปรเจคตามหน้าที่ต้องการ - อัปเดตให้ใช้ summary table
         offset = (page - 1) * per_page
         query = """
-            SELECT 
-                project_id, 
-                project_name, 
-                project_status, 
-                project_statusStart, 
-                CASE WHEN project_pdf IS NOT NULL THEN TRUE ELSE FALSE END as has_pdf,
-                project_dotime, 
-                project_endtime,
-                project_close_date
-            FROM project 
-            WHERE teacher_id = %s AND project_statusStart = 2
-            ORDER BY project_close_date DESC
+            SELECT p.project_id, p.project_name, a.project_status, a.project_statusStart, 
+                   CASE WHEN s.summary_pdf IS NOT NULL THEN TRUE ELSE FALSE END as has_pdf,
+                   p.project_dotime, p.project_endtime, s.project_close_date
+            FROM project p
+            JOIN approval a ON p.project_id = a.project_id
+            LEFT JOIN summary s ON p.project_id = s.project_id
+            WHERE p.teacher_id = %s AND a.project_statusStart = 2
+            ORDER BY COALESCE(s.project_close_date, p.project_endtime) DESC
             LIMIT %s OFFSET %s
         """
         cursor.execute(query, (teacher_id, per_page, offset))
@@ -4369,9 +4188,11 @@ def evaluate_project(project_id):
     student_name = session.get('student_name')
     
     with get_db_cursor() as (db, cursor):
+        # แก้ไข: ใช้ approval table สำหรับ project_statusStart
         cursor.execute("""
-            SELECT p.project_name, p.project_statusStart
+            SELECT p.project_name, a.project_statusStart
             FROM project p 
+            JOIN approval a ON p.project_id = a.project_id
             WHERE p.project_id = %s
         """, (project_id,))
         project = cursor.fetchone()
@@ -4387,7 +4208,7 @@ def evaluate_project(project_id):
             flash('โครงการยังไม่เสร็จสิ้น ไม่สามารถประเมินได้', 'warning')
             return redirect(url_for('student_dashboard'))
         
-        # แก้ไข: ตรวจสอบสิทธิ์ใน status_register
+        # ตรวจสอบสิทธิ์ใน status_register
         cursor.execute("""
             SELECT sr.join_id 
             FROM status_register sr
@@ -4540,10 +4361,7 @@ def add_project():
         teacher_info = cursor.fetchone()
     
     if request.method == "POST":
-        # Debug: แสดงข้อมูลทั้งหมดที่ส่งมาจากฟอร์ม
-        print("Form data:", request.form)
-        
-        # รับข้อมูลพื้นฐานโครงการ
+        # รับข้อมูลจากฟอร์ม (เหมือนเดิม)
         project_budgettype = request.form["project_budgettype"]
         project_year = request.form["project_year"]
         project_name = request.form["project_name"]
@@ -4555,7 +4373,8 @@ def add_project():
         project_budget = request.form["project_budget"]
         project_detail = request.form["project_detail"]
         project_policy = request.form["policy"]
-        # รับข้อมูลอื่นๆ จากฟอร์ม
+        
+        # รับข้อมูลอื่นๆ
         project_output = request.form["output"]
         project_strategy = request.form["strategy"]
         project_indicator = request.form["indicator"]
@@ -4606,7 +4425,7 @@ def add_project():
             query = """INSERT INTO project (
                     project_budgettype, project_year, project_name, project_style,
                     project_address, project_dotime, project_endtime, project_target,
-                    project_status, teacher_id, project_budget, project_detail,
+                    teacher_id, project_budget, project_detail,
                     project_output, project_strategy, project_indicator, project_cluster,
                     project_commonality, project_physical_grouping, project_rationale,
                     project_objectives, project_goals, project_output_target, project_outcome_target,
@@ -4617,7 +4436,7 @@ def add_project():
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW()
+                    %s, %s, %s, %s, %s, %s, %s, %s, NOW()
                 )"""
             
             cursor.execute(
@@ -4625,7 +4444,7 @@ def add_project():
                 (
                     project_budgettype, project_year, project_name, project_style,
                     project_address, project_dotime, project_endtime, project_target,
-                    0, teacher_id, project_budget, project_detail,
+                    teacher_id, project_budget, project_detail,
                     project_output, project_strategy, project_indicator, project_cluster,
                     project_commonality, project_physical_grouping, project_rationale,
                     project_objectives, project_goals, project_output_target, project_outcome_target,
@@ -4638,7 +4457,13 @@ def add_project():
             db.commit()
             project_id = cursor.lastrowid
             
-            # สร้างและบันทึก PDF
+            # สร้างระเบียนใน approval table
+            cursor.execute("""
+                INSERT INTO approval (project_id, project_status, project_statusStart)
+                VALUES (%s, 0, 0)
+            """, (project_id,))
+            
+            # สร้างและบันทึก PDF ลงตาราง approval
             project_data = {
                 "project_id": project_id,
                 "project_budgettype": project_budgettype,
@@ -4673,21 +4498,24 @@ def add_project():
                 "activities": activities,
                 "compensation": compensation,
                 "expenses": expenses,
-                "policy": project_policy  # เพิ่ม policy ในการสร้าง PDF
+                "policy": project_policy
             }
             
             pdf_buffer = create_project_pdf(project_data)
             if pdf_buffer:
                 pdf_content = pdf_buffer.getvalue()
                 
-                update_query = "UPDATE project SET project_pdf = %s WHERE project_id = %s"
-                cursor.execute(update_query, (pdf_content, project_id))
+                # บันทึก PDF ลงตาราง approval
+                cursor.execute("""
+                    UPDATE approval SET project_pdf = %s WHERE project_id = %s
+                """, (pdf_content, project_id))
                 db.commit()
             
         flash("สร้างโครงการเรียบร้อยแล้ว", "success")
         return redirect(url_for("teacher_projects"))
 
     return render_template("add_project.html", teacher_info=teacher_info)
+
     
 def is_project_name_duplicate(project_name, current_project_id=None):
     with get_db_cursor() as (db, cursor):
@@ -4939,14 +4767,15 @@ def teacher_home():
             (c[0], c[1], base64.b64encode(c[2]).decode("utf-8")) for c in constants
         ]
         
-        # ดึงข้อมูลโครงการที่กำลังจัด (ทุกคน) - โครงการที่อนุมัติแล้วและกำลังดำเนินการ
+        # แก้ไข: ดึงข้อมูลโครงการที่กำลังจัด - ใช้ approval table
         active_projects_query = """
             SELECT p.project_id, p.project_name, p.project_dotime, p.project_endtime, 
-                   p.project_address, p.project_statusStart, p.project_target, t.teacher_name,
-                   (SELECT COUNT(*) FROM `join` WHERE project_id = p.project_id AND join_status = 1) as participant_count
+                   p.project_address, a.project_statusStart, p.project_target, t.teacher_name,
+                   (SELECT COUNT(*) FROM status_register sr WHERE sr.project_id = p.project_id AND sr.status_register = 1) as participant_count
             FROM project p
             JOIN teacher t ON p.teacher_id = t.teacher_id
-            WHERE p.project_status = 2 AND p.project_statusStart = 1
+            JOIN approval a ON p.project_id = a.project_id
+            WHERE a.project_status = 2 AND a.project_statusStart = 1
             ORDER BY p.project_dotime ASC
             LIMIT 10
         """
@@ -4975,7 +4804,7 @@ def teacher_home():
         page=page, 
         total_pages=total_pages, 
         search_query=search_query,
-        active_projects=active_projects  # ส่งโครงการที่กำลังจัดไปแทน
+        active_projects=active_projects
     )
 
 def get_branches_from_database():
@@ -5350,12 +5179,15 @@ def teacher_projects():
 
     teacher_id = session["teacher_id"]
     page = request.args.get("page", 1, type=int)
-    per_page = 6  # จำนวนโปรเจคต่อหน้า
+    per_page = 6
 
     with get_db_cursor() as (db, cursor):
         # นับจำนวนโปรเจคที่ยังไม่เสร็จสิ้นทั้งหมด
         cursor.execute(
-            "SELECT COUNT(*) FROM project WHERE teacher_id = %s AND (project_statusStart != 2 OR project_statusStart IS NULL)", 
+            """SELECT COUNT(*) 
+               FROM project p
+               JOIN approval a ON p.project_id = a.project_id
+               WHERE p.teacher_id = %s AND (a.project_statusStart != 2 OR a.project_statusStart IS NULL)""", 
             (teacher_id,)
         )
         total_projects = cursor.fetchone()[0]
@@ -5363,20 +5195,21 @@ def teacher_projects():
         # คำนวณจำนวนหน้าทั้งหมด
         total_pages = ceil(total_projects / per_page)
 
-        # ดึงข้อมูลโปรเจคตามหน้าที่ต้องการ - เรียงจากใหม่ไปเก่า
+        # ดึงข้อมูลโปรเจคตามหน้าที่ต้องการ
         offset = (page - 1) * per_page
         query = """
-            SELECT project_id, project_name, project_status, project_statusStart, 
-                   CASE WHEN project_pdf IS NOT NULL THEN TRUE ELSE FALSE END as has_pdf,
-                   project_reject, project_submit_date, project_reject_date
-            FROM project 
-            WHERE teacher_id = %s AND (project_statusStart != 2 OR project_statusStart IS NULL)
+            SELECT p.project_id, p.project_name, a.project_status, a.project_statusStart, 
+                   CASE WHEN a.project_pdf IS NOT NULL THEN TRUE ELSE FALSE END as has_pdf,
+                   a.project_reject, a.project_submit_date, a.project_reject_date
+            FROM project p
+            JOIN approval a ON p.project_id = a.project_id
+            WHERE p.teacher_id = %s AND (a.project_statusStart != 2 OR a.project_statusStart IS NULL)
             ORDER BY 
                 CASE 
-                    WHEN project_submit_date IS NOT NULL THEN project_submit_date
-                    ELSE project_create_date
+                    WHEN a.project_submit_date IS NOT NULL THEN a.project_submit_date
+                    ELSE p.project_create_date
                 END DESC,
-                project_id DESC
+                p.project_id DESC
             LIMIT %s OFFSET %s
         """
         cursor.execute(query, (teacher_id, per_page, offset))
@@ -5397,13 +5230,17 @@ def request_approval():
     project_id = data.get("project_id")
     try:
         with get_db_cursor() as (db, cursor):
-            query = "UPDATE project SET project_status = 1, project_submit_date = NOW() WHERE project_id = %s"
-            cursor.execute(query, (project_id,))
+            cursor.execute("""
+                UPDATE approval 
+                SET project_status = 1, project_submit_date = NOW() 
+                WHERE project_id = %s
+            """, (project_id,))
             db.commit()
         return jsonify({"success": True})
     except Exception as e:
         logging.error(f"Error in request_approval: {str(e)}")
         return jsonify({"success": False}), 500
+
 
 @app.route("/reject_project", methods=["POST"])
 @login_required("admin")
@@ -5424,14 +5261,16 @@ def reject_project():
 @app.route("/project/<int:project_id>")
 def project_detail(project_id):
     with get_db_cursor() as (db, cursor):
-        query = """SELECT project.project_id, project.project_name, project.project_year, project.project_style, 
-                          project.project_address, DATE(project.project_dotime) as project_dotime, 
-                          DATE(project.project_endtime) as project_endtime, 
-                          project.project_target, teacher.teacher_name, project.project_statusStart,
-                          project.project_status, project.project_detail
-                   FROM project
-                   JOIN teacher ON project.teacher_id = teacher.teacher_id
-                   WHERE project.project_id = %s"""
+        # แก้ไข: ใช้ approval table สำหรับ project_statusStart
+        query = """SELECT p.project_id, p.project_name, p.project_year, p.project_style, 
+                          p.project_address, DATE(p.project_dotime) as project_dotime, 
+                          DATE(p.project_endtime) as project_endtime, 
+                          p.project_target, t.teacher_name, a.project_statusStart,
+                          a.project_status, p.project_detail
+                   FROM project p
+                   JOIN teacher t ON p.teacher_id = t.teacher_id
+                   JOIN approval a ON p.project_id = a.project_id
+                   WHERE p.project_id = %s"""
         cursor.execute(query, (project_id,))
         project = cursor.fetchone()
 
@@ -5439,7 +5278,7 @@ def project_detail(project_id):
             flash("โครงการไม่พบ", "error")
             return redirect(url_for("active_projects"))
 
-        # แก้ไข: ใช้ status_register
+        # ใช้ status_register
         cursor.execute(
             "SELECT COUNT(*) FROM status_register WHERE project_id = %s",
             (project_id,),
@@ -5481,9 +5320,9 @@ def update_project_statusStart():
     project_status = request.form.get("projectStatus")
 
     with get_db_cursor() as (db, cursor):
-        # ตรวจสอบสถานะการอนุมัติโครงการ
+        # แก้ไข: ตรวจสอบสถานะการอนุมัติโครงการจาก approval table
         cursor.execute(
-            "SELECT project_status FROM project WHERE project_id = %s", (project_id,)
+            "SELECT project_status FROM approval WHERE project_id = %s", (project_id,)
         )
         result = cursor.fetchone()
         if result and result[0] != 2:
@@ -5493,8 +5332,9 @@ def update_project_statusStart():
         if project_status is not None and project_status != "":
             try:
                 project_status = int(project_status)
+                # แก้ไข: อัปเดตใน approval table แทน project table
                 query = (
-                    "UPDATE project SET project_statusStart = %s WHERE project_id = %s"
+                    "UPDATE approval SET project_statusStart = %s WHERE project_id = %s"
                 )
                 cursor.execute(query, (project_status, project_id))
                 db.commit()
@@ -5507,6 +5347,8 @@ def update_project_statusStart():
     return redirect(url_for("project_detail", project_id=project_id))
 
 
+
+# แก้ไข route active_projects ใน app.py
 @app.route("/active_projects")
 def active_projects():
     # ตรวจสอบสถานะการล็อกอิน
@@ -5518,13 +5360,14 @@ def active_projects():
         user_type = session['user_type']
     
     with get_db_cursor() as (db, cursor):
-        # แก้ไข query เพื่อให้ดึงโครงการทั้งหมด ทั้งที่กำลังดำเนินการและเสร็จสิ้นแล้ว
+        # แก้ไข: ใช้ approval table แทน project table สำหรับ project_statusStart
         query = """
         SELECT p.project_id, p.project_name, p.project_dotime, p.project_endtime,
-               p.project_statusStart, t.teacher_name
+               a.project_statusStart, t.teacher_name
         FROM project p
         JOIN teacher t ON p.teacher_id = t.teacher_id
-        WHERE p.project_status = 2 AND (p.project_statusStart = 1 OR p.project_statusStart = 2)
+        JOIN approval a ON p.project_id = a.project_id
+        WHERE a.project_status = 2 AND (a.project_statusStart = 1 OR a.project_statusStart = 2)
         ORDER BY p.project_dotime DESC
         """
         cursor.execute(query)
@@ -5536,7 +5379,6 @@ def active_projects():
         is_logged_in=is_logged_in,
         user_type=user_type
     )
-
 
 @app.route("/project/<int:project_id>/approve_participants")
 @login_required("teacher")
@@ -5726,7 +5568,6 @@ def check_student_id_exists():
 def add_student():
     """เพิ่มข้อมูลนักศึกษา"""
     if request.method == "GET":
-        # ดึงข้อมูลสาขาทั้งหมด
         branches = get_branches_from_database()
         return render_template("add_student.html", branches=branches)
     
@@ -5736,42 +5577,32 @@ def add_student():
         student_email = request.form.get("student_email", "")
         student_phone = request.form["student_phone"]
         branch_id = request.form.get("branch_id")
+        student_password = request.form.get("student_password", "")  # รหัสผ่านใหม่
         
         # ตรวจสอบรหัสนักศึกษาซ้ำ
         with get_db_cursor() as (db, cursor):
             cursor.execute(
-                "SELECT COUNT(*) FROM `join` WHERE join_student_id = %s",
+                "SELECT COUNT(*) FROM `join` WHERE join_id = %s",
                 (student_id,)
             )
             if cursor.fetchone()[0] > 0:
                 flash("รหัสนักศึกษานี้มีอยู่ในระบบแล้ว", "error")
                 return redirect(url_for("add_student"))
+            
+            # เข้ารหัสรหัสผ่าน
+            hashed_password = ""
+            if student_password:
+                hashed_password = generate_password_hash(student_password)
                 
-            # บันทึกข้อมูลนักศึกษา - สร้างข้อมูลการเข้าร่วมเสมือน
             try:
-                # จำเป็นต้องมี project_id แม้จะเป็นการเพิ่มข้อมูลเบื้องต้น
-                # ตรวจสอบว่ามีโครงการใดบ้างในระบบ
-                cursor.execute("SELECT project_id FROM project LIMIT 1")
-                project = cursor.fetchone()
-                
-                if project:
-                    project_id = project[0]
-                else:
-                    # ถ้าไม่มีโครงการเลย ให้สร้างโครงการเสมือนสำหรับข้อมูลเบื้องต้น
-                    cursor.execute("""
-                        INSERT INTO project (project_name, project_status) 
-                        VALUES ('ข้อมูลเบื้องต้น', 0)
-                    """)
-                    project_id = cursor.lastrowid
-                
-                # บันทึกข้อมูลนักศึกษา
+                # บันทึกข้อมูลนักศึกษาโดยตรงในตาราง join
                 query = """
-                    INSERT INTO `join` (join_student_id, join_name, join_email, join_telephone, branch_id, project_id, join_status, join_timestamp)
-                    VALUES (%s, %s, %s, %s, %s, %s, 1, NOW())
+                    INSERT INTO `join` (join_id, join_name, join_email, join_telephone, branch_id, join_password)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                 """
                 cursor.execute(
                     query,
-                    (student_id, student_name, student_email, student_phone, branch_id, project_id)
+                    (student_id, student_name, student_email, student_phone, branch_id, hashed_password)
                 )
                 db.commit()
                 
@@ -5788,15 +5619,16 @@ def add_student():
 @app.route("/edit_student/<student_id>", methods=["GET", "POST"])
 @login_required("admin")
 def edit_student(student_id):
-    """แก้ไขข้อมูลนักศึกษา"""
+    """แก้ไขข้อมูลนักศึกษาพร้อมจัดการรหัสผ่าน"""
     with get_db_cursor() as (db, cursor):
         if request.method == "GET":
             # ดึงข้อมูลนักศึกษา
             cursor.execute("""
-                SELECT j.join_student_id, j.join_name, j.join_email, j.join_telephone, j.branch_id, b.branch_name
+                SELECT j.join_id, j.join_name, j.join_email, j.join_telephone, 
+                       j.branch_id, b.branch_name, j.join_password
                 FROM `join` j
                 LEFT JOIN branch b ON j.branch_id = b.branch_id
-                WHERE j.join_student_id = %s
+                WHERE j.join_id = %s
                 ORDER BY j.join_id DESC
                 LIMIT 1
             """, (student_id,))
@@ -5813,7 +5645,8 @@ def edit_student(student_id):
                 'email': student_data[2],
                 'phone': student_data[3],
                 'branch_id': student_data[4],
-                'branch_name': student_data[5] if student_data[5] else 'ไม่ระบุสาขา'
+                'branch_name': student_data[5] if student_data[5] else 'ไม่ระบุสาขา',
+                'has_password': bool(student_data[6])  # ตรวจสอบว่ามีรหัสผ่านหรือไม่
             }
             
             # ดึงข้อมูลสาขาทั้งหมด
@@ -5827,22 +5660,195 @@ def edit_student(student_id):
             student_phone = request.form["student_phone"]
             branch_id = request.form.get("branch_id")
             
+            # จัดการรหัสผ่าน
+            reset_password = request.form.get("reset_password") == "1"
+            clear_password = request.form.get("clear_password") == "1"
+            new_password = request.form.get("new_password", "")
+            confirm_password = request.form.get("confirm_password", "")
+            
             try:
-                # อัปเดตข้อมูลนักศึกษาทุกรายการที่มีรหัสนักศึกษานี้
-                cursor.execute("""
+                # เตรียมข้อมูลสำหรับอัปเดต
+                update_fields = ["join_name = %s", "join_email = %s", "join_telephone = %s", "branch_id = %s"]
+                update_values = [student_name, student_email, student_phone, branch_id]
+                
+                # จัดการรหัสผ่าน
+                if clear_password:
+                    # ลบรหัสผ่าน
+                    update_fields.append("join_password = NULL")
+                    flash("ลบรหัสผ่านเรียบร้อยแล้ว นักศึกษาจะต้องใช้เบอร์โทรในการเข้าสู่ระบบ", "info")
+                    
+                elif reset_password:
+                    # รีเซ็ตรหัสผ่าน
+                    if not new_password or not confirm_password:
+                        flash("กรุณากรอกรหัสผ่านใหม่และยืนยันรหัสผ่านให้ครบถ้วน", "error")
+                        return redirect(url_for("edit_student", student_id=student_id))
+                    
+                    if new_password != confirm_password:
+                        flash("รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน", "error")
+                        return redirect(url_for("edit_student", student_id=student_id))
+                    
+                    if len(new_password) < 4:
+                        flash("รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร", "error")
+                        return redirect(url_for("edit_student", student_id=student_id))
+                    
+                    # เข้ารหัสรหัสผ่านใหม่
+                    hashed_password = generate_password_hash(new_password)
+                    update_fields.append("join_password = %s")
+                    update_values.append(hashed_password)
+                    flash("รีเซ็ตรหัสผ่านเรียบร้อยแล้ว กรุณาแจ้งรหัสผ่านใหม่ให้นักศึกษาทราบ", "success")
+                
+                # อัปเดตข้อมูลนักศึกษา
+                query = f"""
                     UPDATE `join` 
-                    SET join_name = %s, join_email = %s, join_telephone = %s, branch_id = %s
-                    WHERE join_student_id = %s
-                """, (student_name, student_email, student_phone, branch_id, student_id))
+                    SET {', '.join(update_fields)}
+                    WHERE join_id = %s
+                """
+                update_values.append(student_id)
+                
+                cursor.execute(query, update_values)
                 db.commit()
                 
-                flash("อัปเดตข้อมูลนักศึกษาเรียบร้อยแล้ว", "success")
+                if not (reset_password or clear_password):
+                    flash("อัปเดตข้อมูลนักศึกษาเรียบร้อยแล้ว", "success")
                 
             except Exception as e:
                 db.rollback()
                 flash(f"เกิดข้อผิดพลาดในการอัปเดตข้อมูล: {str(e)}", "error")
                 
             return redirect(url_for("manage_students"))
+        # เพิ่มฟังก์ชันเหล่านี้ใน app.py
+
+@app.route("/register_student", methods=["POST"])
+def register_student():
+    """ฟังก์ชันสมัครสมาชิกนักศึกษา"""
+    try:
+        student_id = request.form.get("student_id", "").strip()
+        student_name = request.form.get("student_name", "").strip()
+        student_email = request.form.get("student_email", "").strip()
+        student_phone = request.form.get("student_phone", "").strip()
+        branch_id = request.form.get("branch_id", "").strip()
+        password = request.form.get("password", "").strip()
+        confirm_password = request.form.get("confirm_password", "").strip()
+        
+        # ตรวจสอบข้อมูลพื้นฐาน
+        if not all([student_id, student_name, student_email, student_phone, branch_id, password, confirm_password]):
+            flash("กรุณากรอกข้อมูลให้ครบถ้วน", "danger")
+            return redirect(url_for("login"))
+        
+        # ตรวจสอบรหัสผ่าน
+        if password != confirm_password:
+            flash("รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน", "danger")
+            return redirect(url_for("login"))
+        
+        if len(password) < 4:
+            flash("รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร", "danger")
+            return redirect(url_for("login"))
+        
+        # ตรวจสอบรูปแบบอีเมล
+        import re
+        email_regex = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+        if not re.match(email_regex, student_email):
+            flash("กรุณากรอกอีเมลให้ถูกต้อง", "danger")
+            return redirect(url_for("login"))
+        
+        # ตรวจสอบเบอร์โทร
+        if len(student_phone) < 9:
+            flash("กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (อย่างน้อย 9 หลัก)", "danger")
+            return redirect(url_for("login"))
+        
+        with get_db_cursor() as (db, cursor):
+            # ตรวจสอบรหัสนักศึกษาซ้ำ
+            cursor.execute("SELECT COUNT(*) FROM `join` WHERE join_id = %s", (student_id,))
+            if cursor.fetchone()[0] > 0:
+                flash("รหัสนักศึกษานี้มีอยู่ในระบบแล้ว", "danger")
+                return redirect(url_for("login"))
+            
+            # ตรวจสอบอีเมลซ้ำ
+            cursor.execute("SELECT COUNT(*) FROM `join` WHERE join_email = %s", (student_email,))
+            if cursor.fetchone()[0] > 0:
+                flash("อีเมลนี้มีอยู่ในระบบแล้ว", "danger")
+                return redirect(url_for("login"))
+            
+            # ตรวจสอบว่าสาขาที่เลือกมีอยู่จริง
+            cursor.execute("SELECT COUNT(*) FROM branch WHERE branch_id = %s", (branch_id,))
+            if cursor.fetchone()[0] == 0:
+                flash("ไม่พบสาขาที่เลือก", "danger")
+                return redirect(url_for("login"))
+            
+            # เข้ารหัสรหัสผ่าน
+            hashed_password = generate_password_hash(password)
+            
+            # บันทึกข้อมูลนักศึกษา
+            cursor.execute("""
+                INSERT INTO `join` (join_id, join_name, join_email, join_telephone, branch_id, join_password)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (student_id, student_name, student_email, student_phone, branch_id, hashed_password))
+            
+            db.commit()
+            
+            flash(f"สมัครสมาชิกเรียบร้อยแล้ว! ยินดีต้อนรับ {student_name} สามารถเข้าสู่ระบบได้ทันที", "success")
+            
+            # ล็อกอินอัตโนมัติหลังสมัครสมาชิก
+            session.clear()
+            session["student_id"] = student_id
+            session["student_name"] = student_name
+            session["student_email"] = student_email
+            session["student_phone"] = student_phone
+            session["student_branch_id"] = branch_id
+            
+            # ดึงชื่อสาขา
+            cursor.execute("SELECT branch_name FROM branch WHERE branch_id = %s", (branch_id,))
+            branch_result = cursor.fetchone()
+            session["student_branch"] = branch_result[0] if branch_result else "ไม่ระบุสาขา"
+            session["user_type"] = "student"
+            
+            return redirect(url_for("student_dashboard"))
+            
+    except Exception as e:
+        flash(f"เกิดข้อผิดพลาดในการสมัครสมาชิก: {str(e)}", "danger")
+        return redirect(url_for("login"))
+
+@app.route("/get_branches", methods=["GET"])
+def get_branches():
+    """API สำหรับดึงข้อมูลสาขาทั้งหมด"""
+    try:
+        with get_db_cursor() as (db, cursor):
+            cursor.execute("SELECT branch_id, branch_name FROM branch ORDER BY branch_name")
+            branches = cursor.fetchall()
+            
+            branch_list = []
+            for branch in branches:
+                branch_list.append({
+                    "id": branch[0],
+                    "name": branch[1]
+                })
+            
+            return jsonify({
+                "success": True,
+                "branches": branch_list
+            })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@app.route("/check_student_exists", methods=["POST"])
+def check_student_exists():
+    """API สำหรับตรวจสอบรหัสนักศึกษาซ้ำ"""
+    try:
+        student_id = request.form.get("student_id", "").strip()
+        
+        if not student_id:
+            return jsonify({"exists": False})
+        
+        with get_db_cursor() as (db, cursor):
+            cursor.execute("SELECT COUNT(*) FROM `join` WHERE join_id = %s", (student_id,))
+            count = cursor.fetchone()[0]
+            
+            return jsonify({"exists": count > 0})
+    except Exception as e:
+        return jsonify({"exists": False, "error": str(e)}), 500
 
 @app.route("/delete_student/<student_id>", methods=["POST"])
 @login_required("admin")
@@ -5880,7 +5886,7 @@ def student_profile():
         with get_db_cursor() as (db, cursor):
             cursor.execute("""
                 SELECT j.join_id, j.join_name, j.join_email, j.join_telephone, 
-                       j.branch_id, b.branch_name
+                       j.branch_id, b.branch_name, j.join_password
                 FROM `join` j
                 LEFT JOIN branch b ON j.branch_id = b.branch_id
                 WHERE j.join_id = %s
@@ -5897,7 +5903,8 @@ def student_profile():
                 'join_email': student_data[2],
                 'join_telephone': student_data[3],
                 'branch_id': student_data[4],
-                'branch_name': student_data[5] if student_data[5] else 'ไม่ระบุสาขา'
+                'branch_name': student_data[5] if student_data[5] else 'ไม่ระบุสาขา',
+                'has_password': bool(student_data[6])  # ตรวจสอบว่ามีรหัสผ่านหรือไม่
             }
             
         return render_template("student_profile.html", student=student)
@@ -5906,15 +5913,17 @@ def student_profile():
         new_name = request.form.get("join_name", "").strip()
         new_email = request.form.get("join_email", "").strip()
         new_phone = request.form.get("join_telephone", "").strip()
-        current_phone = request.form.get("current_phone", "").strip()
+        current_password = request.form.get("current_password", "").strip()
+        new_password = request.form.get("new_password", "").strip()
+        confirm_password = request.form.get("confirm_password", "").strip()
         
-        if not all([new_name, new_email, new_phone, current_phone]):
+        if not all([new_name, new_email, new_phone]):
             flash("กรุณากรอกข้อมูลให้ครบถ้วน", "error")
             return redirect(url_for("student_profile"))
         
         with get_db_cursor() as (db, cursor):
             cursor.execute(
-                "SELECT join_name, join_email, join_telephone FROM `join` WHERE join_id = %s",
+                "SELECT join_name, join_email, join_telephone, join_password FROM `join` WHERE join_id = %s",
                 (student_id,)
             )
             current_data = cursor.fetchone()
@@ -5923,24 +5932,82 @@ def student_profile():
                 flash("ไม่พบข้อมูลนักศึกษา", "error")
                 return redirect(url_for("student_profile"))
             
-            if current_phone != current_data[2]:
-                flash("เบอร์โทรศัพท์ปัจจุบันไม่ถูกต้อง", "error")
+            stored_password = current_data[3]
+            changes_made = False
+            update_fields = []
+            update_values = []
+            
+            # ตรวจสอบการเปลี่ยนแปลงข้อมูลพื้นฐาน
+            if new_name != current_data[0]:
+                update_fields.append("join_name = %s")
+                update_values.append(new_name)
+                changes_made = True
+                
+            if new_email != current_data[1]:
+                update_fields.append("join_email = %s")
+                update_values.append(new_email)
+                changes_made = True
+                
+            if new_phone != current_data[2]:
+                update_fields.append("join_telephone = %s")
+                update_values.append(new_phone)
+                changes_made = True
+            
+            # ตรวจสอบการเปลี่ยนรหัสผ่าน
+            if new_password:
+                if new_password != confirm_password:
+                    flash("รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน", "error")
+                    return redirect(url_for("student_profile"))
+                
+                if len(new_password) < 4:
+                    flash("รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร", "error")
+                    return redirect(url_for("student_profile"))
+                
+                # ตรวจสอบรหัสผ่านปัจจุบัน (ถ้ามี)
+                if stored_password:
+                    if not current_password:
+                        flash("กรุณากรอกรหัสผ่านปัจจุบัน", "error")
+                        return redirect(url_for("student_profile"))
+                    
+                    password_valid = False
+                    try:
+                        if stored_password.startswith(('pbkdf2:', 'scrypt:', 'argon2:', '$')):
+                            password_valid = check_password_hash(stored_password, current_password)
+                        else:
+                            password_valid = (stored_password == current_password)
+                    except Exception as e:
+                        password_valid = (stored_password == current_password)
+                    
+                    if not password_valid:
+                        flash("รหัสผ่านปัจจุบันไม่ถูกต้อง", "error")
+                        return redirect(url_for("student_profile"))
+                
+                # เข้ารหัสรหัสผ่านใหม่
+                hashed_password = generate_password_hash(new_password)
+                update_fields.append("join_password = %s")
+                update_values.append(hashed_password)
+                changes_made = True
+            
+            if not changes_made:
+                flash("ไม่มีการเปลี่ยนแปลงข้อมูล", "info")
                 return redirect(url_for("student_profile"))
             
+            # อัพเดทข้อมูล
             try:
-                cursor.execute("""
-                    UPDATE `join` 
-                    SET join_name = %s, join_email = %s, join_telephone = %s 
-                    WHERE join_id = %s
-                """, (new_name, new_email, new_phone, student_id))
+                query = f"UPDATE `join` SET {', '.join(update_fields)} WHERE join_id = %s"
+                update_values.append(student_id)
+                cursor.execute(query, update_values)
                 db.commit()
                 
-                # อัพเดท session
-                session["student_name"] = new_name
-                session["student_email"] = new_email
-                session["student_phone"] = new_phone
-                
                 flash("อัพเดทข้อมูลส่วนตัวเรียบร้อยแล้ว", "success")
+                
+                # อัพเดท session หากมีการเปลี่ยนแปลง
+                if new_name != current_data[0]:
+                    session["student_name"] = new_name
+                if new_email != current_data[1]:
+                    session["student_email"] = new_email
+                if new_phone != current_data[2]:
+                    session["student_phone"] = new_phone
                 
             except Exception as e:
                 flash(f"เกิดข้อผิดพลาดในการอัพเดทข้อมูล: {str(e)}", "error")

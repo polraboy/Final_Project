@@ -328,7 +328,7 @@
                 <td>
                   {% if project[4] %}
                     <button onclick="confirmDownload({{ project[0] }}, '{{ project[1] }}')" class="btn btn-primary btn-sm">
-                      ดาวน์โหลด PDF
+                      ดาวน์โหลด PDF สรุป
                     </button>
                   {% else %}
                     <span class="text-muted">ไม่มีไฟล์</span>
@@ -379,7 +379,7 @@
       function confirmDownload(projectId, projectName) {
         Swal.fire({
             title: 'ยืนยันการดาวน์โหลด',
-            text: `คุณต้องการดาวน์โหลด PDF ของโครงการ "${projectName}" ใช่หรือไม่?`,
+            text: `คุณต้องการดาวน์โหลด PDF สรุปของโครงการ "${projectName}" ใช่หรือไม่?`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
@@ -388,7 +388,7 @@
             cancelButtonText: 'ยกเลิก'
         }).then((result) => {
             if (result.isConfirmed) {
-                // เปลี่ยนเส้นทางไปยัง URL การดาวน์โหลด
+                // เปลี่ยนเส้นทางไปยัง URL การดาวน์โหลด PDF สรุป
                 window.location.href = `/download_summary_pdf/${projectId}`;
             }
         });

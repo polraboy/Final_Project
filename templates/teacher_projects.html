@@ -359,91 +359,94 @@
               </tr>
             </thead>
             <tbody>
-              {% for project in projects %}
-              <tr>
-                <td>{{ loop.index + (page - 1) * per_page }}</td>
-                <td>
-                  <a
-                    href="javascript:void(0)"
-                    onclick="confirmViewProject({{ project[0] }}, '{{ project[1] }}')"
-                    class="text-primary"
-                    >{{ project[1] }}</a
-                  >
-                </td>
-                <td>
-                  {% if project[2] == 0 %}
-                  <span class="badge bg-secondary">ยังไม่ยื่นอนุมัติ</span>
-                  {% elif project[2] == 1 %}
-                  <span class="badge bg-warning text-dark">รออนุมัติ</span>
-                  {% if project[6] %}
-                  <br /><small
-                    >ส่งเมื่อ: <span class="thai-date">{{ project[6].strftime('%d/%m/%Y %H:%M:%S') }}</span></small
-                  >
-                  {% endif %} {% elif project[2] == 2 %}
-                  <span class="badge bg-success">อนุมัติแล้ว</span>
-                  {% elif project[2] == 3 %}
-                  <span class="badge bg-danger">ตีกลับ</span>
-                  {% if project[7] %}
-                  <br /><small
-                    >ตีกลับเมื่อ: <span class="thai-date">{{ project[7].strftime('%d/%m/%Y %H:%M:%S') }}</span></small
-                  >
-                  {% endif %} {% if project[5] %}
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-info mt-1"
-                    onclick="showRejectReason('{{ project[1] }}', `{{ project[5] }}`)"
-                  >
-                    <i class="fas fa-info-circle"></i> ดูเหตุผลการตีกลับ
-                  </button>
-                  {% endif %} {% endif %}
-                </td>
-                <td>
-                  {% if project[3] == 1 %}
-                  <span class="badge bg-info">เปิดโครงการ</span>
-                  {% else %}
-                  <span class="badge bg-danger">ปิดโครงการ</span>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if project[2] == 1 %}
-                  <button onclick="confirmCancelSubmission({{ project[0] }}, '{{ project[1] }}')" class="btn btn-warning btn-sm mb-1">
-                    <i class="fas fa-times-circle"></i> ยกเลิกการส่ง
-                  </button>
-                  <br>
-                  {% endif %}
-                  
-                  {% if project[2] == 0 or project[2] == 3 %}
-                  <button onclick="confirmApproval({{ project[0] }}, '{{ project[1] }}')" class="btn btn-primary btn-sm mb-1">
-                    <i class="fas fa-paper-plane"></i> ขออนุมัติ
-                  </button>
-                  <br>
-                  {% endif %}
-                  
-                  {% if project[2] == 2 and project[3] == 1 %}
-                  <button onclick="confirmCloseProject({{ project[0] }}, '{{ project[1] }}')" class="btn btn-danger btn-sm mb-1">
-                    <i class="fas fa-check-circle"></i> เสร็จสิ้นโครงการ
-                  </button>
-                  <br>
-                  {% endif %}
-                  
-                  <button onclick="confirmEditProject({{ project[0] }}, '{{ project[1] }}')" class="btn btn-warning btn-sm mb-1">
-                    <i class="fas fa-edit"></i> แก้ไข
-                  </button>
-                </td>
-                <td>
-                  {% if project[4] %}
-                  <button onclick="confirmDownload({{ project[0] }}, '{{ project[1] }}')" class="btn btn-primary btn-sm">
-                    <i class="fas fa-download"></i> ดาวน์โหลด PDF
-                  </button>
-                  {% else %}
-                  <span class="text-muted">
-                    <i class="fas fa-file-times"></i> ไม่มีไฟล์
-                  </span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
+  {% for project in projects %}
+  <tr>
+    <td>{{ loop.index + (page - 1) * per_page }}</td>
+    <td>
+      <a
+        href="javascript:void(0)"
+        onclick="confirmViewProject({{ project[0] }}, '{{ project[1] }}')"
+        class="text-primary"
+        >{{ project[1] }}</a
+      >
+    </td>
+    <td>
+      {% if project[2] == 0 %}
+      <span class="badge bg-secondary">ยังไม่ยื่นอนุมัติ</span>
+      {% elif project[2] == 1 %}
+      <span class="badge bg-warning text-dark">รออนุมัติ</span>
+      {% if project[6] %}
+      <br /><small
+        >ส่งเมื่อ: <span class="thai-date">{{ project[6].strftime('%d/%m/%Y %H:%M:%S') }}</span></small
+      >
+      {% endif %} 
+      {% elif project[2] == 2 %}
+      <span class="badge bg-success">อนุมัติแล้ว</span>
+      {% elif project[2] == 3 %}
+      <span class="badge bg-danger">ตีกลับ</span>
+      {% if project[7] %}
+      <br /><small
+        >ตีกลับเมื่อ: <span class="thai-date">{{ project[7].strftime('%d/%m/%Y %H:%M:%S') }}</span></small
+      >
+      {% endif %} 
+      {% if project[5] %}
+      <button
+        type="button"
+        class="btn btn-sm btn-info mt-1"
+        onclick="showRejectReason('{{ project[1] }}', `{{ project[5] }}`)"
+      >
+        <i class="fas fa-info-circle"></i> ดูเหตุผลการตีกลับ
+      </button>
+      {% endif %} 
+      {% endif %}
+    </td>
+    <td>
+      {% if project[3] == 1 %}
+      <span class="badge bg-info">เปิดโครงการ</span>
+      {% else %}
+      <span class="badge bg-danger">ปิดโครงการ</span>
+      {% endif %}
+    </td>
+    <td>
+      {% if project[2] == 1 %}
+      <button onclick="confirmCancelSubmission({{ project[0] }}, '{{ project[1] }}')" class="btn btn-warning btn-sm mb-1">
+        <i class="fas fa-times-circle"></i> ยกเลิกการส่ง
+      </button>
+      <br>
+      {% endif %}
+      
+      {% if project[2] == 0 or project[2] == 3 %}
+      <button onclick="confirmApproval({{ project[0] }}, '{{ project[1] }}')" class="btn btn-primary btn-sm mb-1">
+        <i class="fas fa-paper-plane"></i> ขออนุมัติ
+      </button>
+      <br>
+      {% endif %}
+      
+      {% if project[2] == 2 and project[3] == 1 %}
+      <button onclick="confirmCloseProject({{ project[0] }}, '{{ project[1] }}')" class="btn btn-danger btn-sm mb-1">
+        <i class="fas fa-check-circle"></i> เสร็จสิ้นโครงการ
+      </button>
+      <br>
+      {% endif %}
+      
+      <button onclick="confirmEditProject({{ project[0] }}, '{{ project[1] }}')" class="btn btn-warning btn-sm mb-1">
+        <i class="fas fa-edit"></i> แก้ไข
+      </button>
+    </td>
+    <td>
+      {% if project[4] %}
+      <button onclick="confirmDownload({{ project[0] }}, '{{ project[1] }}')" class="btn btn-primary btn-sm">
+        <i class="fas fa-download"></i> ดาวน์โหลด PDF
+      </button>
+      {% else %}
+      <span class="text-muted">
+        <i class="fas fa-file-times"></i> ไม่มีไฟล์
+      </span>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</tbody>
           </table>
         </div>
       </div>
@@ -540,7 +543,76 @@
           }
         });
       }
+function confirmCancelSubmission(projectId, projectName) {
+  Swal.fire({
+    title: 'ยืนยันการยกเลิกการส่ง',
+    html: `
+      <div class="text-left">
+        <p>คุณต้องการยกเลิกการส่งโครงการ <strong>"${projectName}"</strong> ใช่หรือไม่?</p>
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle"></i> 
+          โครงการจะกลับสู่สถานะ "ยังไม่ยื่นอนุมัติ" และสามารถแก้ไขได้อีกครั้ง
+        </div>
+      </div>
+    `,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ffc107',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: '<i class="fas fa-times-circle"></i> ใช่, ยกเลิกการส่ง',
+    cancelButtonText: '<i class="fas fa-arrow-left"></i> กลับ'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Swal.fire({
+        title: 'กำลังยกเลิกการส่ง...',
+        text: 'กรุณารอสักครู่',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
 
+      fetch('/cancel_submission', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ project_id: projectId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire({
+            title: 'สำเร็จ!',
+            text: 'ยกเลิกการส่งโครงการเรียบร้อยแล้ว',
+            icon: 'success',
+            confirmButtonColor: '#28a745',
+            confirmButtonText: '<i class="fas fa-check"></i> ตกลง'
+          }).then(() => {
+            location.reload();
+          });
+        } else {
+          Swal.fire({
+            title: 'เกิดข้อผิดพลาด!',
+            text: data.message || 'ไม่สามารถยกเลิกการส่งโครงการได้ กรุณาลองใหม่อีกครั้ง',
+            icon: 'error',
+            confirmButtonColor: '#dc3545',
+            confirmButtonText: '<i class="fas fa-times"></i> ตกลง'
+          });
+        }
+      })
+      .catch(error => {
+        Swal.fire({
+          title: 'เกิดข้อผิดพลาด!',
+          text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
+          icon: 'error',
+          confirmButtonColor: '#dc3545',
+          confirmButtonText: '<i class="fas fa-times"></i> ตกลง'
+        });
+      });
+    }
+  });
+}
       function confirmEditProject(projectId, projectName) {
         Swal.fire({
           title: 'แก้ไขโครงการ',
