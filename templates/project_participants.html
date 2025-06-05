@@ -240,16 +240,16 @@
                     <table class="table table-hover">
                         <thead class="thead-light">
                             <tr>
-                                <th width="3%">ลำดับ</th>
-                                <th width="13%">ชื่อ-นามสกุล</th>
-                                <th width="9%">รหัสนักศึกษา</th>
-                                <th width="11%">อีเมล</th>
-                                <th width="9%">เบอร์โทรศัพท์</th>
-                                <th width="9%">สาขา</th>
-                                <th width="7%">สถานะ</th>
-                                <th width="13%">วันเวลาที่ลงทะเบียน</th>
+                                <th width="5%">ลำดับ</th>
+                                <th width="15%">ชื่อ-นามสกุล</th>
+                                <th width="12%">รหัสนักศึกษา</th>
+                                <th width="15%">อีเมล</th>
+                                <th width="12%">เบอร์โทรศัพท์</th>
+                                <th width="12%">สาขา</th>
+                                <th width="10%">สถานะ</th>
+                                <th width="15%">วันเวลาที่ลงทะเบียน</th>
                                 {% if can_approve %}
-                                <th width="18%">การดำเนินการ</th>
+                                <th width="14%">การดำเนินการ</th>
                                 {% endif %}
                             </tr>
                         </thead>
@@ -280,16 +280,26 @@
                                 </td>
                                 {% if can_approve %}
                                 <td>
-                                    <form action="{{ url_for('update_join_status') }}" method="POST">
+                                    <form action="{{ url_for('update_join_status') }}" method="POST" 
+                                          onsubmit="return confirmStatusChange(this, '{{ p.join_name }}', {{ p.status_register }})">
                                         <input type="hidden" name="join_id" value="{{ p.join_id }}">
                                         <input type="hidden" name="project_id" value="{{ project_id }}">
+                                        
                                         <select name="join_status" class="form-control form-control-sm" 
-                                                onchange="this.form.submit()">
+                                                onchange="checkConflictBeforeSubmit(this)"
+                                                data-student-id="{{ p.join_id }}"
+                                                data-current-status="{{ p.status_register }}"
+                                                data-student-name="{{ p.join_name }}">
                                             <option value="0" {% if p.status_register == 0 %}selected{% endif %}>รอการอนุมัติ</option>
                                             <option value="1" {% if p.status_register == 1 %}selected{% endif %}>อนุมัติ</option>
                                             <option value="2" {% if p.status_register == 2 %}selected{% endif %}>ไม่อนุมัติ</option>
                                         </select>
                                     </form>
+                                    
+                                    <!-- แสดงข้อมูลการทับซ้อนถ้ามี -->
+                                    <div id="conflict-info-{{ p.join_id }}" class="conflict-warning" style="display: none;">
+                                        <small><i class="fas fa-exclamation-triangle text-warning"></i> มีโครงการทับซ้อน</small>
+                                    </div>
                                 </td>
                                 {% endif %}
                             </tr>
@@ -325,10 +335,104 @@
             }
             
             let message = `คุณต้องการอนุมัติผู้เข้าร่วม ${waitingCount} คนหรือไม่?\n\n`;
-            message += '⚠️ การดำเนินการนี้จะไม่สามารถยกเลิกได้';
+            message += '⚠️ การดำเนินการนี้จะไม่สามารถยกเลิกได้\n';
+            message += '⚠️ ระบบจะตรวจสอบและปฏิเสธโครงการที่ทับซ้อนอัตโนมัติ';
             
             return confirm(message);
         }
+
+        function confirmStatusChange(form, studentName, currentStatus) {
+            const newStatus = form.querySelector('select[name="join_status"]').value;
+            const statusTexts = {
+                '0': 'รอการอนุมัติ',
+                '1': 'อนุมัติ',
+                '2': 'ไม่อนุมัติ'
+            };
+            
+            if (newStatus == currentStatus) {
+                return false; // ไม่มีการเปลี่ยนแปลง
+            }
+            
+            let message = `เปลี่ยนสถานะของ "${studentName}" เป็น "${statusTexts[newStatus]}" หรือไม่?`;
+            
+            if (newStatus == '1') {
+                message += '\n\n⚠️ หากมีโครงการทับซ้อน ระบบจะปฏิเสธโครงการอื่นอัตโนมัติ';
+            }
+            
+            return confirm(message);
+        }
+
+        function checkConflictBeforeSubmit(selectElement) {
+            const studentId = selectElement.getAttribute('data-student-id');
+            const newStatus = selectElement.value;
+            const currentStatus = selectElement.getAttribute('data-current-status');
+            
+            // ถ้าเปลี่ยนเป็นอนุมัติ ให้ตรวจสอบการทับซ้อน
+            if (newStatus == '1' && currentStatus != '1') {
+                checkScheduleConflict(studentId, {{ project_id }}, function(hasConflict, conflicts) {
+                    const conflictDiv = document.getElementById('conflict-info-' + studentId);
+                    
+                    if (hasConflict && conflicts.length > 0) {
+                        let conflictMsg = '⚠️ พบโครงการทับซ้อน:\n';
+                        conflicts.forEach(function(conflict) {
+                            conflictMsg += `• ${conflict.name} (${conflict.start_date} - ${conflict.end_date}) - ${conflict.status}\n`;
+                        });
+                        conflictMsg += '\nระบบจะปฏิเสธโครงการที่ทับซ้อนอัตโนมัติ';
+                        
+                        if (conflictDiv) {
+                            conflictDiv.style.display = 'block';
+                            conflictDiv.innerHTML = '<small><i class="fas fa-exclamation-triangle text-warning"></i> มีโครงการทับซ้อน ' + conflicts.length + ' โครงการ</small>';
+                        }
+                        
+                        if (confirm(conflictMsg + '\n\nดำเนินการต่อหรือไม่?')) {
+                            selectElement.form.submit();
+                        } else {
+                            // กลับไปสถานะเดิม
+                            selectElement.value = currentStatus;
+                        }
+                    } else {
+                        if (conflictDiv) {
+                            conflictDiv.style.display = 'none';
+                        }
+                        selectElement.form.submit();
+                    }
+                });
+            } else {
+                // ไม่ต้องตรวจสอบ หรือไม่ได้เปลี่ยนเป็นอนุมัติ
+                selectElement.form.submit();
+            }
+        }
+
+        function checkScheduleConflict(studentId, projectId, callback) {
+            $.ajax({
+                url: '{{ url_for("check_schedule_conflict") }}',
+                method: 'POST',
+                data: {
+                    student_id: studentId,
+                    project_id: projectId
+                },
+                success: function(response) {
+                    callback(response.has_conflict, response.conflicts || []);
+                },
+                error: function() {
+                    console.error('Error checking schedule conflict');
+                    callback(false, []);
+                }
+            });
+        }
+
+        // ซ่อนข้อความเตือนการทับซ้อนเมื่อเปลี่ยนกลับเป็นสถานะอื่น
+        $(document).ready(function() {
+            $('select[name="join_status"]').change(function() {
+                const studentId = $(this).data('student-id');
+                const newStatus = $(this).val();
+                const conflictDiv = $('#conflict-info-' + studentId);
+                
+                if (newStatus != '1') {
+                    conflictDiv.hide();
+                }
+            });
+        });
     </script>
 </body>
 </html>
