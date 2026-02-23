@@ -2810,16 +2810,16 @@ def edit_project(project_id):
     with get_db_cursor() as (db, cursor):
         # ดึงข้อมูลโครงการเดิม
         query = """SELECT project_id, project_budgettype, project_year, project_name, 
-                   project_style, project_address, project_dotime, project_endtime, 
-                   project_target, project_status, project_budget, project_detail,
-                   project_output, project_strategy, project_indicator, project_cluster,
-                   project_commonality, project_physical_grouping, project_rationale,
-                   project_objectives, project_goals, project_output_target, project_outcome_target,
-                   project_activity, project_activities_json, project_quantity_indicator,
-                   project_quality_indicator, project_time_indicator, project_cost_indicator,
-                   project_expected_results, project_compensation_json, project_expenses_json,
-                   project_policy
-                   FROM project WHERE project_id = %s AND teacher_id = %s"""
+           project_style, project_address, project_dotime, project_endtime, 
+           project_target, project_budget, project_detail,
+           project_output, project_strategy, project_indicator, project_cluster,
+           project_commonality, project_physical_grouping, project_rationale,
+           project_objectives, project_goals, project_output_target, project_outcome_target,
+           project_activity, project_activities_json, project_quantity_indicator,
+           project_quality_indicator, project_time_indicator, project_cost_indicator,
+           project_expected_results, project_compensation_json, project_expenses_json,
+           project_policy
+           FROM project WHERE project_id = %s AND teacher_id = %s"""
         cursor.execute(query, (project_id, teacher_id))
         project = cursor.fetchone()
 
@@ -2837,43 +2837,43 @@ def edit_project(project_id):
 
     # สร้าง project_data สำหรับ GET request
     project_data = {
-        "project_id": project[0],
-        "project_budgettype": project[1],
-        "project_year": project[2],
-        "project_name": project[3],
-        "project_style": project[4],
-        "project_address": project[5],
-        "project_dotime": project[6],
-        "project_endtime": project[7],
-        "project_target": project[8],
-        "project_status": project[9],
-        "project_budget": project[10],
-        "project_detail": project[11],
-        "project_output": project[12],
-        "project_strategy": project[13],
-        "project_indicator": project[14],
-        "project_cluster": project[15],
-        "project_commonality": project[16],
-        "project_physical_grouping": project[17],
-        "project_rationale": project[18],
-        "project_objectives": project[19],
-        "project_goals": project[20],
-        "project_output_target": project[21],
-        "project_outcome_target": project[22],
-        "project_activity": project[23],
-        "project_activities_json": project[24],
-        "project_quantity_indicator": project[25],
-        "project_quality_indicator": project[26],
-        "project_time_indicator": project[27],
-        "project_cost_indicator": project[28],
-        "project_expected_results": project[29],
-        "project_compensation_json": project[30],
-        "project_expenses_json": project[31],
-        "project_policy": project[32] if len(project) > 32 else "",
-        "policy": project[32] if len(project) > 32 else "",
-        "teacher_name": teacher_info[0],
-        "branch_name": teacher_info[1]
-    }
+    "project_id": project[0],
+    "project_budgettype": project[1],
+    "project_year": project[2],
+    "project_name": project[3],
+    "project_style": project[4],
+    "project_address": project[5],
+    "project_dotime": project[6],
+    "project_endtime": project[7],
+    "project_target": project[8],
+    # ลบ project_status ออก (เดิมคือ project[9])
+    "project_budget": project[9],        # เดิม [10]
+    "project_detail": project[10],       # เดิม [11]
+    "project_output": project[11],       # เดิม [12]
+    "project_strategy": project[12],     # เดิม [13]
+    "project_indicator": project[13],    # เดิม [14]
+    "project_cluster": project[14],      # เดิม [15]
+    "project_commonality": project[15],  # เดิม [16]
+    "project_physical_grouping": project[16],  # เดิม [17]
+    "project_rationale": project[17],    # เดิม [18]
+    "project_objectives": project[18],   # เดิม [19]
+    "project_goals": project[19],        # เดิม [20]
+    "project_output_target": project[20],# เดิม [21]
+    "project_outcome_target": project[21],# เดิม [22]
+    "project_activity": project[22],     # เดิม [23]
+    "project_activities_json": project[23],# เดิม [24]
+    "project_quantity_indicator": project[24],# เดิม [25]
+    "project_quality_indicator": project[25],# เดิม [26]
+    "project_time_indicator": project[26],# เดิม [27]
+    "project_cost_indicator": project[27],# เดิม [28]
+    "project_expected_results": project[28],# เดิม [29]
+    "project_compensation_json": project[29],# เดิม [30]
+    "project_expenses_json": project[30],# เดิม [31]
+    "project_policy": project[31] if len(project) > 31 else "",  # เดิม [32]
+    "policy": project[31] if len(project) > 31 else "",
+    "teacher_name": teacher_info[0],
+    "branch_name": teacher_info[1]
+}
 
     if request.method == "POST":
         # อัปเดต project_data ด้วยข้อมูลจากฟอร์ม
