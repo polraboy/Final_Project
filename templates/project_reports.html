@@ -92,109 +92,49 @@
 </head>
 <body>
     <!-- เมนูนำทาง แยกตามประเภทผู้ใช้ -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <a class="navbar-brand" href="{{ url_for('home') }}">
-            <img src="/static/image_2024-02-07_191338051.png"
-                 width="40"
-                 height="40"
-                 class="d-inline-block align-top"
-                 alt="Logo" />
+     <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="#">
+            <img src="/static/image_2024-02-07_191338051.png" width="40" height="40" class="d-inline-block align-top" alt="Logo" />
             <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br />วิทยาเขตขอนแก่น</span>
         </a>
-        <button class="navbar-toggler"
-                type="button"
-                data-toggle="collapse"
-                data-target="#navbarNav"
-                aria-controls="navbarNav"
-                aria-expanded="false"
-                aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
-                {% if g.user %}
-                    {% if g.user.type == 'admin' %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_home') }}">
-                            <i class="fas fa-home"></i> หน้าหลัก
-                        </a>
-                    </li>
-                    {% elif g.user.type == 'teacher' %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('teacher_home') }}">
-                            <i class="fas fa-home"></i> หน้าหลัก
-                        </a>
-                    </li>
-                    {% endif %}
-                {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('login') }}">
-                            <i class="fas fa-home"></i> หน้าหลัก
-                        </a>
-                    </li>
-                {% endif %}
-
-                
-                {% if g.user %}
-                    {% if g.user.type == 'admin' %}
-                    <!-- เมนูสำหรับเจ้าหน้าที่ (Admin) -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('active_projects') }}">
-                          <i class="fas fa-project-diagram"></i> โครงการ
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('approve_project') }}">
-                            <i class="fas fa-clipboard-check"></i> อนุมัติคำขอโครงการ
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('edit_basic_info') }}">
-                            <i class="fas fa-cog"></i> ข้อมูลพื้นฐาน
-                        </a>
-                    </li>
-                    {% elif g.user.type == 'teacher' %}
-                    <!-- เมนูสำหรับครู (Teacher) -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('add_project') }}">
-                            <i class="fas fa-plus"></i> เพิ่มโครงการ
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('teacher_projects') }}">
-                            <i class="fas fa-tasks"></i> จัดการโครงการ
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('project_history') }}">
-                            <i class="fas fa-history"></i> ประวัติโครงการ
-                        </a>
-                    </li>
-                    {% endif %}
-                
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="active_projects"><i class="fas fa-project-diagram"></i> โครงการ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('approve_project') }}"><i class="fas fa-check-circle"></i> อนุมัติคำขอโครงการ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('edit_basic_info') }}"><i class="fas fa-cog"></i> ข้อมูลพื้นฐาน</a>
+                </li>
                 <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('manage_students') }}"><i class="fas fa-user-graduate"></i> จัดการนักศึกษา</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('project_reports') }}">
                         <i class="fas fa-chart-bar"></i> รายงาน
                     </a>
                 </li>
-                
-                
+                {% if g.user %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('logout') }}">
-                        <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
-                    </a>
-                </li>
-                {% else %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('login') }}">
-                        <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
+                    <a class="nav-link" href="#" data-toggle="modal" data-target="#userInfoModal">
+                        <i class="fas fa-user"></i> {{ g.user.name }}
                     </a>
                 </li>
                 {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a>
+                </li>
             </ul>
         </div>
     </nav>
-    
    
     
     <div class="container mt-5">

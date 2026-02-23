@@ -112,59 +112,7 @@
 
   <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-      <a class="navbar-brand" href="#">
-        <img
-          src="/static/image_2024-02-07_191338051.png"
-          width="40"
-          height="40"
-          class="d-inline-block align-top"
-          alt="Logo"
-        />
-        <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br />วิทยาเขตขอนแก่น</span>
-      </a>
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-toggle="collapse"
-        data-target="#navbarNav"
-        aria-controls="navbarNav"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ml-auto">
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('student_dashboard') }}"
-              ><i class="fas fa-home"></i> หน้าหลัก</a
-            >
-          </li>
-          
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('active_projects') }}"
-              ><i class="fas fa-project-diagram"></i> โครงการ</a
-            >
-          </li>
-          <li class="nav-item active">
-            <a class="nav-link" href="{{ url_for('student_history', student_id=session.get('student_id')) }}"
-              ><i class="fas fa-history"></i> ประวัติของฉัน</a
-            >
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('student_profile') }}"
-              ><i class="fas fa-user"></i> ข้อมูลส่วนตัว</a
-            >
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('logout') }}"
-              ><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a
-            >
-          </li>
-        </ul>
-      </div>
-    </nav>
+   
 
     <div class="container">
       <!-- แสดง Flash Messages -->
@@ -208,7 +156,7 @@
               <div class="col-md-6">
                 <div class="card project-card shadow-sm">
                   <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>{{ project[2] }}</span>
+                    <span>{{ project[3] }}</span> <!-- แก้ไข: เปลี่ยน project[2] เป็น project[3] เพราะ project_name อยู่ index 3 -->
                     {% if project[0] == 0 %}
                       <span class="badge badge-warning badge-status">รอการอนุมัติ</span>
                     {% elif project[0] == 1 %}
@@ -252,26 +200,17 @@
             {% endif %}
           </div>
         {% endif %}
+        
+        <!-- ปุ่มกลับ -->
+        <div class="mt-4 text-center">
+          <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> กลับหน้าหลัก
+          </a>
+        </div>
       </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="container">
-        <img
-          src="/static/image_2024-02-07_191338051.png"
-          alt="Logo"
-          class="mb-3"
-        />
-        <p>
-          คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ - มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน
-          วิทยาเขตขอนแก่น
-        </p>
-        <p>150 ถ.ศรีจันทร์ ต.ในเมือง อ.เมือง จ.ขอนแก่น 40000</p>
-        <p>โทร: 043-283-705 | เวลาทำการ: 8.00-16.00 น.</p>
-      </div>
-    </footer>
-
+   
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

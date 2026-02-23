@@ -529,7 +529,7 @@ def admin_home():
 
             return redirect(url_for("admin_home"))
 
-    # ดึงข้อมูล constants สำหรับการแสดงผล
+    # ดึงข้อมูล constants สำหรับการแสดงผล - เพิ่ม constants_datetime
     try:
         with get_db_cursor() as (db, cursor):
             count_query = "SELECT COUNT(*) FROM constants"
@@ -548,7 +548,8 @@ def admin_home():
                 
             offset = (page - 1) * per_page
 
-            query = "SELECT constants_headname, constants_detail, constants_image FROM constants"
+            # แก้ไข: เพิ่ม constants_datetime ในการ SELECT
+            query = "SELECT constants_headname, constants_detail, constants_image, constants_datetime FROM constants"
             if search_query:
                 query += " WHERE constants_headname LIKE %s"
                 query += " ORDER BY constants_datetime DESC LIMIT %s OFFSET %s"
@@ -559,16 +560,35 @@ def admin_home():
                 
             constants = cursor.fetchall()
 
-        # แปลงรูปภาพเป็น base64
-        constants = [
-            (c[0], c[1], base64.b64encode(c[2]).decode("utf-8")) for c in constants
-        ]
+        # แปลงรูปภาพเป็น base64 และจัดรูปแบบวันที่
+        formatted_constants = []
+        for c in constants:
+            # แปลงรูปภาพ
+            image_base64 = base64.b64encode(c[2]).decode("utf-8")
+            
+            # จัดรูปแบบวันที่
+            if c[3]:  # ถ้ามี constants_datetime
+                if isinstance(c[3], datetime):
+                    formatted_date = c[3].strftime('%d/%m/%Y %H:%M')
+                else:
+                    formatted_date = str(c[3])
+            else:
+                formatted_date = 'ไม่ระบุวันที่'
+            
+            formatted_constants.append((c[0], c[1], image_base64, formatted_date))
+            
     except mysql.connector.Error as err:
         flash(f"เกิดข้อผิดพลาดในการดึงข้อมูล: {err}", "danger")
-        constants = []
+        formatted_constants = []
         total_pages = 1
 
-    return render_template("admin_home.html", constants=constants, page=page, total_pages=total_pages, search_query=search_query)
+    return render_template(
+        "admin_home.html", 
+        constants=formatted_constants, 
+        page=page, 
+        total_pages=total_pages, 
+        search_query=search_query
+    )
 @app.route("/approve_project", methods=["GET", "POST"])
 @login_required("admin")
 def approve_project():
@@ -711,7 +731,7 @@ def get_status(status_code):
     else:
         return "ไม่มีข้อมูล"
     # เพิ่มฟังก์ชันสำหรับแสดงประวัติของนักศึกษา (ใช้หน้าเดียวกับ student_history ที่มีอยู่)
-@app.route("/student_history/<student_id>")
+@app.route("/student_history/<string:student_id>")
 def student_history(student_id):
     if session.get("user_type") == "student":
         if student_id != session.get("student_id"):
@@ -732,13 +752,14 @@ def student_history(student_id):
         """, (student_id,))
         student_info = cursor.fetchone()
         
-        # แก้ไข: ใช้ status_register
+        # แก้ไข: ใช้ approval table สำหรับ project_statusStart
         cursor.execute("""
             SELECT sr.status_register, sr.register_time, 
                    p.project_id, p.project_name, p.project_dotime, p.project_endtime,
-                   p.project_statusStart
+                   a.project_statusStart
             FROM status_register sr
             JOIN project p ON sr.project_id = p.project_id
+            JOIN approval a ON p.project_id = a.project_id
             WHERE sr.join_id = %s
             ORDER BY sr.register_time DESC
         """, (student_id,))
@@ -1726,13 +1747,13 @@ def create_project_summary_pdf(project_data):
              Paragraph("คน", table_item_style),
              Paragraph(f"{project_target}", table_item_style),
              Paragraph(f"{participant_count}", table_item_style),
-             Paragraph("บรรลุ" if target_percentage >= 80 else "ไม่บรรลุ", table_item_style)],
+             Paragraph("บรรลุ" if target_percentage >= 75 else "ไม่บรรลุ", table_item_style)],
              
             [Paragraph(f"จำนวนผู้เข้าร่วมโครงการไม่ต่ำกว่าร้อยละ 75", table_item_left_style),
              Paragraph("ร้อยละ", table_item_style),
              Paragraph("75", table_item_style),
              Paragraph(f"{target_percent}", table_item_style),
-             Paragraph("บรรลุ" if target_percentage >= 80 else "ไม่บรรลุ", table_item_style)],
+             Paragraph("บรรลุ" if target_percentage >= 75 else "ไม่บรรลุ", table_item_style)],
              
             [Paragraph("<b>เชิงคุณภาพ</b>", table_header_style), "", "", "", ""],
             
@@ -3174,13 +3195,12 @@ def teacher_evaluation_project(project_id):
         """, (project_id,))
         participants_count = cursor.fetchone()[0] or 0
         
-        # ดึงข้อมูลการประเมิน
+        # ดึงข้อมูลการประเมิน - ลบ evaluation_score ออก
         query = """
         SELECT 
             pe.evaluation_id,
             j.join_name,
             j.join_email,
-            pe.evaluation_score,
             pe.project_evaluation_content_score,
             pe.project_evaluation_organization_score,
             pe.project_evaluation_instructor_score,
@@ -3200,17 +3220,26 @@ def teacher_evaluation_project(project_id):
         cursor.execute(query, (project_id,))
         evaluations = cursor.fetchall()
         
-        # สรุปผลการประเมิน
+        # สรุปผลการประเมิน - คำนวณค่าเฉลี่ยจากคอลัมน์ที่มีอยู่
         summary_query = """
         SELECT 
             COUNT(*) as total_evaluations,
-            ROUND(AVG(evaluation_score), 2) as average_score,
+            ROUND(AVG((COALESCE(project_evaluation_content_score, 0) + 
+                      COALESCE(project_evaluation_organization_score, 0) + 
+                      COALESCE(project_evaluation_instructor_score, 0) + 
+                      COALESCE(project_evaluation_overall_score, 0)) / 4), 2) as average_score,
             ROUND(AVG(COALESCE(project_evaluation_content_score, 0)), 2) as avg_content,
             ROUND(AVG(COALESCE(project_evaluation_organization_score, 0)), 2) as avg_organization,
             ROUND(AVG(COALESCE(project_evaluation_instructor_score, 0)), 2) as avg_instructor,
             ROUND(AVG(COALESCE(project_evaluation_overall_score, 0)), 2) as avg_overall,
-            MIN(evaluation_score) as min_score,
-            MAX(evaluation_score) as max_score
+            MIN((COALESCE(project_evaluation_content_score, 0) + 
+                COALESCE(project_evaluation_organization_score, 0) + 
+                COALESCE(project_evaluation_instructor_score, 0) + 
+                COALESCE(project_evaluation_overall_score, 0)) / 4) as min_score,
+            MAX((COALESCE(project_evaluation_content_score, 0) + 
+                COALESCE(project_evaluation_organization_score, 0) + 
+                COALESCE(project_evaluation_instructor_score, 0) + 
+                COALESCE(project_evaluation_overall_score, 0)) / 4) as max_score
         FROM 
             project_evaluation
         WHERE 
@@ -3221,18 +3250,26 @@ def teacher_evaluation_project(project_id):
         
         evaluation_list = []
         for row in evaluations:
+            # คำนวณคะแนนเฉลี่ยรวมจากทั้ง 4 หมวด
+            content_score = float(row[3] or 0)
+            organization_score = float(row[4] or 0)
+            instructor_score = float(row[5] or 0)
+            overall_score = float(row[6] or 0)
+            
+            average_score = (content_score + organization_score + instructor_score + overall_score) / 4
+            
             evaluation_list.append({
                 'evaluation_id': row[0],
                 'join_name': row[1] or 'ไม่ระบุชื่อ',
                 'join_email': row[2] or 'ไม่ระบุอีเมล',
-                'evaluation_score': float(row[3] or 0),
-                'content_score': float(row[4] or 0),
-                'organization_score': float(row[5] or 0),
-                'instructor_score': float(row[6] or 0),
-                'overall_score': float(row[7] or 0),
-                'evaluation_comments': row[8] or '',
-                'evaluation_date': row[9],
-                'detailed_scores': row[10] or '{}'
+                'evaluation_score': average_score,  # คะแนนเฉลี่ยที่คำนวณใหม่
+                'content_score': content_score,
+                'organization_score': organization_score,
+                'instructor_score': instructor_score,
+                'overall_score': overall_score,
+                'evaluation_comments': row[7] or '',
+                'evaluation_date': row[8],
+                'detailed_scores': row[9] or '{}'
             })
         
         if summary:
@@ -3361,13 +3398,22 @@ def project_summary(project_id):
         """, (project_id,))
         participant_count = int(cursor.fetchone()[0])
         
-        # ดึงข้อมูลการประเมิน
+        # ดึงข้อมูลการประเมิน - แก้ไขให้ไม่ใช้ evaluation_score
         cursor.execute("""
             SELECT 
                 COUNT(*) as total_evaluations,
-                ROUND(AVG(evaluation_score), 2) as average_score,
-                MIN(evaluation_score) as min_score,
-                MAX(evaluation_score) as max_score
+                ROUND(AVG((COALESCE(project_evaluation_content_score, 0) + 
+                          COALESCE(project_evaluation_organization_score, 0) + 
+                          COALESCE(project_evaluation_instructor_score, 0) + 
+                          COALESCE(project_evaluation_overall_score, 0)) / 4), 2) as average_score,
+                MIN((COALESCE(project_evaluation_content_score, 0) + 
+                    COALESCE(project_evaluation_organization_score, 0) + 
+                    COALESCE(project_evaluation_instructor_score, 0) + 
+                    COALESCE(project_evaluation_overall_score, 0)) / 4) as min_score,
+                MAX((COALESCE(project_evaluation_content_score, 0) + 
+                    COALESCE(project_evaluation_organization_score, 0) + 
+                    COALESCE(project_evaluation_instructor_score, 0) + 
+                    COALESCE(project_evaluation_overall_score, 0)) / 4) as max_score
             FROM 
                 project_evaluation
             WHERE 
@@ -3422,6 +3468,7 @@ def project_summary(project_id):
         evaluation_comments=evaluation_comments,
         project_success=project_success
     )
+
 @app.route("/admin_project_history")
 @login_required("admin")
 def admin_project_history():
@@ -3618,11 +3665,14 @@ def generate_summary_pdf(project_id):
             """, (project_id,))
             participant_count = int(cursor.fetchone()[0])
             
-            # ดึงข้อมูลการประเมิน
+            # ดึงข้อมูลการประเมิน - แก้ไขให้ไม่ใช้ evaluation_score
             cursor.execute("""
                 SELECT 
                     COUNT(*) as total_evaluations,
-                    ROUND(AVG(evaluation_score), 2) as average_score
+                    ROUND(AVG((COALESCE(project_evaluation_content_score, 0) + 
+                              COALESCE(project_evaluation_organization_score, 0) + 
+                              COALESCE(project_evaluation_instructor_score, 0) + 
+                              COALESCE(project_evaluation_overall_score, 0)) / 4), 2) as average_score
                 FROM 
                     project_evaluation
                 WHERE 
@@ -4089,7 +4139,7 @@ def generate_summary_pdf(project_id):
             
     except Exception as e:
         logging.error(f"Error creating summary PDF: {e}", exc_info=True)
-        return False        
+        return False
 def thai_money_text(amount):
     """แปลงตัวเลขเป็นคำอ่านจำนวนเงินภาษาไทย"""
     # ตัดทศนิยมให้เหลือ 2 ตำแหน่ง
@@ -4422,21 +4472,18 @@ def evaluate_project(project_id):
                 instructor_avg = sum(category_scores['instructor']) / len(category_scores['instructor']) if category_scores['instructor'] else 0
                 overall_avg = sum(category_scores['overall']) / len(category_scores['overall']) if category_scores['overall'] else 0
                 
-                # คะแนนรวมเฉลี่ย
-                total_avg = total_score / question_count if question_count > 0 else 0
-                
                 evaluation_comments = request.form.get('evaluation_comments', '')
                 detailed_scores_json = json.dumps(detailed_scores)
                 
-                # บันทึกการประเมิน
+                # บันทึกการประเมิน - ลบ evaluation_score ออก
                 cursor.execute("""
                     INSERT INTO project_evaluation 
-                    (project_id, join_id, evaluation_score, evaluation_comments, 
+                    (project_id, join_id, evaluation_comments, 
                      project_evaluation_content_score, project_evaluation_organization_score,
                      project_evaluation_instructor_score, project_evaluation_overall_score,
                      project_evaluation_detailed_scores, evaluation_date)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
-                """, (project_id, student_id, total_avg, evaluation_comments,
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                """, (project_id, student_id, evaluation_comments,
                      content_avg, organization_avg, instructor_avg, overall_avg,
                      detailed_scores_json))
                 db.commit()
@@ -4532,17 +4579,147 @@ def check_project_name():
 @login_required("admin")
 def add_branch():
     if request.method == "GET":
-        return render_template("add_branch.html")
+        # ดึง branch_id ถัดไปอัตโนมัติ (รูปแบบ branch001, branch002)
+        with get_db_cursor() as (db, cursor):
+            try:
+                # ดึง branch_id ที่มีรูปแบบ branchXXX
+                cursor.execute("SELECT branch_id FROM branch WHERE branch_id LIKE 'branch%' ORDER BY branch_id DESC LIMIT 1")
+                max_branch = cursor.fetchone()
+                
+                if max_branch:
+                    # แยกเลขจาก branch001 -> 001 -> 1 -> 2 -> 002
+                    current_num = int(max_branch[0].replace('branch', ''))
+                    next_num = current_num + 1
+                    next_id = f"branch{next_num:03d}"  # format เป็น branch001, branch002
+                else:
+                    next_id = "branch001"
+            except:
+                next_id = "branch001"
+        
+        return render_template("add_branch.html", next_branch_id=next_id)
+    
     elif request.method == "POST":
         branch_id = request.form["branch_id"]
         branch_name = request.form["branch_name"]
-        with get_db_cursor() as (db, cursor):
-            query = "INSERT INTO branch (branch_name,branch_id) VALUES (%s,%s)"
-            cursor.execute(query, (branch_name,branch_id))
-            db.commit()
+        
+        try:
+            with get_db_cursor() as (db, cursor):
+                # ตรวจสอบ branch_id ซ้ำ
+                cursor.execute("SELECT COUNT(*) FROM branch WHERE branch_id = %s", (branch_id,))
+                if cursor.fetchone()[0] > 0:
+                    flash("รหัสสาขานี้มีอยู่แล้ว กรุณาใช้รหัสอื่น", "error")
+                    return redirect(url_for("add_branch"))
+                
+                query = "INSERT INTO branch (branch_id, branch_name) VALUES (%s, %s)"
+                cursor.execute(query, (branch_id, branch_name))
+                db.commit()
+                
+            flash("เพิ่มข้อมูลสาขาเรียบร้อยแล้ว", "success")
+            return redirect(url_for("edit_basic_info"))
+            
+        except Exception as e:
+            flash(f"เกิดข้อผิดพลาด: {str(e)}", "error")
+            return redirect(url_for("add_branch"))
+# เพิ่มฟังก์ชันเหล่านี้ใน app.py
 
-        flash("เพิ่มข้อมูลสาขาเรียบร้อยแล้ว", "success")
-        return redirect(url_for("edit_basic_info"))
+@app.route("/edit_basic_info", methods=["GET", "POST"])
+@login_required("admin")
+def edit_basic_info():
+    try:
+        if "admin_id" in session:
+            # ดึงข้อมูลสาขา
+            with get_db_cursor() as (db, cursor):
+                try:
+                    # ดึงข้อมูลสาขา - เรียงลำดับแบบง่าย
+                    cursor.execute("SELECT branch_id, branch_name FROM branch ORDER BY branch_id")
+                    branches = cursor.fetchall()
+                    
+                    # ดึงข้อมูลอาจารย์ - เรียงลำดับตาม teacher_id
+                    cursor.execute("""
+                        SELECT t.teacher_id, t.teacher_name, t.teacher_username, 
+                               t.teacher_password, t.teacher_phone, t.teacher_email, 
+                               b.branch_name, t.branch_id
+                        FROM teacher t
+                        LEFT JOIN branch b ON t.branch_id = b.branch_id
+                        ORDER BY t.teacher_id
+                    """)
+                    teachers = cursor.fetchall()
+                    
+                    # ดึงข้อมูลแอดมิน - เรียงลำดับตาม admin_id
+                    cursor.execute("""
+                        SELECT admin_id, admin_name, admin_username, admin_password, 
+                               admin_email FROM admin ORDER BY admin_id
+                    """)
+                    admins = cursor.fetchall()
+                    
+                    # ตรวจสอบข้อมูลเพื่อการ debug
+                    print(f"Teachers: {len(teachers)}, Branches: {len(branches)}, Admins: {len(admins)}")
+                    
+                except Exception as e:
+                    print(f"Error fetching data: {e}")
+                    teachers = []
+                    branches = []
+                    admins = []
+            
+            return render_template(
+                "edit_basic_info.html", 
+                teachers=teachers, 
+                branches=branches,
+                admins=admins
+            )
+        else:
+            return redirect(url_for("login"))
+    except Exception as e:
+        import traceback
+        print(f"ERROR in edit_basic_info: {str(e)}")
+        print(traceback.format_exc())
+        flash(f"ไม่สามารถโหลดหน้าได้ เกิดข้อผิดพลาด: {str(e)}", "error")
+        return redirect(url_for("admin_home"))
+@app.route("/get_next_branch_id")
+@login_required("admin")
+def get_next_branch_id():
+    """API สำหรับดึงรหัสสาขาถัดไป (รูปแบบ branchXXX)"""
+    try:
+        with get_db_cursor() as (db, cursor):
+            # ดึง branch_id ที่มีรูปแบบ branchXXX
+            cursor.execute("SELECT branch_id FROM branch WHERE branch_id LIKE 'branch%' ORDER BY branch_id DESC LIMIT 1")
+            max_branch = cursor.fetchone()
+            
+            if max_branch:
+                # แยกเลขจาก branch001 -> 001 -> 1 -> 2 -> 002
+                current_num = int(max_branch[0].replace('branch', ''))
+                next_num = current_num + 1
+                next_id = f"branch{next_num:03d}"  # format เป็น branch001, branch002
+            else:
+                next_id = "branch001"
+            
+            return jsonify({
+                "success": True,
+                "next_id": next_id
+            })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@app.route("/check_branch_id", methods=["POST"])
+@login_required("admin")
+def check_branch_id():
+    """API สำหรับตรวจสอบรหัสสาขาซ้ำ"""
+    try:
+        branch_id = request.form.get("branch_id")
+        
+        if not branch_id:
+            return jsonify({"exists": False})
+        
+        with get_db_cursor() as (db, cursor):
+            cursor.execute("SELECT COUNT(*) FROM branch WHERE branch_id = %s", (branch_id,))
+            count = cursor.fetchone()[0]
+            
+            return jsonify({"exists": count > 0})
+    except Exception as e:
+        return jsonify({"exists": False, "error": str(e)}), 500
 @app.route('/check_duplicate')
 def check_duplicate():
     name = request.args.get('name', '')
@@ -4748,59 +4925,6 @@ def is_project_name_duplicate(project_name, current_project_id=None):
             cursor.execute(query, (project_name,))
             count = cursor.fetchone()[0]
             return count > 0
-@app.route("/edit_basic_info", methods=["GET", "POST"])
-@login_required("admin")
-def edit_basic_info():
-    try:
-        if "admin_id" in session:
-            # ดึงข้อมูลสาขา
-            with get_db_cursor() as (db, cursor):
-                try:
-                    # ดึงข้อมูลสาขา
-                    cursor.execute("SELECT branch_id, branch_name FROM branch ORDER BY branch_name")
-                    branches = cursor.fetchall()
-                    
-                    # ดึงข้อมูลอาจารย์
-                    cursor.execute("""
-                        SELECT t.teacher_id, t.teacher_name, t.teacher_username, 
-                               t.teacher_password, t.teacher_phone, t.teacher_email, 
-                               b.branch_name, t.branch_id
-                        FROM teacher t
-                        LEFT JOIN branch b ON t.branch_id = b.branch_id
-                        ORDER BY t.teacher_name
-                    """)
-                    teachers = cursor.fetchall()
-                    
-                    # ดึงข้อมูลแอดมิน
-                    cursor.execute("""
-                        SELECT admin_id, admin_name, admin_username, admin_password, 
-                               admin_email FROM admin ORDER BY admin_name
-                    """)
-                    admins = cursor.fetchall()
-                    
-                    # ตรวจสอบข้อมูลเพื่อการ debug
-                    print(f"Teachers: {len(teachers)}, Branches: {len(branches)}, Admins: {len(admins)}")
-                    
-                except Exception as e:
-                    print(f"Error fetching data: {e}")
-                    teachers = []
-                    branches = []
-                    admins = []
-            
-            return render_template(
-                "edit_basic_info.html", 
-                teachers=teachers, 
-                branches=branches,
-                admins=admins
-            )
-        else:
-            return redirect(url_for("login"))
-    except Exception as e:
-        import traceback
-        print(f"ERROR in edit_basic_info: {str(e)}")
-        print(traceback.format_exc())
-        flash(f"ไม่สามารถโหลดหน้าได้ เกิดข้อผิดพลาด: {str(e)}", "error")
-        return redirect(url_for("admin_home"))
 
 def get_teacher_by_id(teacher_id):
     with get_db_cursor() as (db, cursor):

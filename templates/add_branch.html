@@ -77,6 +77,14 @@
         max-width: 100px;
         margin-bottom: 10px;
       }
+
+      .auto-generate-btn {
+        margin-top: 5px;
+      }
+
+      .input-group {
+        margin-bottom: 10px;
+      }
     </style>
   </head>
 
@@ -153,6 +161,18 @@
         </ul>
       </div>
     </nav>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="container mt-3">
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }}">{{ message }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
     {% if g.user %}
     <div class="modal fade" id="userInfoModal" tabindex="-1" role="dialog" aria-labelledby="userInfoModalLabel" aria-hidden="true">
       <div class="modal-dialog" role="document">
@@ -177,23 +197,41 @@
       </div>
     </div>
     {% endif %}
+    
     <div class="container">
       <div class="content-box">
         <h2 class="text-center mb-4">เพิ่มข้อมูลสาขา</h2>
-        <form action="{{ url_for('add_branch') }}" method="POST">
+        <form action="{{ url_for('add_branch') }}" method="POST" id="branchForm">
           <div class="form-group">
             <label for="branch_id"
               ><i class="fas fa-hashtag"></i> รหัสสาขา:</label
             >
-            <input
-              type="text"
-              class="form-control"
-              id="branch_id"
-              name="branch_id"
-              required
-              placeholder="กรอกรหัสสาขา"
-            />
+            <div class="input-group">
+              <input
+                type="text"
+                class="form-control"
+                id="branch_id"
+                name="branch_id"
+                value="{{ next_branch_id or 'branch001' }}"
+                required
+                placeholder="กรอกรหัสสาขา (เช่น branch001)"
+                pattern="branch[0-9]{3}"
+                title="รูปแบบ: branch001, branch002, ..."
+              />
+              <div class="input-group-append">
+                <button 
+                  type="button" 
+                  class="btn btn-outline-secondary" 
+                  onclick="generateNextId()"
+                  title="สร้างรหัสถัดไปอัตโนมัติ"
+                >
+                  <i class="fas fa-sync-alt"></i>
+                </button>
+              </div>
+            </div>
+            <small class="text-muted">รหัสถัดไปที่แนะนำ: {{ next_branch_id or 'branch001' }} (รูปแบบ: branchXXX)</small>
           </div>
+          
           <div class="form-group">
             <label for="branch_name"
               ><i class="fas fa-graduation-cap"></i> ชื่อสาขา:</label
@@ -207,7 +245,11 @@
               placeholder="กรอกชื่อสาขา"
             />
           </div>
+          
           <div class="text-center mt-4">
+            <button type="button" class="btn btn-secondary mr-2" onclick="history.back()">
+              <i class="fas fa-arrow-left"></i> ย้อนกลับ
+            </button>
             <button type="submit" class="btn btn-primary btn-lg">
               <i class="fas fa-plus-circle"></i> เพิ่มสาขา
             </button>
@@ -219,5 +261,88 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
+      function generateNextId() {
+        // ดึงรหัสถัดไปจากเซิร์ฟเวอร์
+        fetch('/get_next_branch_id')
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              document.getElementById('branch_id').value = data.next_id;
+            } else {
+              alert('ไม่สามารถดึงรหัสถัดไปได้');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('เกิดข้อผิดพลาดในการดึงรหัสถัดไป');
+          });
+      }
+
+      // เพิ่มการตรวจสอบก่อนส่งฟอร์ม
+      document.getElementById('branchForm').addEventListener('submit', function(e) {
+        const branchId = document.getElementById('branch_id').value;
+        const branchName = document.getElementById('branch_name').value.trim();
+        
+        if (!branchId || !branchName) {
+          e.preventDefault();
+          alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+          return false;
+        }
+        
+        // ตรวจสอบรูปแบบ branchXXX
+        const branchPattern = /^branch[0-9]{3}$/;
+        if (!branchPattern.test(branchId)) {
+          e.preventDefault();
+          alert('รหัสสาขาต้องเป็นรูปแบบ branchXXX (เช่น branch001, branch002)');
+          return false;
+        }
+      });
+
+      // เพิ่มฟังก์ชันช่วยสร้างรหัสสาขาแบบ manual
+      function formatBranchId() {
+        const input = document.getElementById('branch_id');
+        let value = input.value.toLowerCase();
+        
+        // ถ้าใส่แค่ตัวเลข ให้เติม branch ด้านหน้า
+        if (/^[0-9]{1,3}$/.test(value)) {
+          const num = parseInt(value);
+          input.value = `branch${num.toString().padStart(3, '0')}`;
+        }
+        // ถ้าใส่ branch ตามด้วยตัวเลข ให้ format ใหม่
+        else if (/^branch[0-9]{1,3}$/.test(value)) {
+          const num = parseInt(value.replace('branch', ''));
+          input.value = `branch${num.toString().padStart(3, '0')}`;
+        }
+      }
+
+      // เพิ่ม event listener สำหรับ format รหัสอัตโนมัติ
+      document.getElementById('branch_id').addEventListener('blur', function() {
+        formatBranchId();
+        
+        // ตรวจสอบรหัสซ้ำ
+        const branchId = this.value;
+        if (branchId) {
+          fetch('/check_branch_id', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'branch_id=' + encodeURIComponent(branchId)
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.exists) {
+              alert('รหัสสาขานี้มีอยู่แล้ว กรุณาใช้รหัสอื่น');
+              this.focus();
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
+        }
+      });
+    </script>
   </body>
 </html>

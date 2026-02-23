@@ -279,12 +279,16 @@
             transition: all 0.3s ease;
             border: 2px solid transparent;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            color: inherit;
         }
 
         .quick-action-card:hover {
             transform: translateY(-3px);
             border-color: var(--primary-color);
             box-shadow: 0 5px 20px rgba(255, 140, 0, 0.2);
+            text-decoration: none;
+            color: inherit;
         }
 
         .quick-action-card i {
@@ -297,22 +301,50 @@
             color: var(--primary-color);
             font-weight: bold;
         }
+
+        /* DateTime Display */
+        .datetime-info {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .datetime-ago {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .datetime-full {
+            margin-top: 2px;
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
     </style>
 </head>
 
 <body>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="container mt-3">
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <a class="navbar-brand" href="#">
-            <img src="/static/image_2024-02-07_191338051.png" width="40" height="40" class="d-inline-block align-top"
-                alt="Logo">
-            <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br>วิทยาเขตขอนแก่น</span>
-            <span class="admin-badge">
-                <i class="fas fa-user-shield"></i> ADMIN
-            </span>
+            <img src="/static/image_2024-02-07_191338051.png" width="40" height="40" class="d-inline-block align-top" alt="Logo" />
+            <span>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน<br />วิทยาเขตขอนแก่น</span>
         </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -321,7 +353,7 @@
                     <a class="nav-link" href="{{ url_for('admin_home') }}"><i class="fas fa-home"></i> หน้าหลัก</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('active_projects') }}"><i class="fas fa-project-diagram"></i> โครงการ</a>
+                    <a class="nav-link" href="active_projects"><i class="fas fa-project-diagram"></i> โครงการ</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('approve_project') }}"><i class="fas fa-check-circle"></i> อนุมัติคำขอโครงการ</a>
@@ -329,12 +361,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('edit_basic_info') }}"><i class="fas fa-cog"></i> ข้อมูลพื้นฐาน</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item active">
                     <a class="nav-link" href="{{ url_for('manage_students') }}"><i class="fas fa-user-graduate"></i> จัดการนักศึกษา</a>
                 </li>
-                <a href="{{ url_for('manage_evaluation_questions') }}" class="btn btn-primary">
-    <i class="fas fa-clipboard-list"></i> จัดการคำถามแบบประเมิน
-</a>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('project_reports') }}">
                         <i class="fas fa-chart-bar"></i> รายงาน
@@ -430,74 +459,86 @@
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="content-box">
-        <div class="section-header admin-section-header">
-          <h3><i class="fas fa-tachometer-alt"></i> แดชบอร์ดผู้ดูแลระบบ</h3>
+    <div class="container">
+        <!-- Main Content -->
+        <div class="content-box">
+            <div class="section-header admin-section-header">
+                <h3><i class="fas fa-tachometer-alt"></i> แดชบอร์ดผู้ดูแลระบบ</h3>
+            </div>
+            
+            <div class="quick-actions">
+                <!-- โครงการทั้งหมด -->
+                <a href="{{ url_for('active_projects') }}" class="quick-action-card">
+                    <i class="fas fa-project-diagram"></i>
+                    <h6>โครงการทั้งหมด</h6>
+                    <p class="text-muted mb-0">ดูและจัดการ</p>
+                </a>
+                
+                <!-- จัดการนักศึกษา -->
+                <a href="{{ url_for('manage_students') }}" class="quick-action-card">
+                    <i class="fas fa-user-graduate"></i>
+                    <h6>จัดการนักศึกษา</h6>
+                    <p class="text-muted mb-0">เพิ่ม แก้ไข ลบ</p>
+                </a>
+                
+                <!-- รายงานระบบ -->
+                <a href="{{ url_for('project_reports') }}" class="quick-action-card">
+                    <i class="fas fa-chart-bar"></i>
+                    <h6>รายงานระบบ</h6>
+                    <p class="text-muted mb-0">สถิติและข้อมูล</p>
+                </a>
+                
+                <!-- อนุมัติโครงการ -->
+                <a href="{{ url_for('approve_project') }}" class="quick-action-card">
+                    <i class="fas fa-check-circle"></i>
+                    <h6>อนุมัติโครงการ</h6>
+                    <p class="text-muted mb-0">อนุมัติคำขอใหม่</p>
+                </a>
+                
+                <!-- ข้อมูลพื้นฐาน -->
+                <a href="{{ url_for('edit_basic_info') }}" class="quick-action-card">
+                    <i class="fas fa-cog"></i>
+                    <h6>ข้อมูลพื้นฐาน</h6>
+                    <p class="text-muted mb-0">แก้ไขข้อมูลระบบ</p>
+                </a>
+                
+                <!-- จัดการคำถามแบบประเมิน -->
+                <a href="{{ url_for('manage_evaluation_questions') }}" class="quick-action-card">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h6>จัดการคำถามแบบประเมิน</h6>
+                    <p class="text-muted mb-0">แก้ไขคำถาม</p>
+                </a>
+            </div>
         </div>
         
-        <div class="quick-actions">
-          <!-- โครงการทั้งหมด -->
-          <a href="{{ url_for('active_projects') }}" class="quick-action-card clickable-card" onclick="showLoadingEffect(this)">
-            <i class="fas fa-project-diagram"></i>
-            <h6>โครงการทั้งหมด</h6>
-            <p class="text-muted mb-0">ดูและจัดการ</p>
-            <div class="card-overlay">
-              <span class="action-text">คลิกเพื่อดู</span>
-            </div>
-          </a>
-          
-          <!-- จัดการนักศึกษา -->
-          <a href="{{ url_for('manage_students') }}" class="quick-action-card clickable-card" onclick="showLoadingEffect(this)">
-            <i class="fas fa-user-graduate"></i>
-            <h6>จัดการนักศึกษา</h6>
-            <p class="text-muted mb-0">เพิ่ม แก้ไข ลบ</p>
-            <div class="card-overlay">
-              <span class="action-text">คลิกเพื่อจัดการ</span>
-            </div>
-          </a>
-          
-          <!-- รายงานระบบ -->
-          <a href="{{ url_for('project_reports') }}" class="quick-action-card clickable-card" onclick="showLoadingEffect(this)">
-            <i class="fas fa-chart-bar"></i>
-            <h6>รายงานระบบ</h6>
-            <p class="text-muted mb-0">สถิติและข้อมูล</p>
-            <div class="card-overlay">
-              <span class="action-text">คลิกเพื่อดูรายงาน</span>
-            </div>
-          </a>
-          
-          <!-- อนุมัติโครงการ -->
-          <a href="{{ url_for('approve_project') }}" class="quick-action-card clickable-card" onclick="showLoadingEffect(this)">
-            <i class="fas fa-check-circle"></i>
-            <h6>อนุมัติโครงการ</h6>
-            <p class="text-muted mb-0">อนุมัติคำขอใหม่</p>
-            <div class="card-overlay">
-              <span class="action-text">คลิกเพื่ออนุมัติ</span>
-            </div>
-          </a>
-          
-          <!-- ข้อมูลพื้นฐาน -->
-          <a href="{{ url_for('edit_basic_info') }}" class="quick-action-card clickable-card" onclick="showLoadingEffect(this)">
-            <i class="fas fa-cog"></i>
-            <h6>ข้อมูลพื้นฐาน</h6>
-            <p class="text-muted mb-0">แก้ไขข้อมูลระบบ</p>
-            <div class="card-overlay">
-              <span class="action-text">คลิกเพื่อแก้ไข</span>
-            </div>
-          </a>
-          
-        
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    
         <!-- News Management Section -->
         <div class="content-box">
             <div class="section-header">
                 <h3><i class="fas fa-newspaper"></i> จัดการข้อมูลข่าวสาร</h3>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <form method="GET" action="{{ url_for('admin_home') }}">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="search" 
+                                   value="{{ search_query }}" placeholder="ค้นหาข่าวสาร...">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i> ค้นหา
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-6 text-right">
+                    {% if search_query %}
+                        <a href="{{ url_for('admin_home') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> ล้างการค้นหา
+                        </a>
+                    {% endif %}
+                </div>
             </div>
             
             {% if constants|length > 0 %}
@@ -516,9 +557,7 @@
                                 <h5 class="card-title">{{ constant[0] }}</h5>
                                 <p class="card-text flex-grow-1">{{ constant[1] }}</p>
                                 <div class="mt-auto">
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock"></i> เพิ่มเมื่อ: วันที่ไม่ระบุ
-                                    </small>
+                                   
                                 </div>
                             </div>
                         </div>
@@ -552,10 +591,28 @@
             {% else %}
                 <div class="no-data">
                     <i class="fas fa-newspaper"></i>
-                    <h5>ยังไม่มีข้อมูลข่าวสาร</h5>
-                    <p>คลิกปุ่ม + ด้านล่างขวาเพื่อเพิ่มข่าวสารใหม่</p>
+                    <h5>
+                        {% if search_query %}
+                            ไม่พบข่าวสารที่ค้นหา "{{ search_query }}"
+                        {% else %}
+                            ยังไม่มีข้อมูลข่าวสาร
+                        {% endif %}
+                    </h5>
+                    <p>
+                        {% if search_query %}
+                            ลองใช้คำค้นหาอื่น หรือ
+                            <a href="{{ url_for('admin_home') }}">ดูข่าวสารทั้งหมด</a>
+                        {% else %}
+                            คลิกปุ่ม + ด้านล่างขวาเพื่อเพิ่มข่าวสารใหม่
+                        {% endif %}
+                    </p>
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addConstantModal">
-                        <i class="fas fa-plus"></i> เพิ่มข่าวสารแรก
+                        <i class="fas fa-plus"></i> 
+                        {% if search_query %}
+                            เพิ่มข่าวสารใหม่
+                        {% else %}
+                            เพิ่มข่าวสารแรก
+                        {% endif %}
                     </button>
                 </div>
             {% endif %}
@@ -598,6 +655,466 @@
                 $(this).find('i').removeClass('fa-spin');
             }
         );
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut('slow');
+        }, 5000);
+
+        // Form validation
+        $('#addConstantModal form').on('submit', function(e) {
+            var headname = $('#constant_headname').val().trim();
+            var detail = $('#constant_detail').val().trim();
+            var image = $('#constant_image')[0].files[0];
+
+            if (!headname || !detail || !image) {
+                e.preventDefault();
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return false;
+            }
+
+            if (image && image.size > 5 * 1024 * 1024) { // 5MB
+                e.preventDefault();
+                alert('ขนาดไฟล์รูปภาพต้องไม่เกิน 5MB');
+                return false;
+            }
+        });
+
+        // Image preview functionality
+        $('#constant_image').change(function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    // Remove existing preview
+                    $('#image-preview').remove();
+                    
+                    // Create preview element
+                    var preview = $('<div id="image-preview" class="mt-2"><img src="' + e.target.result + '" class="img-thumbnail" style="max-width: 200px; max-height: 150px;"><br><small class="text-muted">ตัวอย่างรูปภาพ</small></div>');
+                    $('#constant_image').parent().append(preview);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Clear form when modal is closed
+        $('#addConstantModal').on('hidden.bs.modal', function () {
+            $(this).find('form')[0].reset();
+            $('#image-preview').remove();
+        });
+
+        // Search functionality with Enter key
+        $('input[name="search"]').keypress(function(e) {
+            if (e.which == 13) {
+                $(this).closest('form').submit();
+            }
+        });
+
+        // Smooth scrolling for anchor links
+        $('a[href^="#"]').on('click', function(event) {
+            var target = $(this.getAttribute('href'));
+            if( target.length ) {
+                event.preventDefault();
+                $('html, body').stop().animate({
+                    scrollTop: target.offset().top - 100
+                }, 1000);
+            }
+        });
+
+        // Card animation on scroll
+        function animateOnScroll() {
+            $('.card').each(function() {
+                var elementTop = $(this).offset().top;
+                var elementBottom = elementTop + $(this).outerHeight();
+                var viewportTop = $(window).scrollTop();
+                var viewportBottom = viewportTop + $(window).height();
+
+                if (elementBottom > viewportTop && elementTop < viewportBottom) {
+                    $(this).addClass('animate__animated animate__fadeInUp');
+                }
+            });
+        }
+
+        $(window).on('scroll resize', animateOnScroll);
+        $(document).ready(animateOnScroll);
+
+        // Loading state for quick action cards
+        $('.quick-action-card').on('click', function() {
+            var $this = $(this);
+            var originalText = $this.find('h6').text();
+            $this.find('h6').text('กำลังโหลด...');
+            $this.find('i').addClass('fa-spin');
+            
+            // Reset after 2 seconds if still on page
+            setTimeout(function() {
+                $this.find('h6').text(originalText);
+                $this.find('i').removeClass('fa-spin');
+            }, 2000);
+        });
+
+        // Tooltip initialization
+        $('[data-toggle="tooltip"]').tooltip();
+
+        // Auto-refresh news count every 30 seconds
+        setInterval(function() {
+            // You can add AJAX call here to refresh news count
+            console.log('Auto-refresh check...');
+        }, 30000);
+
+        // Keyboard shortcuts
+        $(document).keydown(function(e) {
+            // Ctrl+N or Cmd+N to add new news
+            if ((e.ctrlKey || e.metaKey) && e.keyCode === 78) {
+                e.preventDefault();
+                $('#addConstantModal').modal('show');
+            }
+            
+            // Escape to close modals
+            if (e.keyCode === 27) {
+                $('.modal').modal('hide');
+            }
+        });
+
+        // Progress bar for form submission
+        $('#addConstantModal form').on('submit', function() {
+            var $submitBtn = $(this).find('button[type="submit"]');
+            var originalText = $submitBtn.html();
+            
+            $submitBtn.html('<i class="fas fa-spinner fa-spin"></i> กำลังบันทึก...');
+            $submitBtn.prop('disabled', true);
+            
+            // If form validation fails, restore button
+            setTimeout(function() {
+                if ($('#addConstantModal').is(':visible')) {
+                    $submitBtn.html(originalText);
+                    $submitBtn.prop('disabled', false);
+                }
+            }, 5000);
+        });
+
+        // Dark mode toggle (optional feature)
+        function toggleDarkMode() {
+            $('body').toggleClass('dark-mode');
+            localStorage.setItem('darkMode', $('body').hasClass('dark-mode'));
+        }
+
+        // Load dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            $('body').addClass('dark-mode');
+        }
+
+        // Infinite scroll for news (if implemented)
+        var loading = false;
+        $(window).scroll(function() {
+            if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100 && !loading) {
+                // Implement infinite scroll here if needed
+                console.log('Near bottom of page');
+            }
+        });
+
+        // News card hover effects
+        $('.card').hover(
+            function() {
+                $(this).find('.card-img-top').css('transform', 'scale(1.05)');
+            },
+            function() {
+                $(this).find('.card-img-top').css('transform', 'scale(1)');
+            }
+        );
+
+        // Statistics counter animation (if you add stats)
+        function animateCounters() {
+            $('.counter').each(function() {
+                var $this = $(this);
+                var countTo = $this.attr('data-count');
+                
+                $({ countNum: $this.text() }).animate({
+                    countNum: countTo
+                }, {
+                    duration: 2000,
+                    easing: 'linear',
+                    step: function() {
+                        $this.text(Math.floor(this.countNum));
+                    },
+                    complete: function() {
+                        $this.text(this.countNum);
+                    }
+                });
+            });
+        }
+
+        // Performance monitoring
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                var loadTime = window.performance.timing.loadEventEnd - window.performance.timing.navigationStart;
+                console.log('Page load time: ' + loadTime + 'ms');
+            }, 0);
+        });
     </script>
+
+    <!-- Custom CSS for additional features -->
+    <style>
+        /* Dark mode styles (optional) */
+        .dark-mode {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .dark-mode .content-box {
+            background-color: #2d2d2d;
+            color: #ffffff;
+        }
+
+        .dark-mode .card {
+            background-color: #3d3d3d;
+            color: #ffffff;
+        }
+
+        /* Loading animations */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Smooth transitions */
+        * {
+            transition: all 0.3s ease;
+        }
+
+        /* Image preview styles */
+        #image-preview {
+            border: 2px dashed #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        /* Enhanced hover effects */
+        .quick-action-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent, rgba(255, 140, 0, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 15px;
+        }
+
+        .quick-action-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary-color), #ffb347);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .quick-actions {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .content-box {
+                padding: 15px;
+            }
+            
+            .edit-mode-button {
+                width: 60px;
+                height: 60px;
+                font-size: 20px;
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .navbar-brand span {
+                font-size: 0.9rem;
+            }
+
+            .admin-badge {
+                margin-left: 5px;
+                padding: 3px 8px;
+                font-size: 0.7rem;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .navbar, .edit-mode-button, .modal, .btn {
+                display: none !important;
+            }
+            
+            .content-box {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+
+            .card {
+                break-inside: avoid;
+            }
+        }
+
+        /* Accessibility improvements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus styles for keyboard navigation */
+        .quick-action-card:focus,
+        .btn:focus,
+        .form-control:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Animation for cards */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate__animated {
+            animation-duration: 0.5s;
+            animation-fill-mode: both;
+        }
+
+        .animate__fadeInUp {
+            animation-name: fadeInUp;
+        }
+
+        /* Enhanced modal styles */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal.fade .modal-dialog {
+            transform: scale(0.8) translateY(-50px);
+            transition: all 0.3s ease;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1) translateY(0);
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Enhanced alerts */
+        .alert {
+            border: none;
+            border-radius: 10px;
+            padding: 15px 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #dc3545, #fd7e14);
+            color: white;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: #000;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #17a2b8, #007bff);
+            color: white;
+        }
+
+        /* Footer for admin panel */
+        .admin-footer {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 50px;
+        }
+
+        /* Enhanced quick action hover */
+        .quick-action-card:hover h6 {
+            color: #fff;
+        }
+
+        .quick-action-card:hover {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .quick-action-card:hover i {
+            color: #fff;
+        }
+
+        /* Notification badge */
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
 </body>
+
 </html>
