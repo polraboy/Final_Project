@@ -5643,14 +5643,18 @@ def update_project_statusStart():
     project_status = request.form.get("projectStatus")
 
     with get_db_cursor() as (db, cursor):
-        # แก้ไข: ตรวจสอบสถานะการอนุมัติโครงการจาก approval table
         cursor.execute(
-            "SELECT project_status FROM approval WHERE project_id = %s", (project_id,)
-        )
-        result = cursor.fetchone()
-        if result and result[0] != 2:
-            flash("โครงการยังไม่ได้รับการอนุมัติ ไม่สามารถเริ่มดำเนินการได้", "error")
-            return redirect(url_for("project_detail", project_id=project_id))
+        "SELECT project_status, project_statusStart FROM approval WHERE project_id = %s", (project_id,)
+    )
+    result = cursor.fetchone()
+    if result and result[0] != 2:
+        flash("โครงการยังไม่ได้รับการอนุมัติ ไม่สามารถเริ่มดำเนินการได้", "error")
+        return redirect(url_for("project_detail", project_id=project_id))
+
+    # ป้องกันการเปลี่ยนสถานะเมื่อโครงการเสร็จสิ้นแล้ว
+    if result and result[1] == 2:
+        flash("โครงการนี้เสร็จสิ้นแล้ว ไม่สามารถเปลี่ยนแปลงสถานะได้", "error")
+        return redirect(url_for("project_detail", project_id=project_id))
 
         if project_status is not None and project_status != "":
             try:

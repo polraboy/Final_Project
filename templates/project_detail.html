@@ -617,7 +617,7 @@
 
           <!-- Teacher Management Section -->
           {% if is_logged_in and user_type == 'teacher' %}
-            {% if project.project_status == 2 %}
+            {% if project.project_status == 2 and project.project_statusStart != 2 %}
               <div class="management-section">
                 <h5 class="management-title">
                   <i class="fas fa-cogs mr-2"></i> จัดการสถานะโครงการ
@@ -657,6 +657,11 @@
                   </form>
                 </div>
                 {% endif %}
+              </div>
+            {% elif project.project_status == 2 and project.project_statusStart == 2 %}
+              <div class="alert alert-secondary text-center">
+                <i class="fas fa-check-circle mr-2"></i>
+                โครงการนี้เสร็จสิ้นแล้ว ไม่สามารถเปลี่ยนแปลงสถานะได้
               </div>
             {% else %}
               <div class="alert alert-warning text-center">
