@@ -2806,20 +2806,20 @@ def edit_project(project_id):
         return redirect(url_for("login"))
 
     teacher_id = session["teacher_id"]
-    
+
     with get_db_cursor() as (db, cursor):
-        # ดึงข้อมูลโครงการเดิม
+        # ดึงข้อมูลโครงการเดิม (ลบ project_status ออกเพราะอยู่ในตาราง approval)
         query = """SELECT project_id, project_budgettype, project_year, project_name, 
-           project_style, project_address, project_dotime, project_endtime, 
-           project_target, project_budget, project_detail,
-           project_output, project_strategy, project_indicator, project_cluster,
-           project_commonality, project_physical_grouping, project_rationale,
-           project_objectives, project_goals, project_output_target, project_outcome_target,
-           project_activity, project_activities_json, project_quantity_indicator,
-           project_quality_indicator, project_time_indicator, project_cost_indicator,
-           project_expected_results, project_compensation_json, project_expenses_json,
-           project_policy
-           FROM project WHERE project_id = %s AND teacher_id = %s"""
+                   project_style, project_address, project_dotime, project_endtime, 
+                   project_target, project_budget, project_detail,
+                   project_output, project_strategy, project_indicator, project_cluster,
+                   project_commonality, project_physical_grouping, project_rationale,
+                   project_objectives, project_goals, project_output_target, project_outcome_target,
+                   project_activity, project_activities_json, project_quantity_indicator,
+                   project_quality_indicator, project_time_indicator, project_cost_indicator,
+                   project_expected_results, project_compensation_json, project_expenses_json,
+                   project_policy
+                   FROM project WHERE project_id = %s AND teacher_id = %s"""
         cursor.execute(query, (project_id, teacher_id))
         project = cursor.fetchone()
 
@@ -2836,44 +2836,45 @@ def edit_project(project_id):
         teacher_info = cursor.fetchone()
 
     # สร้าง project_data สำหรับ GET request
+    # (index ปรับใหม่หลังจากลบ project_status ออก)
     project_data = {
-    "project_id": project[0],
-    "project_budgettype": project[1],
-    "project_year": project[2],
-    "project_name": project[3],
-    "project_style": project[4],
-    "project_address": project[5],
-    "project_dotime": project[6],
-    "project_endtime": project[7],
-    "project_target": project[8],
-    # ลบ project_status ออก (เดิมคือ project[9])
-    "project_budget": project[9],        # เดิม [10]
-    "project_detail": project[10],       # เดิม [11]
-    "project_output": project[11],       # เดิม [12]
-    "project_strategy": project[12],     # เดิม [13]
-    "project_indicator": project[13],    # เดิม [14]
-    "project_cluster": project[14],      # เดิม [15]
-    "project_commonality": project[15],  # เดิม [16]
-    "project_physical_grouping": project[16],  # เดิม [17]
-    "project_rationale": project[17],    # เดิม [18]
-    "project_objectives": project[18],   # เดิม [19]
-    "project_goals": project[19],        # เดิม [20]
-    "project_output_target": project[20],# เดิม [21]
-    "project_outcome_target": project[21],# เดิม [22]
-    "project_activity": project[22],     # เดิม [23]
-    "project_activities_json": project[23],# เดิม [24]
-    "project_quantity_indicator": project[24],# เดิม [25]
-    "project_quality_indicator": project[25],# เดิม [26]
-    "project_time_indicator": project[26],# เดิม [27]
-    "project_cost_indicator": project[27],# เดิม [28]
-    "project_expected_results": project[28],# เดิม [29]
-    "project_compensation_json": project[29],# เดิม [30]
-    "project_expenses_json": project[30],# เดิม [31]
-    "project_policy": project[31] if len(project) > 31 else "",  # เดิม [32]
-    "policy": project[31] if len(project) > 31 else "",
-    "teacher_name": teacher_info[0],
-    "branch_name": teacher_info[1]
-}
+        "project_id": project[0],
+        "project_budgettype": project[1],
+        "project_year": project[2],
+        "project_name": project[3],
+        "project_style": project[4],
+        "project_address": project[5],
+        "project_dotime": project[6],
+        "project_endtime": project[7],
+        "project_target": project[8],
+        # project_status ถูกลบออก (เดิมคือ project[9]) เพราะอยู่ในตาราง approval
+        "project_budget": project[9],
+        "project_detail": project[10],
+        "project_output": project[11],
+        "project_strategy": project[12],
+        "project_indicator": project[13],
+        "project_cluster": project[14],
+        "project_commonality": project[15],
+        "project_physical_grouping": project[16],
+        "project_rationale": project[17],
+        "project_objectives": project[18],
+        "project_goals": project[19],
+        "project_output_target": project[20],
+        "project_outcome_target": project[21],
+        "project_activity": project[22],
+        "project_activities_json": project[23],
+        "project_quantity_indicator": project[24],
+        "project_quality_indicator": project[25],
+        "project_time_indicator": project[26],
+        "project_cost_indicator": project[27],
+        "project_expected_results": project[28],
+        "project_compensation_json": project[29],
+        "project_expenses_json": project[30],
+        "project_policy": project[31] if len(project) > 31 else "",
+        "policy": project[31] if len(project) > 31 else "",
+        "teacher_name": teacher_info[0],
+        "branch_name": teacher_info[1]
+    }
 
     if request.method == "POST":
         # อัปเดต project_data ด้วยข้อมูลจากฟอร์ม
@@ -2890,38 +2891,38 @@ def edit_project(project_id):
                 "project_budget": request.form["project_budget"],
                 "project_detail": request.form["project_detail"],
                 "project_output": request.form["output"],
-                "output": request.form["output"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "output": request.form["output"],
                 "project_strategy": request.form["strategy"],
-                "strategy": request.form["strategy"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "strategy": request.form["strategy"],
                 "project_indicator": request.form["indicator"],
-                "indicator": request.form["indicator"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "indicator": request.form["indicator"],
                 "project_cluster": request.form["cluster"],
-                "cluster": request.form["cluster"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "cluster": request.form["cluster"],
                 "project_commonality": request.form["commonality"],
-                "commonality": request.form["commonality"], 
+                "commonality": request.form["commonality"],
                 "project_physical_grouping": request.form["physical_grouping"],
-                "physical_grouping": request.form["physical_grouping"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "physical_grouping": request.form["physical_grouping"],
                 "project_rationale": request.form["rationale"],
-                "rationale": request.form["rationale"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "rationale": request.form["rationale"],
                 "project_objectives": request.form["objectives"],
-                "objectives": request.form["objectives"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "objectives": request.form["objectives"],
                 "project_goals": request.form["goals"],
-                "goals": request.form["goals"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "goals": request.form["goals"],
                 "project_output_target": request.form["output_target"],
-                "output_target": request.form["output_target"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "output_target": request.form["output_target"],
                 "project_outcome_target": request.form["outcome_target"],
-                "outcome_target": request.form["outcome_target"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "outcome_target": request.form["outcome_target"],
                 "project_activity": request.form["project_activity"],
                 "project_quantity_indicator": request.form["quantity_indicator"],
-                "quantity_indicator": request.form["quantity_indicator"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "quantity_indicator": request.form["quantity_indicator"],
                 "project_quality_indicator": request.form["quality_indicator"],
-                "quality_indicator": request.form["quality_indicator"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "quality_indicator": request.form["quality_indicator"],
                 "project_time_indicator": request.form["time_indicator"],
-                "time_indicator": request.form["time_indicator"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "time_indicator": request.form["time_indicator"],
                 "project_cost_indicator": request.form["cost_indicator"],
-                "cost_indicator": request.form["cost_indicator"],  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "cost_indicator": request.form["cost_indicator"],
                 "project_expected_results": request.form.get("expected_results", ""),
-                "expected_results": request.form.get("expected_results", ""),  # เพิ่มเพื่อให้แน่ใจว่ามีทั้งสองฟิลด์
+                "expected_results": request.form.get("expected_results", ""),
                 "project_policy": request.form.get("policy", ""),
                 "policy": request.form.get("policy", ""),
             }
@@ -2930,7 +2931,7 @@ def edit_project(project_id):
         error_messages = []
 
         # ตรวจสอบชื่อโครงการซ้ำ
-        if project_data["project_name"] != project[3]:  # ถ้าชื่อโครงการมีการเปลี่ยนแปลง
+        if project_data["project_name"] != project[3]:
             if is_project_name_duplicate(project_data["project_name"], project_id):
                 error_messages.append("ไม่สามารถแก้ไขโครงการได้เนื่องจากชื่อโครงการ '{}' มีอยู่แล้ว กรุณาใช้ชื่อโครงการอื่น".format(project_data["project_name"]))
 
@@ -2941,35 +2942,25 @@ def edit_project(project_id):
         if error_messages:
             for message in error_messages:
                 flash(message, "error")
-                
-            # แปลง JSON strings กลับเป็น Python lists เพื่อส่งกลับไปยังหน้า edit_project.html
+
             try:
-                if project_data.get("project_activities_json"):
-                    activities = json.loads(project_data.get("project_activities_json"))
-                else:
-                    activities = []
+                activities = json.loads(project_data.get("project_activities_json")) if project_data.get("project_activities_json") else []
                 project_data["activities"] = activities
             except (json.JSONDecodeError, TypeError):
                 project_data["activities"] = []
-                
+
             try:
-                if project_data.get("project_compensation_json"):
-                    compensation = json.loads(project_data.get("project_compensation_json"))
-                else:
-                    compensation = []
+                compensation = json.loads(project_data.get("project_compensation_json")) if project_data.get("project_compensation_json") else []
                 project_data["compensation"] = compensation
             except (json.JSONDecodeError, TypeError):
                 project_data["compensation"] = []
-                
+
             try:
-                if project_data.get("project_expenses_json"):
-                    expenses = json.loads(project_data.get("project_expenses_json"))
-                else:
-                    expenses = []
+                expenses = json.loads(project_data.get("project_expenses_json")) if project_data.get("project_expenses_json") else []
                 project_data["expenses"] = expenses
             except (json.JSONDecodeError, TypeError):
                 project_data["expenses"] = []
-                
+
             return render_template("edit_project.html", project=project_data, teacher_info=teacher_info)
 
         # รับข้อมูลแผนปฏิบัติงาน
@@ -2978,32 +2969,27 @@ def edit_project(project_id):
         for i, activity in enumerate(activity_data):
             if activity:
                 selected_months = request.form.getlist(f"month[{i}][]")
-                activities.append(
-                    {"activity": activity, "months": selected_months}
-                )
+                activities.append({"activity": activity, "months": selected_months})
         activities_json = json.dumps(activities, ensure_ascii=False)
         project_data["activities"] = activities
-        
-        # รับข้อมูลค่าตอบแทนและค่าใช้สอย
+
+        # รับข้อมูลค่าตอบแทน
         compensation = []
         compensation_descriptions = request.form.getlist("compensation_description[]")
         compensation_amounts = request.form.getlist("compensation_amount[]")
         for desc, amount in zip(compensation_descriptions, compensation_amounts):
             if desc and amount:
-                compensation.append(
-                    {"description": desc, "amount": float(amount)}
-                )
+                compensation.append({"description": desc, "amount": float(amount)})
         compensation_json = json.dumps(compensation, ensure_ascii=False)
         project_data["compensation"] = compensation
 
+        # รับข้อมูลค่าใช้สอย
         expenses = []
         expense_descriptions = request.form.getlist("expense_description[]")
         expense_amounts = request.form.getlist("expense_amount[]")
         for desc, amount in zip(expense_descriptions, expense_amounts):
             if desc and amount:
-                expenses.append(
-                    {"description": desc, "amount": float(amount)}
-                )
+                expenses.append({"description": desc, "amount": float(amount)})
         expenses_json = json.dumps(expenses, ensure_ascii=False)
         project_data["expenses"] = expenses
 
@@ -3012,9 +2998,8 @@ def edit_project(project_id):
         total_expenses = sum(item["amount"] for item in expenses)
         grand_total = total_compensation + total_expenses
 
-        # บันทึกข้อมูลลงฐานข้อมูล
+        # บันทึกข้อมูลโครงการลงฐานข้อมูล (ตาราง project)
         with get_db_cursor() as (db, cursor):
-            # อัปเดตข้อมูลโครงการในฐานข้อมูล
             query = """UPDATE project SET 
                        project_budgettype = %s, project_year = %s, project_name = %s, 
                        project_style = %s, project_address = %s, project_dotime = %s, 
@@ -3068,7 +3053,7 @@ def edit_project(project_id):
             )
             db.commit()
 
-        # เพิ่มข้อมูลยอดรวมใน project_data สำหรับใช้ในการสร้าง PDF
+        # เพิ่มข้อมูลยอดรวมใน project_data สำหรับสร้าง PDF
         project_data["total_compensation"] = total_compensation
         project_data["total_expenses"] = total_expenses
         project_data["grand_total"] = grand_total
@@ -3079,7 +3064,6 @@ def edit_project(project_id):
         if isinstance(project_data["project_endtime"], datetime):
             project_data["project_endtime"] = project_data["project_endtime"].strftime('%Y-%m-%d')
 
-        # เพิ่ม log เพื่อดูข้อมูล
         logging.info(f"Creating PDF for project: {project_data['project_name']}")
         logging.info(f"Project data keys: {list(project_data.keys())}")
         logging.info(f"Project dates: {project_data['project_dotime']} to {project_data['project_endtime']}")
@@ -3090,7 +3074,6 @@ def edit_project(project_id):
         if pdf_buffer:
             pdf_content = pdf_buffer.getvalue()
 
-            # ตรวจสอบ PDF 
             try:
                 from PyPDF2 import PdfReader
                 reader = PdfReader(BytesIO(pdf_content))
@@ -3099,10 +3082,25 @@ def edit_project(project_id):
             except Exception as e:
                 logging.error(f"Error checking PDF: {e}")
 
+            # บันทึก PDF ลงตาราง approval (ไม่ใช่ตาราง project)
             with get_db_cursor() as (db, cursor):
                 try:
-                    query = "UPDATE project SET project_pdf = %s WHERE project_id = %s"
-                    cursor.execute(query, (pdf_content, project_id))
+                    # ตรวจสอบว่ามี record ใน approval สำหรับ project_id นี้หรือยัง
+                    cursor.execute(
+                        "SELECT approval_id FROM approval WHERE project_id = %s",
+                        (project_id,)
+                    )
+                    approval_record = cursor.fetchone()
+
+                    if approval_record:
+                        # ถ้ามีอยู่แล้ว ให้ UPDATE
+                        query = "UPDATE approval SET project_pdf = %s WHERE project_id = %s"
+                        cursor.execute(query, (pdf_content, project_id))
+                    else:
+                        # ถ้ายังไม่มี ให้ INSERT ใหม่ (project_status = 0 = ยังไม่อนุมัติ)
+                        query = "INSERT INTO approval (project_id, project_pdf, project_status) VALUES (%s, %s, 0)"
+                        cursor.execute(query, (project_id, pdf_content))
+
                     db.commit()
                     logging.info(f"PDF uploaded for project_id: {project_id}")
                     flash("โครงการและ PDF ถูกบันทึกเรียบร้อยแล้ว", "success")
@@ -3116,30 +3114,21 @@ def edit_project(project_id):
 
         return redirect(url_for("teacher_projects"))
 
-    # แปลง JSON strings กลับเป็น Python lists สำหรับการแสดงผลในฟอร์ม
+    # แปลง JSON strings กลับเป็น Python lists สำหรับแสดงผลในฟอร์ม (GET request)
     try:
-        if project_data.get("project_activities_json"):
-            activities = json.loads(project_data.get("project_activities_json"))
-        else:
-            activities = []
+        activities = json.loads(project_data.get("project_activities_json")) if project_data.get("project_activities_json") else []
         project_data["activities"] = activities
     except (json.JSONDecodeError, TypeError):
         project_data["activities"] = []
-        
+
     try:
-        if project_data.get("project_compensation_json"):
-            compensation = json.loads(project_data.get("project_compensation_json"))
-        else:
-            compensation = []
+        compensation = json.loads(project_data.get("project_compensation_json")) if project_data.get("project_compensation_json") else []
         project_data["compensation"] = compensation
     except (json.JSONDecodeError, TypeError):
         project_data["compensation"] = []
-        
+
     try:
-        if project_data.get("project_expenses_json"):
-            expenses = json.loads(project_data.get("project_expenses_json"))
-        else:
-            expenses = []
+        expenses = json.loads(project_data.get("project_expenses_json")) if project_data.get("project_expenses_json") else []
         project_data["expenses"] = expenses
     except (json.JSONDecodeError, TypeError):
         project_data["expenses"] = []
